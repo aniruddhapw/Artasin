@@ -17,9 +17,7 @@ export default async function sitemap() {
   const staticRoutes = [
     { url: `${siteUrl}/`, changeFrequency: "daily", priority: 1 },
     { url: `${siteUrl}/gallery`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${siteUrl}/requests`, changeFrequency: "weekly", priority: 0.6 },
-    { url: `${siteUrl}/login`, changeFrequency: "yearly", priority: 0.2 },
-    { url: `${siteUrl}/signup`, changeFrequency: "yearly", priority: 0.3 }
+    { url: `${siteUrl}/requests`, changeFrequency: "weekly", priority: 0.6 }
   ];
 
   const artworkRoutes = artworks.map((artwork) => ({

@@ -1,21 +1,60 @@
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
+const siteDescription =
+  "Shop original paintings, sculpture, and photography from independent artists, or commission a custom piece made for your space. Curated, minimalist, and authenticated.";
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "ARTISAN | Curated Art Marketplace",
+    default: "ARTISAN | Original Art & Custom Commissions",
     template: "%s | ARTISAN"
   },
-  description:
-    "A production-grade minimalist art marketplace for collections, commissions, and artist studio operations."
+  description: siteDescription,
+  keywords: [
+    "buy original art online",
+    "commission custom artwork",
+    "independent artists",
+    "minimalist art marketplace",
+    "original paintings and sculpture"
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "ARTISAN",
+    title: "ARTISAN | Original Art & Custom Commissions",
+    description: siteDescription,
+    url: siteUrl
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ARTISAN | Original Art & Custom Commissions",
+    description: siteDescription
+  }
+};
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "ARTISAN",
+  url: siteUrl,
+  description: siteDescription,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${siteUrl}/gallery?q={search_term_string}`,
+    "query-input": "required name=search_term_string"
+  }
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <script
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          type="application/ld+json"
+        />
+        {children}
+      </body>
     </html>
   );
 }
