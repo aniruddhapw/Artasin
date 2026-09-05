@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { StarRating } from "@/components/StarRating";
 import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 
@@ -38,6 +39,20 @@ export default async function ArtistProfilePage({ params }) {
     notFound();
   }
 
+  const [reviews, reviewAggregate] = await Promise.all([
+    prisma.review.findMany({
+      where: { artistId: artist.id },
+      include: { buyer: { select: { firstName: true, lastName: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 10
+    }),
+    prisma.review.aggregate({
+      where: { artistId: artist.id },
+      _avg: { rating: true },
+      _count: true
+    })
+  ]);
+
   return (
     <>
       <Nav active="artists" />
@@ -45,6 +60,9 @@ export default async function ArtistProfilePage({ params }) {
         <header className="request-header">
           <p className="byline">{artist.discipline || "Artist"}</p>
           <h1>{artist.displayName}</h1>
+          {reviewAggregate._count ? (
+            <StarRating count={reviewAggregate._count} value={reviewAggregate._avg.rating || 0} />
+          ) : null}
           {artist.bio ? <p>{artist.bio}</p> : null}
           {artist.location ? <p className="artist-location">{artist.location}</p> : null}
         </header>
@@ -67,6 +85,26 @@ export default async function ArtistProfilePage({ params }) {
         ) : (
           <p className="empty-state">This artist has not published any work yet.</p>
         )}
+
+        {reviews.length ? (
+          <section className="more-section">
+            <div className="section-heading inline-heading">
+              <h2>Reviews</h2>
+              <StarRating count={reviewAggregate._count} value={reviewAggregate._avg.rating || 0} />
+            </div>
+            <ul className="review-list">
+              {reviews.map((review) => (
+                <li key={review.id}>
+                  <div className="review-list-head">
+                    <StarRating value={review.rating} />
+                    <span className="review-author">{review.buyer.firstName} {review.buyer.lastName[0]}.</span>
+                  </div>
+                  {review.body ? <p>{review.body}</p> : null}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </main>
       <Footer variant="simple" />
     </>

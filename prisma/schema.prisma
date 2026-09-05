@@ -159,6 +159,7 @@ model Order {
   artwork               Artwork?           @relation(fields: [artworkId], references: [id])
   commissionRequest     CommissionRequest? @relation(fields: [commissionRequestId], references: [id])
   transactions          Transaction[]
+  review                Review?
 }
 
 model CommissionRequest {
@@ -243,12 +244,14 @@ model Payout {
 
 model Review {
   id        String        @id @default(cuid())
+  orderId   String        @unique
   buyerId   String
   artistId  String
   artworkId String?
   rating    Int
   body      String?
   createdAt DateTime      @default(now())
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   buyer     User          @relation(fields: [buyerId], references: [id])
   artist    ArtistProfile @relation(fields: [artistId], references: [id])
   artwork   Artwork?      @relation(fields: [artworkId], references: [id])

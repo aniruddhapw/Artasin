@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { StarRating } from "@/components/StarRating";
 import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 
@@ -50,16 +51,28 @@ export default async function ArtworkDetailPage({ params }) {
     notFound();
   }
 
-  const moreWorks = await prisma.artwork.findMany({
-    where: {
-      artistId: artwork.artistId,
-      status: "PUBLISHED",
-      id: { not: artwork.id }
-    },
-    include: { media: { take: 1, orderBy: { sortOrder: "asc" } } },
-    take: 3,
-    orderBy: { createdAt: "desc" }
-  });
+  const [moreWorks, reviews, reviewAggregate] = await Promise.all([
+    prisma.artwork.findMany({
+      where: {
+        artistId: artwork.artistId,
+        status: "PUBLISHED",
+        id: { not: artwork.id }
+      },
+      include: { media: { take: 1, orderBy: { sortOrder: "asc" } } },
+      take: 3,
+      orderBy: { createdAt: "desc" }
+    }),
+    prisma.review.findMany({
+      where: { artworkId: artwork.id },
+      include: { buyer: { select: { firstName: true, lastName: true } } },
+      orderBy: { createdAt: "desc" }
+    }),
+    prisma.review.aggregate({
+      where: { artworkId: artwork.id },
+      _avg: { rating: true },
+      _count: true
+    })
+  ]);
 
   const price = serializeMoney(artwork.priceCents, artwork.currency);
   const image = artwork.media[0]?.url || "/artisan/artwork-placeholder.svg";
@@ -79,6 +92,9 @@ export default async function ArtworkDetailPage({ params }) {
               by <Link href={`/artist/${artwork.artist.slug}`}>{artwork.artist.displayName}</Link>
             </p>
             <p className="price">{price.formatted}</p>
+            {reviewAggregate._count ? (
+              <StarRating count={reviewAggregate._count} value={reviewAggregate._avg.rating || 0} />
+            ) : null}
             <dl className="spec-list">
               <div>
                 <dt>Medium</dt>
@@ -155,6 +171,26 @@ export default async function ArtworkDetailPage({ params }) {
                 </Link>
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {reviews.length ? (
+          <section className="more-section">
+            <div className="section-heading inline-heading">
+              <h2>Reviews</h2>
+              <StarRating count={reviewAggregate._count} value={reviewAggregate._avg.rating || 0} />
+            </div>
+            <ul className="review-list">
+              {reviews.map((review) => (
+                <li key={review.id}>
+                  <div className="review-list-head">
+                    <StarRating value={review.rating} />
+                    <span className="review-author">{review.buyer.firstName} {review.buyer.lastName[0]}.</span>
+                  </div>
+                  {review.body ? <p>{review.body}</p> : null}
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
       </main>

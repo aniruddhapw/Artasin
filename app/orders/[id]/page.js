@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DisputeAction } from "@/components/orders/DisputeAction";
+import { ReviewAction } from "@/components/orders/ReviewAction";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { getAuthUser } from "@/lib/auth";
@@ -35,7 +36,8 @@ export default async function OrderDetailPage({ params }) {
     include: {
       artwork: { include: { media: { take: 1, orderBy: { sortOrder: "asc" } } } },
       artist: { select: { displayName: true, slug: true } },
-      commissionRequest: { select: { title: true } }
+      commissionRequest: { select: { title: true } },
+      review: true
     }
   });
 
@@ -114,6 +116,12 @@ export default async function OrderDetailPage({ params }) {
             </Link>
             <DisputeAction orderId={order.id} status={order.status} />
           </div>
+
+          {isOwner ? (
+            <div className="order-review-section">
+              <ReviewAction orderId={order.id} review={order.review} status={order.status} />
+            </div>
+          ) : null}
         </div>
       </main>
       <Footer variant="simple" />
