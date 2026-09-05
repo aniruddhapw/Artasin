@@ -1,0 +1,255 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  BUYER
+  ARTIST
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ArtworkStatus {
+  DRAFT
+  PUBLISHED
+  SOLD
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  IN_PROGRESS
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+  DISPUTED
+}
+
+enum CommissionStatus {
+  SUBMITTED
+  ARTIST_REVIEW
+  MEETING_REQUESTED
+  QUOTED
+  ACCEPTED
+  IN_PROGRESS
+  FINAL_REVIEW
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum MeetingStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum TransactionStatus {
+  REQUIRES_PAYMENT
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id              String              @id @default(cuid())
+  email           String              @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  role            UserRole            @default(BUYER)
+  phone           String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  artistProfile   ArtistProfile?
+  buyerOrders     Order[]             @relation("BuyerOrders")
+  commissionBriefs CommissionRequest[] @relation("BuyerCommissionRequests")
+  messages        Message[]
+  meetings        Meeting[]           @relation("BuyerMeetings")
+  reviews         Review[]
+}
+
+model ArtistProfile {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  displayName        String
+  slug               String             @unique
+  bio                String?
+  discipline         String?
+  location           String?
+  website            String?
+  verificationStatus VerificationStatus @default(PENDING)
+  commissionRate     Decimal            @default(15.00) @db.Decimal(5, 2)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artworks           Artwork[]
+  customRequests     CommissionRequest[]
+  orders             Order[]
+  payouts            Payout[]
+  reviews            Review[]
+}
+
+model Artwork {
+  id             String        @id @default(cuid())
+  artistId       String
+  title          String
+  slug           String        @unique
+  description    String
+  category       String
+  medium         String
+  dimensions     String
+  year           Int?
+  priceCents     Int
+  currency       String        @default("USD")
+  status         ArtworkStatus @default(DRAFT)
+  shipsFrom      String?
+  authenticity   String?
+  edition        String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  artist         ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  media          ArtworkMedia[]
+  orders         Order[]
+  reviews        Review[]
+}
+
+model ArtworkMedia {
+  id        String  @id @default(cuid())
+  artworkId String
+  url       String
+  alt       String
+  sortOrder Int     @default(0)
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id                    String             @id @default(cuid())
+  buyerId               String
+  artistId              String
+  artworkId             String?
+  commissionRequestId   String?
+  subtotalCents         Int
+  shippingCents         Int                @default(0)
+  taxCents              Int                @default(0)
+  buyerServiceFeeCents  Int                @default(0)
+  platformCommissionCents Int
+  artistPayoutCents     Int
+  currency              String             @default("USD")
+  status                OrderStatus        @default(PENDING_PAYMENT)
+  shippingAddress       Json?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  buyer                 User               @relation("BuyerOrders", fields: [buyerId], references: [id])
+  artist                ArtistProfile      @relation(fields: [artistId], references: [id])
+  artwork               Artwork?           @relation(fields: [artworkId], references: [id])
+  commissionRequest     CommissionRequest? @relation(fields: [commissionRequestId], references: [id])
+  transactions          Transaction[]
+}
+
+model CommissionRequest {
+  id              String           @id @default(cuid())
+  buyerId         String
+  artistId        String?
+  title           String
+  artworkType     String
+  medium          String?
+  budgetMinCents  Int?
+  budgetMaxCents  Int?
+  timeline        String?
+  dimensions      String?
+  requirements    String
+  referenceUrls   String[]
+  status          CommissionStatus @default(SUBMITTED)
+  quotedPriceCents Int?
+  currency        String           @default("USD")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  buyer           User             @relation("BuyerCommissionRequests", fields: [buyerId], references: [id])
+  artist          ArtistProfile?   @relation(fields: [artistId], references: [id])
+  meetings        Meeting[]
+  messages        Message[]
+  orders          Order[]
+}
+
+model Meeting {
+  id                  String             @id @default(cuid())
+  buyerId             String
+  commissionRequestId String
+  scheduledAt         DateTime
+  durationMinutes     Int                @default(30)
+  meetingType         String
+  provider            String?
+  providerMeetingId   String?
+  joinUrl             String?
+  status              MeetingStatus      @default(REQUESTED)
+  notes               String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  buyer               User               @relation("BuyerMeetings", fields: [buyerId], references: [id])
+  commissionRequest   CommissionRequest  @relation(fields: [commissionRequestId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id                  String            @id @default(cuid())
+  senderId            String
+  commissionRequestId String
+  body                String
+  createdAt           DateTime          @default(now())
+  sender              User              @relation(fields: [senderId], references: [id])
+  commissionRequest   CommissionRequest @relation(fields: [commissionRequestId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id               String            @id @default(cuid())
+  orderId          String
+  provider         String
+  providerIntentId String?
+  amountCents      Int
+  currency         String            @default("USD")
+  status           TransactionStatus @default(REQUIRES_PAYMENT)
+  rawPayload       Json?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  order            Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payout {
+  id                 String        @id @default(cuid())
+  artistId           String
+  amountCents        Int
+  currency           String        @default("USD")
+  provider           String?
+  providerPayoutId   String?
+  status             String        @default("PENDING")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  artist             ArtistProfile @relation(fields: [artistId], references: [id])
+}
+
+model Review {
+  id        String        @id @default(cuid())
+  buyerId   String
+  artistId  String
+  artworkId String?
+  rating    Int
+  body      String?
+  createdAt DateTime      @default(now())
+  buyer     User          @relation(fields: [buyerId], references: [id])
+  artist    ArtistProfile @relation(fields: [artistId], references: [id])
+  artwork   Artwork?      @relation(fields: [artworkId], references: [id])
+}

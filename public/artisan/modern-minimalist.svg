@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <rect width="800" height="800" fill="#eeeeee"/>
+  <rect x="99" y="178" width="590" height="402" fill="#f8f8f6" stroke="#c9c9c9"/>
+  <filter id="blur"><feGaussianBlur stdDeviation="9"/></filter>
+  <g filter="url(#blur)" opacity=".9">
+    <path d="M30 650 L650 80 H780 L160 670Z" fill="#111"/>
+    <path d="M0 535 L540 38 H638 L98 604Z" fill="#bfc7c2"/>
+    <path d="M152 590 L728 86 H800 L226 638Z" fill="#757b79"/>
+    <path d="M315 600 L792 160 H824 L363 635Z" fill="#efefea"/>
+  </g>
+  <rect x="99" y="178" width="590" height="402" fill="none" stroke="#d4d4d4"/>
+  <ellipse cx="390" cy="625" rx="265" ry="36" fill="#cfcfcf" opacity=".6"/>
+</svg>

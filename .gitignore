@@ -1,0 +1,32 @@
+# dependencies
+/node_modules
+
+# next.js build output
+/.next/
+/out/
+
+# production
+/build
+
+# env files — never commit real secrets
+.env
+.env.local
+.env.*.local
+
+# user-uploaded content (local storage provider only; not used in production)
+/public/uploads/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# editor/OS
+.DS_Store
+*.pem
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo

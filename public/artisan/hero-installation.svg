@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 720">
+  <defs>
+    <radialGradient id="room" cx="50%" cy="45%" r="72%">
+      <stop offset="0" stop-color="#3b3333"/>
+      <stop offset=".58" stop-color="#171717"/>
+      <stop offset="1" stop-color="#050505"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1000" height="720" fill="url(#room)"/>
+  <path d="M0 570 L350 390 H650 L1000 570 V720 H0Z" fill="#151211"/>
+  <path d="M145 95 H855 L650 390 H350Z" fill="#100f0f" stroke="#3b3b3b"/>
+  <g stroke="#ff253a" stroke-width="13" fill="none" filter="url(#glow)">
+    <path d="M500 145 l86 66 -86 62 -86 -62z"/>
+    <path d="M500 276 l112 83 -112 83 -112 -83z"/>
+    <path d="M500 440 l142 104 H358z"/>
+  </g>
+  <rect x="356" y="542" width="288" height="28" fill="#ec1f35" filter="url(#glow)"/>
+  <rect x="97" y="286" width="62" height="166" fill="#0b0b0b" stroke="#777"/>
+  <rect x="841" y="286" width="62" height="166" fill="#0b0b0b" stroke="#777"/>
+  <g fill="#f7cf41"><circle cx="126" cy="332" r="13"/><circle cx="873" cy="382" r="15"/><circle cx="126" cy="412" r="11"/><circle cx="872" cy="319" r="10"/></g>
+  <path d="M496 492 c-14 22 -13 44 3 66" stroke="#050505" stroke-width="18" stroke-linecap="round"/>
+</svg>
