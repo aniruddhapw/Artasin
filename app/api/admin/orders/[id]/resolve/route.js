@@ -2,6 +2,8 @@ import { z } from "zod";
 import { fail, handleApiError, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/email";
+import { orderRefundedBuyerEmail } from "@/lib/emails";
 
 const resolveSchema = z.object({
   resolution: z.enum(["refund", "dismiss"])
@@ -17,7 +19,15 @@ export async function POST(request, context) {
     const { id } = await context.params;
     const input = resolveSchema.parse(await request.json());
 
-    const order = await prisma.order.findUnique({ where: { id }, include: { transactions: true } });
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        transactions: true,
+        buyer: { select: { email: true } },
+        artwork: { select: { title: true } },
+        commissionRequest: { select: { title: true } }
+      }
+    });
     if (!order) {
       return fail("Order not found", 404);
     }
@@ -41,6 +51,11 @@ export async function POST(request, context) {
       }
       return tx.order.update({ where: { id: order.id }, data: { status: "COMPLETED" } });
     });
+
+    if (input.resolution === "refund") {
+      const itemTitle = order.artwork?.title || order.commissionRequest?.title || "your commission";
+      await sendEmail({ to: order.buyer.email, ...orderRefundedBuyerEmail(order, itemTitle) });
+    }
 
     return ok({ order: updated });
   } catch (error) {

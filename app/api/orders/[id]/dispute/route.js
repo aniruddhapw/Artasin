@@ -1,6 +1,8 @@
 import { fail, handleApiError, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/email";
+import { disputeFiledAdminEmail } from "@/lib/emails";
 
 const disputableStatuses = ["PAID", "IN_PROGRESS", "SHIPPED", "DELIVERED", "COMPLETED"];
 
@@ -30,6 +32,9 @@ export async function POST(request, context) {
       where: { id },
       data: { status: "DISPUTED" }
     });
+
+    const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { email: true } });
+    await Promise.all(admins.map((admin) => sendEmail({ to: admin.email, ...disputeFiledAdminEmail(updated) })));
 
     return ok({ order: updated });
   } catch (error) {

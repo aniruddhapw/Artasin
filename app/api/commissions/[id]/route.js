@@ -2,6 +2,8 @@ import { z } from "zod";
 import { fail, handleApiError, moneyToCents, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/email";
+import { commissionQuotedBuyerEmail, commissionRejectedBuyerEmail } from "@/lib/emails";
 
 const artistNextStatuses = {
   ARTIST_REVIEW: ["QUOTED", "REJECTED"],
@@ -72,7 +74,10 @@ export async function PATCH(request, context) {
     const { id } = await context.params;
     const input = updateSchema.parse(await request.json());
 
-    const commissionRequest = await prisma.commissionRequest.findUnique({ where: { id } });
+    const commissionRequest = await prisma.commissionRequest.findUnique({
+      where: { id },
+      include: { buyer: { select: { email: true } } }
+    });
     if (!commissionRequest) {
       return fail("Commission request not found", 404);
     }
@@ -95,6 +100,12 @@ export async function PATCH(request, context) {
         quotedPriceCents: input.quotedPriceCents ?? commissionRequest.quotedPriceCents
       }
     });
+
+    if (input.status === "QUOTED") {
+      await sendEmail({ to: commissionRequest.buyer.email, ...commissionQuotedBuyerEmail(updated) });
+    } else if (input.status === "REJECTED") {
+      await sendEmail({ to: commissionRequest.buyer.email, ...commissionRejectedBuyerEmail(updated) });
+    }
 
     return ok({ commissionRequest: updated });
   } catch (error) {

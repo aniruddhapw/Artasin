@@ -49,6 +49,9 @@ See `.env.example` for the full list. Key ones:
 | `STORAGE_PROVIDER` | `local` (default, disk-based — see [Storage](#storage)) or `cloudinary`. |
 | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Required when `STORAGE_PROVIDER=cloudinary`. From your Cloudinary dashboard. |
 | `MEETING_PROVIDER` | Label stored on scheduled meetings; swap for a real calendar/video integration later. |
+| `EMAIL_PROVIDER` | `console` (default in local dev — logs the email instead of sending it) or `resend`. Auto-selects `resend` if `RESEND_API_KEY` is set — see [Notifications](#notifications). |
+| `RESEND_API_KEY` | Required when `EMAIL_PROVIDER=resend`. From your Resend dashboard. |
+| `EMAIL_FROM` | Sender shown on outgoing emails, e.g. `ARTISAN <notifications@yourdomain.com>`. Requires a verified sending domain in Resend. |
 
 ## Architecture Notes
 
@@ -79,6 +82,19 @@ Add another provider (e.g. S3) by adding an entry to the `providers` map in `lib
 ### Commissions
 
 `CommissionRequest` moves through `SUBMITTED → ARTIST_REVIEW → QUOTED → ACCEPTED → IN_PROGRESS → FINAL_REVIEW → COMPLETED` (or `REJECTED`/`CANCELLED`). Artists quote from `/studio/commissions/[id]`; buyers accept a quote from `/commissions/[id]`, which routes to `/checkout?commissionRequestId=...` and creates an `Order` tied back to the brief. Both sides can message (`Message`) and schedule meetings (`Meeting`) on the same thread.
+
+### Reviews
+
+Once an `Order` reaches `DELIVERED` or `COMPLETED`, the buyer can leave a one-time 1-5 star rating and optional comment (`POST /api/orders/:id/review`), enforced by a unique constraint on `Review.orderId`. Average ratings and the review list surface on both the artwork page and the artist's profile page (`components/StarRating.jsx`).
+
+### Notifications
+
+`lib/email.js` defines a provider interface (`send({ to, subject, html })`) and `lib/emails.js` holds the HTML templates, so routes never build email markup inline:
+
+- `console` (default): logs the email to the server console instead of sending it. Used automatically in local dev when no `RESEND_API_KEY` is set.
+- `resend`: sends via the [Resend](https://resend.com) API. Requires `RESEND_API_KEY` and a domain verified in Resend (set `EMAIL_FROM` to an address on that domain).
+
+`sendEmail()` swallows and logs failures rather than throwing, so a broken email provider never blocks the underlying order/commission action. Current triggers: order paid (buyer + artist), order shipped/delivered (buyer), order refunded (buyer), dispute filed (all admins), new commission request (artist), commission quoted/rejected (buyer), artist verification approved/rejected (artist). Add another trigger by importing `sendEmail` and a template function from `lib/emails.js` at the point the underlying state changes.
 
 ## Scripts
 
@@ -116,6 +132,7 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
    - `NEXT_PUBLIC_SITE_URL` — your production domain, e.g. `https://your-app.vercel.app`
    - `PAYMENT_PROVIDER=manual` (until Stripe is wired in — see [Payments](#payments))
    - `STORAGE_PROVIDER=cloudinary` plus the three `CLOUDINARY_*` values from step 4
+   - `EMAIL_PROVIDER=resend` plus `RESEND_API_KEY` and `EMAIL_FROM` — see [Notifications](#notifications)
    - `PLATFORM_COMMISSION_RATE`, `MEETING_PROVIDER` — same as local, or your production defaults
    - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` — Playwright is a dev-only tool used for local screenshot QA; without this its `npm install` step tries to download a ~150MB Chromium binary during every Vercel build for no reason.
 7. **Deploy.** Vercel builds and deploys automatically; every future push to `main` redeploys.
@@ -126,5 +143,5 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
 - Images render via plain `<img>` tags rather than `next/image`; swapping in `next/image` would add automatic resizing/optimization but requires reworking several CSS-driven aspect-ratio containers.
 - The `stripe` payment provider is stubbed but not implemented — see [Payments](#payments) for the exact seam to fill in.
 - There is no dedicated `Dispute` model; disputes reuse the `DISPUTED`/`REFUNDED` `OrderStatus` values (see `/admin/disputes` and `POST /api/orders/:id/dispute`), which is enough for a single order-level dispute but has no room for a reason, evidence, or a history of multiple back-and-forth resolutions.
-- No email/in-app notifications yet for order, quote, meeting, or payout events — needs an email provider (e.g. Resend) decision before it can be built.
-- No wishlist/saved-items, no buyer-side review/rating UI (the `Review` model exists but nothing reads or writes it), and no search box on `/gallery` (the API supports a `q` param already).
+- Email notifications cover order/commission/verification events (see [Notifications](#notifications)) but not meeting scheduling or payouts.
+- No wishlist/saved-items, and no search box on `/gallery` (the API supports a `q` param already).

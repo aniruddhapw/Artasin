@@ -1,6 +1,8 @@
 import { fail, handleApiError, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/email";
+import { orderConfirmedBuyerEmail, orderSoldArtistEmail } from "@/lib/emails";
 import { getPaymentProvider } from "@/lib/payments";
 
 export async function POST(request, context) {
@@ -44,7 +46,12 @@ export async function POST(request, context) {
       const saved = await tx.order.update({
         where: { id: order.id },
         data: { status: nextOrderStatus },
-        include: { transactions: true, artwork: true, artist: true }
+        include: {
+          transactions: true,
+          artwork: true,
+          artist: { include: { user: { select: { email: true } } } },
+          commissionRequest: { select: { title: true } }
+        }
       });
 
       if (result.status === "SUCCEEDED" && order.artworkId) {
@@ -56,6 +63,19 @@ export async function POST(request, context) {
 
       return saved;
     });
+
+    if (updatedOrder.status === "PAID") {
+      const itemTitle = updatedOrder.artwork?.title || updatedOrder.commissionRequest?.title || "your commission";
+      await Promise.all([
+        sendEmail({ to: user.email, ...orderConfirmedBuyerEmail(updatedOrder, itemTitle) }),
+        updatedOrder.artist.user?.email
+          ? sendEmail({
+              to: updatedOrder.artist.user.email,
+              ...orderSoldArtistEmail(updatedOrder, itemTitle, `${user.firstName} ${user.lastName}`)
+            })
+          : null
+      ]);
+    }
 
     return ok({ order: updatedOrder });
   } catch (error) {

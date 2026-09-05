@@ -2,6 +2,8 @@ import { z } from "zod";
 import { fail, handleApiError, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/email";
+import { orderStatusChangedBuyerEmail } from "@/lib/emails";
 
 const artistTransitions = {
   PAID: ["IN_PROGRESS", "SHIPPED"],
@@ -73,8 +75,18 @@ export async function PATCH(request, context) {
 
     const updated = await prisma.order.update({
       where: { id },
-      data: { status: input.status }
+      data: { status: input.status },
+      include: {
+        buyer: { select: { email: true } },
+        artwork: { select: { title: true } },
+        commissionRequest: { select: { title: true } }
+      }
     });
+
+    if (input.status === "SHIPPED" || input.status === "DELIVERED") {
+      const itemTitle = updated.artwork?.title || updated.commissionRequest?.title || "your commission";
+      await sendEmail({ to: updated.buyer.email, ...orderStatusChangedBuyerEmail(updated, itemTitle) });
+    }
 
     return ok({ order: updated });
   } catch (error) {

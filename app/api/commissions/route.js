@@ -2,6 +2,8 @@ import { z } from "zod";
 import { created, fail, handleApiError, mediaUrlSchema, moneyToCents, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/email";
+import { newCommissionRequestArtistEmail } from "@/lib/emails";
 
 const commissionSchema = z.object({
   artistId: z.string().optional(),
@@ -66,9 +68,22 @@ export async function POST(request) {
         status: input.artistId ? "ARTIST_REVIEW" : "SUBMITTED"
       },
       include: {
-        artist: { select: { displayName: true, slug: true } }
+        artist: { select: { displayName: true, slug: true, userId: true } }
       }
     });
+
+    if (commissionRequest.artist) {
+      const artistUser = await prisma.user.findUnique({
+        where: { id: commissionRequest.artist.userId },
+        select: { email: true }
+      });
+      if (artistUser) {
+        await sendEmail({
+          to: artistUser.email,
+          ...newCommissionRequestArtistEmail(commissionRequest, `${user.firstName} ${user.lastName}`)
+        });
+      }
+    }
 
     return created({ commissionRequest });
   } catch (error) {
