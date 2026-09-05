@@ -9,32 +9,14 @@ export const collectionCards = [
   {
     title: "Modern Minimalist",
     count: "42 Artworks",
-    image: "/artisan/modern-minimalist.svg",
+    image: "/artisan/modern-minimalist.jpg",
     href: "/gallery?category=Painting"
   },
   {
     title: "Textured Abstracts",
     count: "28 Artworks",
-    image: "/artisan/textured-abstracts.svg",
+    image: "/artisan/textured-abstracts.jpg",
     href: "/gallery?category=Sculpture"
-  }
-];
-
-export const artists = [
-  {
-    name: "Julian Thorne",
-    discipline: "Sculpture & Installation",
-    image: "/artisan/artist-julian.svg"
-  },
-  {
-    name: "Marcus Vance",
-    discipline: "Digital Media",
-    image: "/artisan/artist-marcus.svg"
-  },
-  {
-    name: "Sarah Lin",
-    discipline: "Oil on Canvas",
-    image: "/artisan/artist-sarah.svg"
   }
 ];
 

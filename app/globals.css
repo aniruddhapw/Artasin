@@ -468,6 +468,26 @@ legend {
   border-radius: 999px;
 }
 
+.artist-avatar-monogram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-low);
+  transition: background 220ms ease;
+}
+
+.artist-avatar-monogram span {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 56px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--primary);
+}
+
+.artist-card:hover .artist-avatar-monogram {
+  background: var(--surface-container);
+}
+
 .artist-card h3 {
   margin-bottom: 4px;
   font-size: 18px;
