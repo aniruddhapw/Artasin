@@ -8,7 +8,7 @@ A minimalist, editorial-style art marketplace built with Next.js (App Router) an
 - PostgreSQL via Prisma 7 with the `@prisma/adapter-pg` driver adapter
 - JWT sessions in an HttpOnly cookie (`jose`, `bcryptjs`)
 - Zod request validation on every mutating API route
-- Local disk file storage for uploads (swappable — see [Storage](#storage))
+- File storage for uploads: local disk in development, Cloudinary in production (see [Storage](#storage))
 
 ## Getting Started
 
@@ -43,9 +43,11 @@ See `.env.example` for the full list. Key ones:
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string. |
 | `JWT_SECRET` | Long random string (24+ chars) used to sign session cookies. |
+| `NEXT_PUBLIC_SITE_URL` | Public base URL, used for SEO metadata (`metadataBase`, Open Graph). Set to your real domain in production. |
 | `PLATFORM_COMMISSION_RATE` | Default commission percentage applied when an artist has no override (`ArtistProfile.commissionRate`). Admins can override per-artist from `/admin/artists`. |
 | `PAYMENT_PROVIDER` | `manual` (default, instant mock settlement) or `stripe` (stubbed — see [Payments](#payments)). |
-| `STORAGE_PROVIDER` | `local` (default — see [Storage](#storage)). |
+| `STORAGE_PROVIDER` | `local` (default, disk-based — see [Storage](#storage)) or `cloudinary`. |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Required when `STORAGE_PROVIDER=cloudinary`. From your Cloudinary dashboard. |
 | `MEETING_PROVIDER` | Label stored on scheduled meetings; swap for a real calendar/video integration later. |
 
 ## Architecture Notes
@@ -67,7 +69,12 @@ Every order stores `platformCommissionCents` and `artistPayoutCents`, computed f
 
 ### Storage
 
-`lib/storage.js` defines a provider interface (`save(file)` → URL) used by `POST /api/uploads` for both artwork images and commission reference files. The default `local` provider writes into `public/uploads/`. Swap in an S3-compatible provider by adding an entry to the `providers` map and setting `STORAGE_PROVIDER`.
+`lib/storage.js` defines a provider interface (`save(file)` → URL) used by `POST /api/uploads` for both artwork images and commission reference files.
+
+- `local` (default): writes into `public/uploads/`. **Only works for local development** — most production hosts (including Vercel) run on an ephemeral, read-only filesystem, so files written here will not persist or may not be servable at all.
+- `cloudinary`: uploads to Cloudinary and returns its `secure_url`. Requires `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. This is what production should use.
+
+Add another provider (e.g. S3) by adding an entry to the `providers` map in `lib/storage.js`.
 
 ### Commissions
 
@@ -76,17 +83,48 @@ Every order stores `platformCommissionCents` and `artistPayoutCents`, computed f
 ## Scripts
 
 ```bash
-npm run dev          # start the dev server
-npm run build         # production build
-npm run start          # run the production build
-npm run db:generate   # regenerate the Prisma client
-npm run db:migrate    # run Prisma migrations
-npm run db:seed       # seed demo data
-npm run db:studio     # open Prisma Studio
+npm run dev                # start the dev server
+npm run build               # production build
+npm run start                 # run the production build
+npm run db:generate         # regenerate the Prisma client
+npm run db:migrate          # create/run a migration (local dev)
+npm run db:migrate:deploy   # apply existing migrations without prompting (production)
+npm run db:seed             # seed demo data
+npm run db:studio           # open Prisma Studio
 ```
+
+## Deploying to Production
+
+This targets **Vercel** (frontend + API routes) and a managed **Postgres** host (Neon or Supabase both work well with Prisma's connection pooling). The design assumes you have accounts on GitHub, Vercel, your Postgres host, and Cloudinary (or another storage provider) — this repo can't create those for you.
+
+1. **Push to GitHub.** Create an empty repo on github.com, then from this folder:
+   ```bash
+   git remote add origin <your-repo-url>
+   git push -u origin main
+   ```
+2. **Create a production database** on Neon/Supabase and copy its connection string.
+3. **Apply migrations to it** (from your machine, pointed at the production `DATABASE_URL`):
+   ```bash
+   DATABASE_URL="<production-url>" npm run db:migrate:deploy
+   ```
+   Only run `npm run db:seed` against production if you actually want the demo accounts/data there — it's meant for local development.
+4. **Create a Cloudinary account** (free tier is fine) and grab the cloud name, API key, and API secret from its dashboard.
+5. **Import the repo into Vercel** (vercel.com → New Project → your GitHub repo). Vercel auto-detects Next.js; no custom build command is needed.
+6. **Set environment variables** in the Vercel project settings — everything in `.env.example`, with production values:
+   - `DATABASE_URL` — the production connection string from step 2
+   - `JWT_SECRET` — a new, long, random value (**do not reuse the local dev secret**)
+   - `NEXT_PUBLIC_SITE_URL` — your production domain, e.g. `https://your-app.vercel.app`
+   - `PAYMENT_PROVIDER=manual` (until Stripe is wired in — see [Payments](#payments))
+   - `STORAGE_PROVIDER=cloudinary` plus the three `CLOUDINARY_*` values from step 4
+   - `PLATFORM_COMMISSION_RATE`, `MEETING_PROVIDER` — same as local, or your production defaults
+   - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` — Playwright is a dev-only tool used for local screenshot QA; without this its `npm install` step tries to download a ~150MB Chromium binary during every Vercel build for no reason.
+7. **Deploy.** Vercel builds and deploys automatically; every future push to `main` redeploys.
+8. **Verify**: sign up a real account, confirm login/logout, publish an artwork (as an admin-approved artist — approve yourself from `/admin/artists` first), run through checkout, and upload an image to confirm Cloudinary is wired correctly.
 
 ## Known Follow-ups
 
 - Images render via plain `<img>` tags rather than `next/image`; swapping in `next/image` would add automatic resizing/optimization but requires reworking several CSS-driven aspect-ratio containers.
-- The `stripe` payment provider and any real object-storage provider are stubbed but not implemented — see the sections above for the exact seam to fill in.
-- There is no dedicated `Dispute` model; the admin dashboard counts orders in the `DISPUTED` `OrderStatus` as a proxy.
+- The `stripe` payment provider is stubbed but not implemented — see [Payments](#payments) for the exact seam to fill in.
+- There is no dedicated `Dispute` model; disputes reuse the `DISPUTED`/`REFUNDED` `OrderStatus` values (see `/admin/disputes` and `POST /api/orders/:id/dispute`), which is enough for a single order-level dispute but has no room for a reason, evidence, or a history of multiple back-and-forth resolutions.
+- No email/in-app notifications yet for order, quote, meeting, or payout events — needs an email provider (e.g. Resend) decision before it can be built.
+- No wishlist/saved-items, no buyer-side review/rating UI (the `Review` model exists but nothing reads or writes it), and no search box on `/gallery` (the API supports a `q` param already).
