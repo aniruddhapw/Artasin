@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>You're Offline | ARTISAN</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #f9f9f7;
+    color: #1a1c1c;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+  }
+  .wrap { max-width: 360px; }
+  h1 { font-size: 24px; font-weight: 400; margin: 0 0 12px; }
+  p { font-family: Arial, sans-serif; font-size: 14px; color: #555; margin: 0 0 24px; }
+  button {
+    border: 1px solid #000;
+    background: #000;
+    color: #f9f9f7;
+    padding: 12px 24px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>You're Offline</h1>
+    <p>ARTISAN needs a connection to load the gallery. Reconnect and try again.</p>
+    <button onclick="location.reload()">Retry</button>
+  </div>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import "./globals.css";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 const siteDescription =
@@ -29,7 +30,17 @@ export const metadata = {
     card: "summary_large_image",
     title: "ARTISAN | Original Art & Custom Commissions",
     description: siteDescription
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black",
+    title: "ARTISAN"
   }
+};
+
+export const viewport = {
+  themeColor: "#000000",
+  colorScheme: "light"
 };
 
 const structuredData = {
@@ -53,6 +64,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
           type="application/ld+json"
         />
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>
