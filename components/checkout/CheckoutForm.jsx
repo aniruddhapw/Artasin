@@ -3,10 +3,57 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const RAZORPAY_SCRIPT = "https://checkout.razorpay.com/v1/checkout.js";
+
+function loadRazorpayScript() {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = RAZORPAY_SCRIPT;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Could not load the payment window. Check your connection."));
+    document.body.appendChild(script);
+  });
+}
+
 export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /**
+   * Opens Razorpay's hosted modal and resolves with the signed payment result.
+   * Card details are entered inside Razorpay's iframe and never touch this app.
+   */
+  function payWithRazorpay(payment, order, shippingAddress) {
+    return new Promise((resolve, reject) => {
+      const razorpay = new window.Razorpay({
+        key: payment.clientKey,
+        amount: payment.amountCents,
+        currency: payment.currency,
+        order_id: payment.intentId,
+        name: "ARTISAN",
+        description: "Original artwork purchase",
+        prefill: {
+          name: shippingAddress.fullName,
+          email: shippingAddress.email
+        },
+        notes: { orderId: order.id },
+        theme: { color: "#000000" },
+        modal: {
+          ondismiss: () => reject(new Error("Payment was cancelled."))
+        },
+        handler: (response) => resolve(response)
+      });
+      razorpay.on("payment.failed", (response) => {
+        reject(new Error(response?.error?.description || "Your payment could not be completed."));
+      });
+      razorpay.open();
+    });
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -36,15 +83,25 @@ export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail }) {
         throw new Error(createPayload.error || "Unable to create order");
       }
 
-      const payResponse = await fetch(`/api/orders/${createPayload.order.id}/pay`, {
-        method: "POST"
+      const { order, payment } = createPayload;
+      let paymentResult = {};
+
+      if (payment?.provider === "razorpay") {
+        await loadRazorpayScript();
+        paymentResult = await payWithRazorpay(payment, order, shippingAddress);
+      }
+
+      const payResponse = await fetch(`/api/orders/${order.id}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentResult)
       });
       const payPayload = await payResponse.json();
       if (!payResponse.ok) {
         throw new Error(payPayload.error || "Payment could not be completed");
       }
 
-      router.push(`/orders/${createPayload.order.id}`);
+      router.push(`/orders/${order.id}`);
       router.refresh();
     } catch (submitError) {
       setError(submitError.message);

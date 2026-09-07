@@ -45,7 +45,8 @@ See `.env.example` for the full list. Key ones:
 | `JWT_SECRET` | Long random string (24+ chars) used to sign session cookies. |
 | `NEXT_PUBLIC_SITE_URL` | Public base URL, used for SEO metadata (`metadataBase`, Open Graph). Set to your real domain in production. |
 | `PLATFORM_COMMISSION_RATE` | Default commission percentage applied when an artist has no override (`ArtistProfile.commissionRate`). Admins can override per-artist from `/admin/artists`. |
-| `PAYMENT_PROVIDER` | `manual` (default, instant mock settlement) or `stripe` (stubbed — see [Payments](#payments)). |
+| `PAYMENT_PROVIDER` | `manual` (default, instant mock settlement — local only) or `razorpay` (real payments — see [Payments](#payments)). |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | Required when `PAYMENT_PROVIDER=razorpay`. Key id/secret from Razorpay → Settings → API Keys; webhook secret from the webhook you create there. |
 | `STORAGE_PROVIDER` | `local` (default, disk-based — see [Storage](#storage)) or `cloudinary`. |
 | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Required when `STORAGE_PROVIDER=cloudinary`. From your Cloudinary dashboard. |
 | `MEETING_PROVIDER` | Label stored on scheduled meetings; swap for a real calendar/video integration later. |
@@ -65,10 +66,17 @@ See `.env.example` for the full list. Key ones:
 
 ### Payments
 
-`lib/payments.js` defines a small provider interface (`createIntent` / `confirmIntent`) so the UI and API routes never hardcode payment behavior:
+`lib/payments.js` defines a small provider interface (`createIntent` / `confirmIntent` / `clientKey`) so the UI and API routes never hardcode payment behavior:
 
-- `manual` (default): creates a mock payment intent and settles it immediately when the buyer confirms checkout. Good for demos and local development.
-- `stripe`: stubbed to throw until `STRIPE_SECRET_KEY` is set and the real Payment Intents calls are wired in. No UI or route changes are needed to switch — only `PAYMENT_PROVIDER=stripe` and the implementation inside `lib/payments.js`.
+- `manual` (default): creates a mock payment intent and settles it immediately when the buyer confirms checkout. Good for demos and local development — **never use it in production**, since it marks orders paid without taking any money.
+- `razorpay`: real payments. Requires `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`.
+- `stripe`: intentionally not implemented. Stripe India has been invite-only for new Indian businesses since May 2024 and doesn't cover UPI, which is why this app uses Razorpay.
+
+**How the Razorpay flow works.** `POST /api/orders` creates our `Order` plus a Razorpay order, and returns the Razorpay order id together with the *publishable* key id (the secret never leaves the server). The browser opens Razorpay's hosted modal — card and UPI details are entered inside Razorpay's iframe and never touch this app. On success the browser posts the signed result to `POST /api/orders/:id/pay`, which verifies the `<order_id>|<payment_id>` HMAC against the key secret and then re-checks the payment's status with Razorpay's API before marking the order paid. A failed verification marks the transaction `FAILED` and returns 402.
+
+Because a buyer can close the tab between paying and being redirected, `POST /api/webhooks/razorpay` is the safety net: it verifies the webhook signature, then marks the order paid (and sends the confirmation emails) if the browser never got the chance to. It's idempotent — an order that isn't `PENDING_PAYMENT` is left alone.
+
+Set the webhook up in the Razorpay dashboard pointing at `https://your-domain/api/webhooks/razorpay`, subscribed to `payment.captured` and `payment.failed`, using the same secret as `RAZORPAY_WEBHOOK_SECRET`.
 
 Every order stores `platformCommissionCents` and `artistPayoutCents`, computed from `getPlatformCommissionRate()` (per-artist override, falling back to `PLATFORM_COMMISSION_RATE`). Admins settle artist balances from `/admin/artists`, which creates a `Payout` record for the outstanding amount.
 
@@ -132,7 +140,7 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
    - `DATABASE_URL` — the production connection string from step 2
    - `JWT_SECRET` — a new, long, random value (**do not reuse the local dev secret**)
    - `NEXT_PUBLIC_SITE_URL` — your production domain, e.g. `https://your-app.vercel.app`
-   - `PAYMENT_PROVIDER=manual` (until Stripe is wired in — see [Payments](#payments))
+   - `PAYMENT_PROVIDER=razorpay` plus `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` — see [Payments](#payments)
    - `STORAGE_PROVIDER=cloudinary` plus the three `CLOUDINARY_*` values from step 4
    - `EMAIL_PROVIDER=resend` plus `RESEND_API_KEY` and `EMAIL_FROM` — see [Notifications](#notifications)
    - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (optional) — see [Auth](#auth)
@@ -144,7 +152,7 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
 ## Known Follow-ups
 
 - Images render via plain `<img>` tags rather than `next/image`; swapping in `next/image` would add automatic resizing/optimization but requires reworking several CSS-driven aspect-ratio containers.
-- The `stripe` payment provider is stubbed but not implemented — see [Payments](#payments) for the exact seam to fill in.
+- Artist payouts are still recorded manually by an admin (`Payout` model) rather than settled automatically. Razorpay Route can split a payment between the platform and the artist at capture time; that's the upgrade path once volume justifies applying for it.
 - There is no dedicated `Dispute` model; disputes reuse the `DISPUTED`/`REFUNDED` `OrderStatus` values (see `/admin/disputes` and `POST /api/orders/:id/dispute`), which is enough for a single order-level dispute but has no room for a reason, evidence, or a history of multiple back-and-forth resolutions.
 - Email notifications cover order/commission/verification events (see [Notifications](#notifications)) but not meeting scheduling or payouts.
 - No wishlist/saved-items, and no search box on `/gallery` (the API supports a `q` param already).

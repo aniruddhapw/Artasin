@@ -69,7 +69,13 @@ export async function POST(request) {
     const paymentProvider = getPaymentProvider();
     const intent = await paymentProvider.createIntent({
       amountCents: totalCents,
-      currency: orderSource.currency
+      currency: orderSource.currency,
+      receipt: `artisan_${Date.now()}`,
+      notes: {
+        buyerEmail: user.email,
+        artist: orderSource.artist.displayName,
+        item: input.artworkId ? "artwork" : "commission"
+      }
     });
 
     const order = await prisma.order.create({
@@ -106,7 +112,18 @@ export async function POST(request) {
       });
     }
 
-    return created({ order });
+    // Everything the browser needs to open the provider's checkout. The key
+    // here is the publishable key id, never the secret.
+    return created({
+      order,
+      payment: {
+        provider: paymentProvider.name,
+        intentId: intent.providerIntentId,
+        amountCents: totalCents,
+        currency: orderSource.currency,
+        clientKey: paymentProvider.clientKey()
+      }
+    });
   } catch (error) {
     return handleApiError(error);
   }

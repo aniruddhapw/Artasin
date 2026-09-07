@@ -28,17 +28,38 @@ export async function POST(request, context) {
       return fail("Order is not awaiting payment", 409);
     }
 
+    const body = await request.json().catch(() => ({}));
     const transaction = order.transactions[0];
     const paymentProvider = getPaymentProvider();
-    const result = await paymentProvider.confirmIntent({
-      providerIntentId: transaction?.providerIntentId
-    });
+
+    let result;
+    try {
+      result = await paymentProvider.confirmIntent({
+        providerIntentId: transaction?.providerIntentId,
+        paymentId: body.razorpay_payment_id,
+        signature: body.razorpay_signature
+      });
+    } catch (confirmError) {
+      // A failed verification must never leave the order looking payable.
+      if (transaction) {
+        await prisma.transaction.update({
+          where: { id: transaction.id },
+          data: { status: "FAILED" }
+        });
+      }
+      return fail(confirmError.message, 402);
+    }
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
       if (transaction) {
         await tx.transaction.update({
           where: { id: transaction.id },
-          data: { status: result.status }
+          data: {
+            status: result.status,
+            // providerIntentId stays the provider's *order* id — the webhook
+            // looks the transaction up by it. The payment id lives in the payload.
+            rawPayload: result.rawPayload ?? undefined
+          }
         });
       }
 
