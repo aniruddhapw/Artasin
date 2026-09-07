@@ -1857,6 +1857,45 @@ textarea::placeholder {
   gap: 28px;
 }
 
+.button-google {
+  width: 100%;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.auth-google-note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.auth-divider {
+  position: relative;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.auth-divider::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  content: "";
+  background: var(--line);
+}
+
+.auth-divider span {
+  position: relative;
+  padding: 0 12px;
+  background: var(--surface-lowest);
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .auth-two-col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

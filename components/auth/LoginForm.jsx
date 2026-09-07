@@ -3,12 +3,20 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { GoogleButton } from "@/components/auth/GoogleButton";
+
+const oauthErrors = {
+  google_auth_failed: "Google Sign-In failed. Please try again.",
+  google_email_unverified: "That Google account's email isn't verified.",
+  google_not_configured: "Google Sign-In isn't available right now."
+};
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState("");
+  const [error, setError] = useState(oauthErrors[searchParams.get("error")] || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const redirect = searchParams.get("redirect");
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -32,7 +40,6 @@ export function LoginForm() {
         throw new Error(payload.error || "Unable to sign in");
       }
 
-      const redirect = searchParams.get("redirect");
       const fallback = payload.user.role === "ARTIST" ? "/studio" : "/";
       router.push(redirect && redirect.startsWith("/") ? redirect : fallback);
       router.refresh();
@@ -49,6 +56,10 @@ export function LoginForm() {
         <p>
           New to ARTISAN? <Link href="/signup">Create an account</Link>
         </p>
+      </div>
+      <GoogleButton redirect={redirect} />
+      <div className="auth-divider">
+        <span>or</span>
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>

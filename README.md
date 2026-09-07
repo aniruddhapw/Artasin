@@ -52,6 +52,7 @@ See `.env.example` for the full list. Key ones:
 | `EMAIL_PROVIDER` | `console` (default in local dev — logs the email instead of sending it) or `resend`. Auto-selects `resend` if `RESEND_API_KEY` is set — see [Notifications](#notifications). |
 | `RESEND_API_KEY` | Required when `EMAIL_PROVIDER=resend`. From your Resend dashboard. |
 | `EMAIL_FROM` | Sender shown on outgoing emails, e.g. `ARTISAN <notifications@yourdomain.com>`. Requires a verified sending domain in Resend. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Enables "Continue with Google" on `/login` and `/signup` when both are set — see [Auth](#auth). Omit either one and the button redirects to `/login?error=google_not_configured` instead of erroring. |
 
 ## Architecture Notes
 
@@ -60,6 +61,7 @@ See `.env.example` for the full list. Key ones:
 - `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/session`.
 - Sessions are a JWT in an HttpOnly, SameSite=Lax cookie (`lib/auth.js`).
 - `proxy.js` (Next's middleware convention as of Next 16) gates `/studio`, `/admin`, `/orders`, `/commissions`, and `/checkout` at the edge by verifying the JWT and role; individual API routes and server components re-check ownership against the database before returning data.
+- **Google Sign-In**: `GET /api/auth/google` redirects to Google's consent screen (with a random `state` value stashed in a short-lived HttpOnly cookie for CSRF protection); `GET /api/auth/google/callback` validates that state, exchanges the code, and either links the Google account to an existing user with the same (verified) email or creates a new `BUYER` account — it never creates an `ARTIST` account, since that needs a display name/slug Google doesn't provide. The resulting session is the same JWT cookie password login uses, so the rest of the app doesn't know or care which method a user signed in with. `User.passwordHash` is nullable to support Google-only accounts; `POST /api/auth/login` returns a distinct error message if you try to password-login into one. Requires a Google Cloud OAuth client with `${NEXT_PUBLIC_SITE_URL}/api/auth/google/callback` registered as an authorized redirect URI (both local and production URLs need their own entry).
 
 ### Payments
 
@@ -133,6 +135,7 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
    - `PAYMENT_PROVIDER=manual` (until Stripe is wired in — see [Payments](#payments))
    - `STORAGE_PROVIDER=cloudinary` plus the three `CLOUDINARY_*` values from step 4
    - `EMAIL_PROVIDER=resend` plus `RESEND_API_KEY` and `EMAIL_FROM` — see [Notifications](#notifications)
+   - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (optional) — see [Auth](#auth)
    - `PLATFORM_COMMISSION_RATE`, `MEETING_PROVIDER` — same as local, or your production defaults
    - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` — Playwright is a dev-only tool used for local screenshot QA; without this its `npm install` step tries to download a ~150MB Chromium binary during every Vercel build for no reason.
 7. **Deploy.** Vercel builds and deploys automatically; every future push to `main` redeploys.

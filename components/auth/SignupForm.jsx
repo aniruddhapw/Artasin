@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 
 export function SignupForm() {
   const router = useRouter();
@@ -62,6 +63,11 @@ export function SignupForm() {
         <p>
           Already registered? <Link href="/login">Sign in</Link>
         </p>
+      </div>
+      <GoogleButton />
+      <p className="auth-google-note">Google Sign-In creates a Collector account. Artists should sign up below.</p>
+      <div className="auth-divider">
+        <span>or</span>
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <div className="role-grid" aria-label="Account type">

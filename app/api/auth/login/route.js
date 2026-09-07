@@ -16,7 +16,13 @@ export async function POST(request) {
       include: { artistProfile: true }
     });
 
-    if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
+    if (!user) {
+      return fail("Invalid email or password", 401);
+    }
+    if (!user.passwordHash) {
+      return fail("This account uses Google Sign-In. Continue with Google to log in.", 401);
+    }
+    if (!(await verifyPassword(input.password, user.passwordHash))) {
       return fail("Invalid email or password", 401);
     }
 
