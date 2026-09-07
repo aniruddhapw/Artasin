@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { NavSearch } from "@/components/NavSearch";
 import { NavUserMenu } from "@/components/NavUserMenu";
 import { getAuthUser, publicUser } from "@/lib/auth";
 import { navItems } from "@/data/artisan";
@@ -31,9 +32,7 @@ export async function Nav({ active = "collections" }) {
               Sign In
             </Link>
           ) : null}
-          <button aria-label="Search" className="nav-search" type="button">
-            <Icon name="search" />
-          </button>
+          <NavSearch />
           <Link aria-label="Shopping bag" href={user ? "/orders" : "/login"}>
             <Icon name="bag" />
           </Link>

@@ -57,6 +57,7 @@ export function NavUserMenu({ user }) {
               </>
             ) : null}
             {user.role === "ADMIN" ? <Link href="/admin">Admin Dashboard</Link> : null}
+            <Link href="/account">Account Settings</Link>
           </div>
           <button disabled={isSigningOut} onClick={handleSignOut} type="button">
             {isSigningOut ? "Signing out..." : "Sign Out"}

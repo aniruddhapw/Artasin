@@ -89,7 +89,7 @@ export function LoginForm() {
             <input name="remember" type="checkbox" />
             <span>Keep me signed in</span>
           </label>
-          <Link href="#">Forgot password?</Link>
+          <Link href="/forgot-password">Forgot password?</Link>
         </div>
         {error ? <p className="auth-error" role="alert">{error}</p> : null}
         <button className="button button-primary auth-submit" disabled={isSubmitting} type="submit">

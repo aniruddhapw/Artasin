@@ -1,6 +1,6 @@
 export const navItems = [
   { href: "/", label: "Collections", key: "collections" },
-  { href: "/#artists", label: "Artists", key: "artists" },
+  { href: "/artists", label: "Artists", key: "artists" },
   { href: "/requests", label: "Requests", key: "requests" },
   { href: "/gallery", label: "Exhibitions", key: "exhibitions" }
 ];

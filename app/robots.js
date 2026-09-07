@@ -11,6 +11,8 @@ export default function robots() {
         "/studio/",
         "/admin",
         "/admin/",
+        "/account",
+        "/account/",
         "/orders",
         "/orders/",
         "/commissions",
