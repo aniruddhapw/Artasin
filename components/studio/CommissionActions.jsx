@@ -44,7 +44,7 @@ export function CommissionActions({ commissionRequestId, status }) {
         {showQuoteForm ? (
           <form className="meeting-form" onSubmit={handleQuoteSubmit}>
             <label>
-              <span>Quote Price (USD)</span>
+              <span>Quote Price (₹)</span>
               <input min="1" name="price" required step="0.01" type="number" />
             </label>
             {error ? <p className="auth-error auth-error-inline">{error}</p> : null}

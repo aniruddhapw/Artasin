@@ -116,7 +116,7 @@ model Artwork {
   dimensions     String
   year           Int?
   priceCents     Int
-  currency       String        @default("USD")
+  currency       String        @default("INR")
   status         ArtworkStatus @default(DRAFT)
   shipsFrom      String?
   authenticity   String?
@@ -150,7 +150,7 @@ model Order {
   buyerServiceFeeCents  Int                @default(0)
   platformCommissionCents Int
   artistPayoutCents     Int
-  currency              String             @default("USD")
+  currency              String             @default("INR")
   status                OrderStatus        @default(PENDING_PAYMENT)
   shippingAddress       Json?
   createdAt             DateTime           @default(now())
@@ -178,7 +178,7 @@ model CommissionRequest {
   referenceUrls   String[]
   status          CommissionStatus @default(SUBMITTED)
   quotedPriceCents Int?
-  currency        String           @default("USD")
+  currency        String           @default("INR")
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   buyer           User             @relation("BuyerCommissionRequests", fields: [buyerId], references: [id])
@@ -222,7 +222,7 @@ model Transaction {
   provider         String
   providerIntentId String?
   amountCents      Int
-  currency         String            @default("USD")
+  currency         String            @default("INR")
   status           TransactionStatus @default(REQUIRES_PAYMENT)
   rawPayload       Json?
   createdAt        DateTime          @default(now())
@@ -234,7 +234,7 @@ model Payout {
   id                 String        @id @default(cuid())
   artistId           String
   amountCents        Int
-  currency           String        @default("USD")
+  currency           String        @default("INR")
   provider           String?
   providerPayoutId   String?
   status             String        @default("PENDING")

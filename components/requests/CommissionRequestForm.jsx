@@ -6,10 +6,10 @@ import { Icon } from "@/components/Icon";
 
 const artworkTypes = ["Painting", "Sculpture", "Digital Art", "Photography"];
 const budgetRanges = [
-  { label: "$5,000 - $10,000", min: 5000, max: 10000 },
-  { label: "$10,000 - $25,000", min: 10000, max: 25000 },
-  { label: "$25,000 - $50,000", min: 25000, max: 50000 },
-  { label: "$50,000+", min: 50000, max: undefined }
+  { label: "₹5,000 - ₹10,000", min: 5000, max: 10000 },
+  { label: "₹10,000 - ₹25,000", min: 10000, max: 25000 },
+  { label: "₹25,000 - ₹50,000", min: 25000, max: 50000 },
+  { label: "₹50,000+", min: 50000, max: undefined }
 ];
 
 export function CommissionRequestForm({ artists, preferredArtistId }) {
@@ -126,7 +126,7 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
           <input name="medium" placeholder="Oil on Canvas, Bronze, Digital..." type="text" />
         </label>
         <label>
-          <span>Estimated Budget (USD)</span>
+          <span>Estimated Budget (₹)</span>
           <select defaultValue="" name="budget">
             <option value="">Select a range...</option>
             {budgetRanges.map((range) => (

@@ -12,7 +12,7 @@ const createArtworkSchema = z.object({
   dimensions: z.string().min(1),
   year: z.number().int().optional(),
   price: z.number().positive(),
-  currency: z.string().length(3).default("USD"),
+  currency: z.string().length(3).default("INR"),
   shipsFrom: z.string().optional(),
   authenticity: z.string().optional(),
   edition: z.string().optional(),

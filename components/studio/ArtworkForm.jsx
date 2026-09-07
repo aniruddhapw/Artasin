@@ -63,7 +63,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       dimensions: formData.get("dimensions"),
       year: year ? Number(year) : undefined,
       price: Number(formData.get("price")),
-      currency: "USD",
+      currency: "INR",
       shipsFrom: formData.get("shipsFrom") || undefined,
       authenticity: formData.get("authenticity") || undefined,
       edition: formData.get("edition") || undefined,
@@ -156,7 +156,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
         </div>
         <div className="auth-two-col">
           <label>
-            <span>Price (USD)</span>
+            <span>Price (₹)</span>
             <input defaultValue={artwork ? artwork.priceCents / 100 : ""} min="1" name="price" required step="0.01" type="number" />
           </label>
           <label>
