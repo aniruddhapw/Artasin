@@ -22,8 +22,8 @@ export function Footer({ variant = "full" }) {
           </div>
           <div>
             {variant === "full" ? <span>Legal</span> : null}
-            <Link href="#">Privacy Policy</Link>
-            <Link href="#">Terms of Service</Link>
+            <Link href="/privacy">Privacy Policy</Link>
+            <Link href="/terms">Terms of Service</Link>
           </div>
         </div>
         <div className="footer-bottom">
