@@ -5,13 +5,16 @@ import { prisma } from "@/lib/db";
 
 const createArtworkSchema = z.object({
   title: z.string().min(1),
-  slug: z.string().min(3).regex(/^[a-z0-9-]+$/),
+  slug: z
+    .string()
+    .min(3, "must be at least 3 characters")
+    .regex(/^[a-z0-9-]+$/, "can only use lowercase letters, numbers, and hyphens"),
   description: z.string().min(1),
   category: z.string().min(1),
   medium: z.string().min(1),
   dimensions: z.string().min(1),
   year: z.number().int().optional(),
-  price: z.number().positive(),
+  price: z.number().positive("must be greater than zero"),
   currency: z.string().length(3).default("INR"),
   shipsFrom: z.string().optional(),
   authenticity: z.string().optional(),

@@ -2,15 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
+import { ensureSlug, slugify } from "@/lib/slug";
 
 const categories = ["Painting", "Sculpture", "Digital Art", "Photography"];
-
-function slugify(value) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 export function ArtworkForm({ artwork, verificationStatus }) {
   const canPublish = verificationStatus === "APPROVED";
@@ -36,7 +31,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       const response = await fetch("/api/uploads", { method: "POST", body: formData });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Upload failed");
+        throw new Error(formatApiError(payload, "Upload failed"));
       }
       setImageUrl(payload.url);
     } catch (uploadError) {
@@ -56,7 +51,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
     const year = formData.get("year");
     const body = {
       title,
-      slug: slug || slugify(title),
+      slug: slug || ensureSlug(title),
       description: formData.get("description"),
       category: formData.get("category"),
       medium: formData.get("medium"),
@@ -79,7 +74,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to save artwork");
+        throw new Error(formatApiError(payload, "Unable to save artwork"));
       }
 
       router.push("/studio/artworks");
@@ -110,14 +105,18 @@ export function ArtworkForm({ artwork, verificationStatus }) {
         </label>
         <label>
           <span>URL Slug</span>
+          <small className="field-hint">
+            The web address for this piece. Generated from the title — edit it if you like. Leave it blank and
+            we&rsquo;ll create one for you.
+          </small>
           <input
+            minLength={3}
             name="slug"
             onChange={(event) => {
               setSlugEdited(true);
               setSlug(event.target.value);
             }}
             pattern="[a-z0-9-]+"
-            required
             value={slug}
           />
         </label>

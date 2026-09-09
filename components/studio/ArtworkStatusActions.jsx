@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function ArtworkStatusActions({ artworkId, status, canPublish }) {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function ArtworkStatusActions({ artworkId, status, canPublish }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to update artwork");
+        throw new Error(formatApiError(payload, "Unable to update artwork"));
       }
       router.refresh();
     } catch (submitError) {

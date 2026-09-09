@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 const nextStatusByStatus = {
   PAID: { label: "Start Fulfillment", next: "IN_PROGRESS" },
@@ -30,7 +31,7 @@ export function OrderShipAction({ orderId, status }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to update order");
+        throw new Error(formatApiError(payload, "Unable to update order"));
       }
       router.refresh();
     } catch (updateError) {

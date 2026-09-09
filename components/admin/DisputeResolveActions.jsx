@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function DisputeResolveActions({ orderId }) {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function DisputeResolveActions({ orderId }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to resolve dispute");
+        throw new Error(formatApiError(payload, "Unable to resolve dispute"));
       }
       router.refresh();
     } catch (submitError) {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export function ResetPasswordForm() {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to reset your password");
+        throw new Error(formatApiError(payload, "Unable to reset your password"));
       }
       setDone(true);
       setTimeout(() => router.push("/login"), 2000);

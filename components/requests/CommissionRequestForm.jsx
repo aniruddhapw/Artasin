@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 import { Icon } from "@/components/Icon";
 
 const artworkTypes = ["Painting", "Sculpture", "Digital Art", "Photography"];
@@ -34,7 +35,7 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
         const response = await fetch("/api/uploads", { method: "POST", body: formData });
         const payload = await response.json();
         if (!response.ok) {
-          throw new Error(payload.error || "Upload failed");
+          throw new Error(formatApiError(payload, "Upload failed"));
         }
         uploaded.push(payload.url);
       }
@@ -78,7 +79,7 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
         return;
       }
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to submit request");
+        throw new Error(formatApiError(payload, "Unable to submit request"));
       }
 
       router.push(`/commissions/${payload.commissionRequest.id}`);

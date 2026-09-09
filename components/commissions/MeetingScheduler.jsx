@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function MeetingScheduler({ commissionRequestId, meetings }) {
   const router = useRouter();
@@ -32,7 +33,7 @@ export function MeetingScheduler({ commissionRequestId, meetings }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to schedule meeting");
+        throw new Error(formatApiError(payload, "Unable to schedule meeting"));
       }
       setIsOpen(false);
       router.refresh();

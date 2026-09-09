@@ -1991,6 +1991,14 @@ textarea::placeholder {
   flex-shrink: 0;
 }
 
+.field-hint {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .link-button {
   border: 0;
   background: none;

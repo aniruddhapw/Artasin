@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function CommissionActions({ commissionRequestId, status }) {
   const router = useRouter();
@@ -20,7 +21,7 @@ export function CommissionActions({ commissionRequestId, status }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to update request");
+        throw new Error(formatApiError(payload, "Unable to update request"));
       }
       setShowQuoteForm(false);
       router.refresh();

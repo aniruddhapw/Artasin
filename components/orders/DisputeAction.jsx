@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 const disputableStatuses = ["PAID", "IN_PROGRESS", "SHIPPED", "DELIVERED", "COMPLETED"];
 
@@ -22,7 +23,7 @@ export function DisputeAction({ orderId, status }) {
       const response = await fetch(`/api/orders/${orderId}/dispute`, { method: "POST" });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to report this order");
+        throw new Error(formatApiError(payload, "Unable to report this order"));
       }
       router.refresh();
     } catch (submitError) {

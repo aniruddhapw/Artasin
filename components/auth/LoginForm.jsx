@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 
 const oauthErrors = {
@@ -37,7 +38,7 @@ export function LoginForm() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to sign in");
+        throw new Error(formatApiError(payload, "Unable to sign in"));
       }
 
       const fallback = payload.user.role === "ARTIST" ? "/studio" : "/";

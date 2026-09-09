@@ -5,14 +5,17 @@ import { prisma } from "@/lib/db";
 
 const signupSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
-  password: z.string().min(8),
+  password: z.string().min(8, "must be at least 8 characters"),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   role: z.enum(["BUYER", "ARTIST"]).default("BUYER"),
   artist: z
     .object({
       displayName: z.string().min(1),
-      slug: z.string().min(3).regex(/^[a-z0-9-]+$/),
+      slug: z
+        .string()
+        .min(3, "must be at least 3 characters")
+        .regex(/^[a-z0-9-]+$/, "can only use lowercase letters, numbers, and hyphens"),
       discipline: z.string().optional(),
       location: z.string().optional()
     })

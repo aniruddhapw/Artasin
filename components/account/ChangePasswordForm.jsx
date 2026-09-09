@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function ChangePasswordForm({ hasPassword }) {
   const [error, setError] = useState("");
@@ -32,7 +33,7 @@ export function ChangePasswordForm({ hasPassword }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to update your password");
+        throw new Error(formatApiError(payload, "Unable to update your password"));
       }
       setSuccess(hasPassword ? "Password updated." : "Password set. You can now sign in with it.");
       form.reset();

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function MessageThread({ commissionRequestId, messages, currentUserId }) {
   const router = useRouter();
@@ -24,7 +25,7 @@ export function MessageThread({ commissionRequestId, messages, currentUserId }) 
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to send message");
+        throw new Error(formatApiError(payload, "Unable to send message"));
       }
       setBody("");
       router.refresh();

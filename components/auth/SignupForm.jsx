@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import { formatApiError } from "@/lib/formErrors";
+import { ensureSlug } from "@/lib/slug";
 
 export function SignupForm() {
   const router = useRouter();
@@ -34,10 +36,9 @@ export function SignupForm() {
             role === "ARTIST"
               ? {
                   displayName: `${firstName} ${lastName}`,
-                  slug: `${firstName}-${lastName}`
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/^-|-$/g, "")
+                  // Transliterates non-Latin names and always yields a valid
+                  // slug, so an artist is never blocked from registering.
+                  slug: ensureSlug(`${firstName} ${lastName}`, "artist")
                 }
               : undefined
         })
@@ -45,7 +46,7 @@ export function SignupForm() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to create account");
+        throw new Error(formatApiError(payload, "Unable to create account"));
       }
 
       router.push(role === "ARTIST" ? "/studio" : "/");

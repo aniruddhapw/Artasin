@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function ProfileForm({ artistProfile }) {
   const router = useRouter();
@@ -32,7 +33,7 @@ export function ProfileForm({ artistProfile }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to save profile");
+        throw new Error(formatApiError(payload, "Unable to save profile"));
       }
       setSuccess(true);
       router.refresh();

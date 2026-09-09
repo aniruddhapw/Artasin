@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 const reviewableStatuses = ["DELIVERED", "COMPLETED"];
 
@@ -58,7 +59,7 @@ export function ReviewAction({ orderId, status, review }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to submit your review");
+        throw new Error(formatApiError(payload, "Unable to submit your review"));
       }
       router.refresh();
     } catch (submitError) {

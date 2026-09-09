@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function AdminArtistRow({ artist }) {
   const router = useRouter();
@@ -20,7 +21,7 @@ export function AdminArtistRow({ artist }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to update rate");
+        throw new Error(formatApiError(payload, "Unable to update rate"));
       }
       router.refresh();
     } catch (submitError) {
@@ -41,7 +42,7 @@ export function AdminArtistRow({ artist }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to update verification");
+        throw new Error(formatApiError(payload, "Unable to update verification"));
       }
       router.refresh();
     } catch (submitError) {
@@ -58,7 +59,7 @@ export function AdminArtistRow({ artist }) {
       const response = await fetch(`/api/admin/artists/${artist.id}/payout`, { method: "POST" });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to process payout");
+        throw new Error(formatApiError(payload, "Unable to process payout"));
       }
       router.refresh();
     } catch (submitError) {

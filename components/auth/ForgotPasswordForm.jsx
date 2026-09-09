@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
 
 export function ForgotPasswordForm() {
   const [error, setError] = useState("");
@@ -23,7 +24,7 @@ export function ForgotPasswordForm() {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to send a reset link");
+        throw new Error(formatApiError(payload, "Unable to send a reset link"));
       }
       setSent(true);
     } catch (submitError) {
