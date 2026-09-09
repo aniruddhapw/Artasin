@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
+import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
@@ -70,7 +71,7 @@ export default async function GalleryPage({ searchParams }) {
                 <div>
                   <img
                     alt={`${artwork.title} artwork`}
-                    src={artwork.media[0]?.url || "/artisan/artwork-placeholder.svg"}
+                    src={thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                   />
                 </div>
                 <h3>{artwork.title}</h3>

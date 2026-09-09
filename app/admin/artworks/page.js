@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { AdminArtworkRow } from "@/components/admin/AdminArtworkRow";
 import { prisma } from "@/lib/db";
+import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
@@ -33,7 +34,7 @@ export default async function AdminArtworksPage() {
             {artworks.map((artwork) => (
               <div className="order-history-row" key={artwork.id}>
                 <div className="order-history-image">
-                  <img alt={artwork.title} src={artwork.media[0]?.url || "/artisan/artwork-placeholder.svg"} />
+                  <img alt={artwork.title} src={thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"} />
                 </div>
                 <div className="order-history-details">
                   <Link href={`/artwork/${artwork.slug}`}>

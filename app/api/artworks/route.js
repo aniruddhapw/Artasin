@@ -28,6 +28,7 @@ const createArtworkSchema = z.object({
         sortOrder: z.number().int().default(0)
       })
     )
+    .max(5, { message: "You can attach up to 5 images" })
     .default([])
 });
 

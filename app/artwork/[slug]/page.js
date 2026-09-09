@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArtworkGallery } from "@/components/artwork/ArtworkGallery";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { StarRating } from "@/components/StarRating";
 import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
+import { galleryImages, thumbUrl } from "@/lib/images";
 
 async function getArtwork(slug) {
   return prisma.artwork.findUnique({
@@ -75,7 +77,7 @@ export default async function ArtworkDetailPage({ params }) {
   ]);
 
   const price = serializeMoney(artwork.priceCents, artwork.currency);
-  const image = artwork.media[0]?.url || "/artisan/artwork-placeholder.svg";
+  const images = galleryImages(artwork.media, artwork.title);
   const isAvailable = artwork.status === "PUBLISHED";
 
   return (
@@ -83,9 +85,7 @@ export default async function ArtworkDetailPage({ params }) {
       <Nav active="exhibitions" />
       <main className="page artwork-page">
         <section className="artwork-layout">
-          <div className="detail-image-frame group-image">
-            <img alt={`${artwork.title} artwork`} src={image} />
-          </div>
+          <ArtworkGallery images={images} title={artwork.title} />
           <aside className="artwork-panel">
             <h1>{artwork.title}</h1>
             <p className="byline">
@@ -163,7 +163,7 @@ export default async function ArtworkDetailPage({ params }) {
                   <div>
                     <img
                       alt={`${work.title} artwork`}
-                      src={work.media[0]?.url || "/artisan/artwork-placeholder.svg"}
+                      src={thumbUrl(work.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                     />
                   </div>
                   <h3>{work.title}</h3>

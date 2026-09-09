@@ -6,6 +6,7 @@ import { formatApiError } from "@/lib/formErrors";
 import { ensureSlug, slugify } from "@/lib/slug";
 
 const categories = ["Painting", "Sculpture", "Digital Art", "Photography"];
+const MAX_IMAGES = 5;
 
 export function ArtworkForm({ artwork, verificationStatus }) {
   const canPublish = verificationStatus === "APPROVED";
@@ -13,32 +14,61 @@ export function ArtworkForm({ artwork, verificationStatus }) {
   const isEditing = Boolean(artwork);
   const [slug, setSlug] = useState(artwork?.slug || "");
   const [slugEdited, setSlugEdited] = useState(isEditing);
-  const [imageUrl, setImageUrl] = useState(artwork?.media?.[0]?.url || "");
+  const [images, setImages] = useState(() => (artwork?.media || []).map((item) => item.url));
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const remainingSlots = MAX_IMAGES - images.length;
+
   async function handleImageChange(event) {
-    const file = event.target.files?.[0];
-    if (!file) {
+    const files = Array.from(event.target.files || []);
+    // Clear the input so re-picking the same file still fires a change event.
+    event.target.value = "";
+    if (!files.length) {
       return;
     }
+    if (files.length > remainingSlots) {
+      setError(`You can add ${remainingSlots} more image${remainingSlots === 1 ? "" : "s"} (${MAX_IMAGES} maximum).`);
+      return;
+    }
+
     setIsUploading(true);
     setError("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/uploads", { method: "POST", body: formData });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(formatApiError(payload, "Upload failed"));
+      const uploaded = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await fetch("/api/uploads", { method: "POST", body: formData });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(formatApiError(payload, "Upload failed"));
+        }
+        uploaded.push(payload.url);
       }
-      setImageUrl(payload.url);
+      setImages((current) => [...current, ...uploaded].slice(0, MAX_IMAGES));
     } catch (uploadError) {
       setError(uploadError.message);
     } finally {
       setIsUploading(false);
     }
+  }
+
+  function removeImage(index) {
+    setImages((current) => current.filter((_, position) => position !== index));
+  }
+
+  function moveImage(index, delta) {
+    setImages((current) => {
+      const target = index + delta;
+      if (target < 0 || target >= current.length) {
+        return current;
+      }
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
   }
 
   async function handleSubmit(event) {
@@ -63,7 +93,11 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       authenticity: formData.get("authenticity") || undefined,
       edition: formData.get("edition") || undefined,
       status: formData.get("status"),
-      media: imageUrl ? [{ url: imageUrl, alt: title, sortOrder: 0 }] : []
+      media: images.map((url, position) => ({
+        url,
+        alt: position === 0 ? title : `${title} — view ${position + 1}`,
+        sortOrder: position
+      }))
     };
 
     try {
@@ -185,17 +219,61 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       </fieldset>
 
       <fieldset>
-        <legend>Artwork Image</legend>
-        <label className="upload-box">
-          <span>{isUploading ? "Uploading..." : "Upload Primary Image"}</span>
-          <small>JPG, PNG, WEBP, or GIF. Max 8MB. Leave blank to use the gallery placeholder.</small>
-          <input accept="image/*" disabled={isUploading} onChange={handleImageChange} type="file" />
+        <legend>Artwork Images</legend>
+        <label className="upload-box upload-box-stacked">
+          <span>
+            {isUploading
+              ? "Uploading..."
+              : images.length
+                ? "Add Another Image"
+                : "Upload Images"}
+          </span>
+          <small>
+            JPG, PNG, WEBP, or GIF. Max 8MB each, up to {MAX_IMAGES} images. The first image is the one buyers see
+            in the gallery — add detail shots, side angles, or the piece hung on a wall so collectors can zoom in
+            and inspect it.
+          </small>
+          <input
+            accept="image/*"
+            disabled={isUploading || remainingSlots <= 0}
+            multiple
+            onChange={handleImageChange}
+            type="file"
+          />
         </label>
-        {imageUrl ? (
-          <div className="artwork-image-preview">
-            <img alt="Artwork preview" src={imageUrl} />
+        {images.length ? (
+          <div className="artwork-image-grid">
+            {images.map((url, position) => (
+              <div className="artwork-image-card" key={url}>
+                <img alt={`Artwork preview ${position + 1}`} src={url} />
+                <span className="primary-flag">{position === 0 ? "Primary" : `Image ${position + 1}`}</span>
+                <div className="artwork-image-actions">
+                  <button
+                    aria-label="Move image earlier"
+                    disabled={position === 0}
+                    onClick={() => moveImage(position, -1)}
+                    type="button"
+                  >
+                    &#8249;
+                  </button>
+                  <button
+                    aria-label="Move image later"
+                    disabled={position === images.length - 1}
+                    onClick={() => moveImage(position, 1)}
+                    type="button"
+                  >
+                    &#8250;
+                  </button>
+                  <button aria-label="Remove image" onClick={() => removeImage(position)} type="button">
+                    &times;
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        ) : null}
+        ) : (
+          <p className="upload-confirmation">No images yet — the gallery placeholder will be used.</p>
+        )}
       </fieldset>
 
       {error ? <p className="auth-error" role="alert">{error}</p> : null}

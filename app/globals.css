@@ -561,7 +561,7 @@ legend {
 }
 
 .detail-image-frame img {
-  max-height: 820px;
+  max-height: min(820px, 68vh);
   object-fit: contain;
 }
 
@@ -2411,5 +2411,367 @@ textarea::placeholder {
   .tag {
     grid-column: 2;
     width: fit-content;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Artwork gallery + zoom viewer
+   --------------------------------------------------------------------------- */
+
+.artwork-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* The main frame is a button now, so the browser defaults have to be undone. */
+.artwork-gallery-main {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: zoom-in;
+  appearance: none;
+}
+
+.artwork-gallery-main img {
+  transition: transform 700ms ease;
+}
+
+.artwork-gallery-main:hover img {
+  transform: scale(1.02);
+}
+
+.artwork-gallery-main:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.artwork-zoom-hint {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-lowest);
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.artwork-gallery-main:hover .artwork-zoom-hint,
+.artwork-gallery-main:focus-visible .artwork-zoom-hint {
+  opacity: 1;
+}
+
+.artwork-thumbs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.artwork-thumb {
+  flex: 0 0 auto;
+  width: 84px;
+  height: 84px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--surface-low);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 180ms ease, opacity 180ms ease;
+  opacity: 0.65;
+}
+
+.artwork-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.artwork-thumb:hover {
+  opacity: 1;
+}
+
+.artwork-thumb.is-active {
+  border-color: var(--primary);
+  opacity: 1;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: #0c0c0c;
+}
+
+.lightbox-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  color: #ffffff;
+}
+
+.lightbox-count {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.lightbox-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lightbox-scale {
+  min-width: 52px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.lightbox-button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.lightbox-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.lightbox-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.lightbox-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Hand every gesture to the pointer handlers instead of the browser. */
+  touch-action: none;
+  cursor: zoom-in;
+}
+
+.lightbox-stage.is-zoomed {
+  cursor: grab;
+}
+
+.lightbox-stage.is-zoomed:active {
+  cursor: grabbing;
+}
+
+.lightbox-image {
+  max-width: 92vw;
+  max-height: 82vh;
+  object-fit: contain;
+  transform-origin: center center;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform;
+}
+
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 48px;
+  height: 48px;
+  transform: translateY(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(12, 12, 12, 0.6);
+  color: #ffffff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.lightbox-nav:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.lightbox-nav.prev {
+  left: 20px;
+}
+
+.lightbox-nav.next {
+  right: 20px;
+}
+
+.lightbox-help {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Studio multi-image uploader */
+
+.upload-box-stacked {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-box-stacked span {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.upload-box-stacked small {
+  max-width: 46ch;
+}
+
+.artwork-image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.artwork-image-card {
+  position: relative;
+  width: 140px;
+  border: 1px solid var(--line);
+  background: var(--surface-lowest);
+}
+
+.artwork-image-card > img {
+  display: block;
+  width: 100%;
+  height: 110px;
+  object-fit: contain;
+  background: var(--surface-low);
+  padding: 8px;
+}
+
+.artwork-image-card .primary-flag {
+  display: block;
+  padding: 6px 8px 0;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.artwork-image-actions {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px 8px;
+}
+
+.artwork-image-actions button {
+  flex: 1;
+  padding: 4px 0;
+  border: 1px solid var(--line);
+  background: var(--surface-lowest);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.artwork-image-actions button:hover:not(:disabled) {
+  background: var(--surface-low);
+  color: var(--text);
+}
+
+.artwork-image-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  .artwork-zoom-hint {
+    display: none;
+  }
+
+  .lightbox-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+
+  .lightbox-nav.prev {
+    left: 8px;
+  }
+
+  .lightbox-nav.next {
+    right: 8px;
+  }
+
+  .lightbox-image {
+    max-width: 100vw;
+    max-height: 74vh;
+  }
+
+  .lightbox-bar {
+    padding: 12px;
+  }
+
+  .lightbox-button {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+  }
+
+  .artwork-thumb {
+    width: 64px;
+    height: 64px;
   }
 }

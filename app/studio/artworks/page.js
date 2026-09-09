@@ -5,6 +5,7 @@ import { ArtworkStatusActions } from "@/components/studio/ArtworkStatusActions";
 import { VerificationBanner } from "@/components/studio/VerificationBanner";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
@@ -41,7 +42,7 @@ export default async function StudioArtworksPage() {
                 <Link className="order-history-image" href={`/studio/artworks/${artwork.id}/edit`}>
                   <img
                     alt={artwork.title}
-                    src={artwork.media[0]?.url || "/artisan/artwork-placeholder.svg"}
+                    src={thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                   />
                 </Link>
                 <div className="order-history-details">

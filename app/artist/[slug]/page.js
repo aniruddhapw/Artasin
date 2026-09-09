@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { StarRating } from "@/components/StarRating";
 import { prisma } from "@/lib/db";
+import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 
 async function getArtist(slug) {
@@ -74,7 +75,7 @@ export default async function ArtistProfilePage({ params }) {
                 <div>
                   <img
                     alt={`${artwork.title} artwork`}
-                    src={artwork.media[0]?.url || "/artisan/artwork-placeholder.svg"}
+                    src={thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                   />
                 </div>
                 <h3>{artwork.title}</h3>

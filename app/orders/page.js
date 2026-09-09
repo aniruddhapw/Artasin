@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
@@ -60,7 +61,7 @@ export default async function OrdersPage() {
                 <div className="order-history-image">
                   <img
                     alt={order.artwork?.title || "Commission order"}
-                    src={order.artwork?.media[0]?.url || "/artisan/artwork-placeholder.svg"}
+                    src={thumbUrl(order.artwork?.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                   />
                 </div>
                 <div className="order-history-details">

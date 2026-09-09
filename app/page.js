@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Icon } from "@/components/Icon";
 import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
+import { detailUrl } from "@/lib/images";
 import { collectionCards, mediums } from "@/data/artisan";
 
 async function getTrendingArtists() {
@@ -45,7 +46,7 @@ export default async function HomePage() {
           <Link className="hero-art group-image" href={heroArtwork ? `/artwork/${heroArtwork.slug}` : "/gallery"}>
             <img
               alt={heroArtwork ? `${heroArtwork.title} artwork` : "Silent Echoes installation artwork"}
-              src={heroArtwork?.media[0]?.url || "/artisan/hero-installation.jpg"}
+              src={detailUrl(heroArtwork?.media[0]?.url) || "/artisan/hero-installation.jpg"}
             />
             <div className="image-caption image-caption-overlay">
               <strong>{heroArtwork ? heroArtwork.title : "Silent Echoes, 2024"}</strong>

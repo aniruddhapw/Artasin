@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
@@ -46,7 +47,7 @@ export default async function CheckoutPage({ searchParams }) {
       title: artwork.title,
       artistName: artwork.artist.displayName,
       artistHref: `/artist/${artwork.artist.slug}`,
-      image: artwork.media[0]?.url || "/artisan/artwork-placeholder.svg",
+      image: thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg",
       price: serializeMoney(artwork.priceCents, artwork.currency)
     };
   } else {
