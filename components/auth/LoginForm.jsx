@@ -67,9 +67,8 @@ export function LoginForm() {
           <span>Email Address</span>
           <input
             autoComplete="email"
-            defaultValue="collector@example.com"
             name="email"
-            placeholder="collector@example.com"
+            placeholder="name@example.com"
             required
             type="email"
           />
@@ -78,7 +77,6 @@ export function LoginForm() {
           <span>Password</span>
           <input
             autoComplete="current-password"
-            defaultValue="artisan-demo-password"
             name="password"
             placeholder="Enter your password"
             required
