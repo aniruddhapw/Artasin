@@ -115,7 +115,27 @@ model ArtistProfile {
   customRequests     CommissionRequest[]
   orders             Order[]
   payouts            Payout[]
+  portfolioPieces    PortfolioPiece[]
   reviews            Review[]
+}
+
+/// Past work an artist has already completed elsewhere. Not for sale — it exists
+/// so collectors can judge an artist's range before commissioning them, which
+/// matters most for artists who have nothing listed on the marketplace yet.
+model PortfolioPiece {
+  id          String        @id @default(cuid())
+  artistId    String
+  title       String
+  description String?
+  medium      String?
+  year        Int?
+  imageUrl    String
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  artist      ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@index([artistId])
 }
 
 model Artwork {

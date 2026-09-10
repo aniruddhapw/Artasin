@@ -30,9 +30,14 @@ export default async function StudioArtworksPage() {
             <h1>Your Artworks</h1>
             <p>Manage listings, pricing, and publication status.</p>
           </div>
-          <Link className="button button-primary" href="/studio/artworks/new">
-            List New Artwork
-          </Link>
+          <div className="studio-header-actions">
+            <Link className="button button-secondary" href="/studio/portfolio">
+              Portfolio
+            </Link>
+            <Link className="button button-primary" href="/studio/artworks/new">
+              List New Artwork
+            </Link>
+          </div>
         </header>
 
         {artworks.length ? (

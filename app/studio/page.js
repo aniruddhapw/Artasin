@@ -93,6 +93,9 @@ export default async function StudioPage({ searchParams }) {
             <p>Overview of your recent sales, active commissions, and shipping logistics.</p>
           </div>
           <div className="studio-header-actions">
+            <Link className="button button-secondary" href="/studio/portfolio">
+              Portfolio
+            </Link>
             <Link className="button button-secondary" href="/studio/artworks">
               Manage Artworks
             </Link>

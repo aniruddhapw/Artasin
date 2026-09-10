@@ -15,7 +15,7 @@ export default async function ArtistsPage() {
   const artists = await prisma.artistProfile.findMany({
     where: { verificationStatus: "APPROVED" },
     include: {
-      _count: { select: { artworks: { where: { status: "PUBLISHED" } } } },
+      _count: { select: { artworks: { where: { status: "PUBLISHED" } }, portfolioPieces: true } },
       reviews: { select: { rating: true } }
     },
     orderBy: { displayName: "asc" }
@@ -50,7 +50,16 @@ export default async function ArtistsPage() {
                     {artist.location ? <p className="artist-location">{artist.location}</p> : null}
                     {reviewCount ? <StarRating count={reviewCount} value={average} /> : null}
                     <p className="artist-directory-count">
-                      {artist._count.artworks} {artist._count.artworks === 1 ? "work" : "works"} available
+                      {[
+                        artist._count.artworks
+                          ? `${artist._count.artworks} ${artist._count.artworks === 1 ? "work" : "works"} available`
+                          : null,
+                        artist._count.portfolioPieces
+                          ? `${artist._count.portfolioPieces} past ${artist._count.portfolioPieces === 1 ? "work" : "works"}`
+                          : null
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "Accepting commissions"}
                     </p>
                   </div>
                 </Link>
