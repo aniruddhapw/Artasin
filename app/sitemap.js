@@ -2,6 +2,10 @@ import { prisma } from "@/lib/db";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 
+// Built statically by default, which left the sitemap advertising artist and
+// artwork URLs that had since been renamed or unpublished until the next deploy.
+export const revalidate = 3600;
+
 export default async function sitemap() {
   const [artworks, artists] = await Promise.all([
     prisma.artwork.findMany({
