@@ -1,17 +1,20 @@
 import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { getTranslations } from "@/lib/i18n";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
 export const metadata = {
   title: "Set a New Password"
 };
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage() {
+  const { t } = await getTranslations();
+
   return (
     <AuthShell
-      body="Choose a new password for your account. This link works once and expires an hour after it was sent."
-      eyebrow="Account Recovery"
-      title="Set a new password."
+      body={t("auth.reset.body")}
+      eyebrow={t("auth.recovery.eyebrow")}
+      title={t("auth.reset.headline")}
     >
       <Suspense fallback={null}>
         <ResetPasswordForm />

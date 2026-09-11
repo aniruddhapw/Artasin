@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function ResetPasswordForm() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -73,23 +75,23 @@ export function ResetPasswordForm() {
   return (
     <>
       <div className="auth-form-header">
-        <h2>Set a New Password</h2>
-        <p>Choose something you haven&rsquo;t used elsewhere.</p>
+        <h2>{t("auth.setNewPassword")}</h2>
+        <p>{t("auth.reset.chooseNew")}</p>
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
-          <span>New Password</span>
+          <span>{t("account.newPassword")}</span>
           <input
             autoComplete="new-password"
             minLength={8}
             name="password"
-            placeholder="At least 8 characters"
+            placeholder={t("auth.atLeast8")}
             required
             type="password"
           />
         </label>
         <label>
-          <span>Confirm New Password</span>
+          <span>{t("auth.confirmNewPassword")}</span>
           <input
             autoComplete="new-password"
             minLength={8}
@@ -101,7 +103,7 @@ export function ResetPasswordForm() {
         </label>
         {error ? <p className="auth-error" role="alert">{error}</p> : null}
         <button className="button button-primary auth-submit" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Updating..." : "Update Password"}
+          {isSubmitting ? t("auth.updating") : t("auth.updatePassword")}
         </button>
       </form>
     </>

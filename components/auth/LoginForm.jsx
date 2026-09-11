@@ -57,12 +57,12 @@ export function LoginForm() {
       <div className="auth-form-header">
         <h2>{t("auth.signIn.title")}</h2>
         <p>
-          New to ARTISAN? <Link href="/signup">Create an account</Link>
+          {t("auth.newHere")} <Link href="/signup">{t("auth.createAccountLink")}</Link>
         </p>
       </div>
       <GoogleButton redirect={redirect} />
       <div className="auth-divider">
-        <span>or</span>
+        <span>{t("auth.or")}</span>
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
@@ -90,15 +90,15 @@ export function LoginForm() {
             <input name="remember" type="checkbox" />
             <span>{t("auth.keepSignedIn")}</span>
           </label>
-          <Link href="/forgot-password">Forgot password?</Link>
+          <Link href="/forgot-password">{t("auth.forgotShort")}</Link>
         </div>
         {error ? <p className="auth-error" role="alert">{error}</p> : null}
         <button className="button button-primary auth-submit" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Signing In..." : "Sign In"}
+          {isSubmitting ? t("auth.signingIn") : t("auth.signIn.title")}
         </button>
       </form>
       <p className="auth-note">
-        Artist dashboards and collector accounts use the same secure sign-in.
+        {t("auth.sharedAccountNote")}
       </p>
     </>
   );

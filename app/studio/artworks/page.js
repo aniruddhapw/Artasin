@@ -59,7 +59,7 @@ export default async function StudioArtworksPage() {
                     <h3>{artwork.title}</h3>
                   </Link>
                   <p>
-                    {artwork.category} · {serializeMoney(artwork.priceCents, artwork.currency).formatted}
+                    {t(`category.${artwork.category}`)} · {serializeMoney(artwork.priceCents, artwork.currency).formatted}
                   </p>
                 </div>
                 <div className="order-history-meta">

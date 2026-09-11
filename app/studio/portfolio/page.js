@@ -30,20 +30,20 @@ export default async function StudioPortfolioPage() {
               Show work you have already made, whether or not it is for sale here. This is what collectors look
               at when they are deciding who to commission — it appears on your{" "}
               <Link className="text-link" href={`/artist/${user.artistProfile.slug}`}>
-                public profile
+                {t("portfolio.publicProfile")}
               </Link>
               .
             </p>
           </div>
           <Link className="button button-secondary" href="/studio/artworks">
-            Manage Listings
+            {t("studio.manageListings")}
           </Link>
         </header>
 
         <section className="share-profile-card">
           <div className="share-profile-intro">
             <h2>{t("studio.shareProfile.title")}</h2>
-            <p>Your past work appears here for anyone who opens this link.</p>
+            <p>{t("portfolio.shareNote")}</p>
           </div>
           <ShareLinkRow
             path={`/artist/${user.artistProfile.slug}`}

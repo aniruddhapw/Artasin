@@ -1,17 +1,20 @@
 import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { getTranslations } from "@/lib/i18n";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata = {
   title: "Sign In"
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const { t } = await getTranslations();
+
   return (
     <AuthShell
-      body="Access saved collections, commission briefs, purchase history, and artist studio tools."
-      eyebrow="Collector Access"
-      title="Return to your private gallery."
+      body={t("auth.signIn.body")}
+      eyebrow={t("auth.signIn.eyebrow")}
+      title={t("auth.signIn.headline")}
     >
       <Suspense fallback={null}>
         <LoginForm />

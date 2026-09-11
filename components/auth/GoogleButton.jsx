@@ -1,3 +1,7 @@
+"use client";
+
+import { useT } from "@/components/i18n/LocaleProvider";
+
 function GoogleIcon() {
   return (
     <svg aria-hidden="true" height="18" viewBox="0 0 18 18" width="18">
@@ -22,11 +26,12 @@ function GoogleIcon() {
 }
 
 export function GoogleButton({ redirect }) {
+  const t = useT();
   const href = redirect ? `/api/auth/google?redirect=${encodeURIComponent(redirect)}` : "/api/auth/google";
   return (
     <a className="button button-secondary button-google" href={href}>
       <GoogleIcon />
-      Continue with Google
+      {t("auth.continueWithGoogle")}
     </a>
   );
 }

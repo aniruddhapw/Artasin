@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function ForgotPasswordForm() {
+  const t = useT();
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,20 +40,20 @@ export function ForgotPasswordForm() {
     return (
       <>
         <div className="auth-form-header">
-          <h2>Check Your Email</h2>
+          <h2>{t("auth.checkEmail")}</h2>
         </div>
         <p className="auth-note" style={{ marginTop: 0 }}>
-          If that email has an account with a password, a reset link is on its way. The link expires in an hour.
+          {t("auth.resetSent")}
         </p>
         <p className="auth-note">
-          Didn&rsquo;t get it? Check your spam folder, or{" "}
+          {t("auth.didntGetIt")}{" "}
           <button className="link-button" onClick={() => setSent(false)} type="button">
-            try another address
+            {t("auth.tryAnotherAddress")}
           </button>
           .
         </p>
         <p className="auth-note">
-          <Link href="/login">Back to sign in</Link>
+          <Link href="/login">{t("auth.backToSignIn")}</Link>
         </p>
       </>
     );
@@ -60,21 +62,21 @@ export function ForgotPasswordForm() {
   return (
     <>
       <div className="auth-form-header">
-        <h2>Reset Password</h2>
-        <p>Enter your email and we&rsquo;ll send you a link to set a new password.</p>
+        <h2>{t("auth.resetTitle")}</h2>
+        <p>{t("auth.resetSubtitle")}</p>
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
-          <span>Email Address</span>
+          <span>{t("auth.email")}</span>
           <input autoComplete="email" name="email" placeholder="name@example.com" required type="email" />
         </label>
         {error ? <p className="auth-error" role="alert">{error}</p> : null}
         <button className="button button-primary auth-submit" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Sending..." : "Send Reset Link"}
+          {isSubmitting ? t("auth.sending") : t("auth.sendResetLink")}
         </button>
       </form>
       <p className="auth-note">
-        Remembered it? <Link href="/login">Sign in</Link>
+        {t("auth.rememberedIt")} <Link href="/login">{t("auth.signInLink")}</Link>
       </p>
     </>
   );

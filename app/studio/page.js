@@ -156,7 +156,7 @@ export default async function StudioPage({ searchParams }) {
                     >
                       <span>{serializeMoney(monthlyTotals[index]).formatted}</span>
                     </div>
-                    <small>{label}</small>
+                    <small>{t(`month.${index}`)}</small>
                   </div>
                 ))}
               </div>
@@ -168,8 +168,7 @@ export default async function StudioPage({ searchParams }) {
               </div>
               <p className="payout-figure">{serializeMoney(nextPayoutCents).formatted}</p>
               <p className="payout-caption">
-                Based on your {Number(100 - (user.artistProfile.commissionRate ?? 15)).toFixed(0)}% share after
-                the platform commission, pending payout processing.
+                {t("studio.payoutNote", { share: Number(100 - (user.artistProfile.commissionRate ?? 15)).toFixed(0) })}
               </p>
             </article>
           </div>
@@ -190,7 +189,7 @@ export default async function StudioPage({ searchParams }) {
                       <div>
                         <h3>{request.title}</h3>
                         <p>
-                          From: {request.buyer.firstName} {request.buyer.lastName[0]}.
+                          {t("studio.from")} {request.buyer.firstName} {request.buyer.lastName[0]}.
                         </p>
                       </div>
                       <span className="tag">{t(`status.${request.status}`, undefined) || request.status.replace(/_/g, " ")}</span>

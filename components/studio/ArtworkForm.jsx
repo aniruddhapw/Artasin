@@ -168,7 +168,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
               </option>
               {categories.map((category) => (
                 <option key={category} value={category}>
-                  {category}
+                  {t(`category.${category}`)}
                 </option>
               ))}
             </select>

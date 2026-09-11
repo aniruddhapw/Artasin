@@ -62,18 +62,18 @@ export function SignupForm() {
   return (
     <>
       <div className="auth-form-header">
-        <h2>Create Account</h2>
+        <h2>{t("auth.signUp.title")}</h2>
         <p>
-          Already registered? <Link href="/login">Sign in</Link>
+          {t("auth.alreadyRegistered")} <Link href="/login">{t("auth.signInLink")}</Link>
         </p>
       </div>
       <GoogleButton />
-      <p className="auth-google-note">Google Sign-In creates a Collector account. Artists should sign up below.</p>
+      <p className="auth-google-note">{t("auth.googleNote")}</p>
       <div className="auth-divider">
-        <span>or</span>
+        <span>{t("auth.or")}</span>
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
-        <div className="role-grid" aria-label="Account type">
+        <div className="role-grid" aria-label={t("auth.accountType")}>
           <label>
             <input
               checked={role === "BUYER"}
@@ -83,8 +83,8 @@ export function SignupForm() {
               value="BUYER"
             />
             <span>
-              <strong>Collector</strong>
-              <small>Buy artwork and request commissions.</small>
+              <strong>{t("auth.collector")}</strong>
+              <small>{t("auth.collectorBlurb")}</small>
             </span>
           </label>
           <label>
@@ -96,8 +96,8 @@ export function SignupForm() {
               value="ARTIST"
             />
             <span>
-              <strong>Artist</strong>
-              <small>List work and manage studio orders.</small>
+              <strong>{t("auth.artist")}</strong>
+              <small>{t("auth.artistBlurb")}</small>
             </span>
           </label>
         </div>
@@ -121,18 +121,18 @@ export function SignupForm() {
             autoComplete="new-password"
             minLength={8}
             name="password"
-            placeholder="At least 8 characters"
+            placeholder={t("auth.atLeast8")}
             required
             type="password"
           />
         </label>
         <label className="check-row">
           <input name="terms" required type="checkbox" />
-          <span>I agree to the marketplace terms and commission policy.</span>
+          <span>{t("auth.terms")}</span>
         </label>
         {error ? <p className="auth-error" role="alert">{error}</p> : null}
         <button className="button button-primary auth-submit" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Creating Account..." : "Create Account"}
+          {isSubmitting ? t("auth.creatingAccount") : t("auth.createAccount")}
         </button>
       </form>
     </>
