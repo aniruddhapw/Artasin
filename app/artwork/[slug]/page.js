@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArtworkGallery } from "@/components/artwork/ArtworkGallery";
 import { Footer } from "@/components/Footer";
 import { ShareButton } from "@/components/ShareButton";
+import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { StarRating } from "@/components/StarRating";
 import { prisma } from "@/lib/db";
@@ -177,7 +178,7 @@ export default async function ArtworkDetailPage({ params }) {
               {moreWorks.map((work) => (
                 <Link className="more-card group-image" href={`/artwork/${work.slug}`} key={work.id}>
                   <div>
-                    <img
+                    <LazyImage
                       alt={`${work.title} artwork`}
                       src={thumbUrl(work.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                     />

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArtistAvatar } from "@/components/ArtistAvatar";
 import { Footer } from "@/components/Footer";
 import { Icon } from "@/components/Icon";
+import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
 import { detailUrl } from "@/lib/images";
@@ -44,8 +45,9 @@ export default async function HomePage() {
             </Link>
           </div>
           <Link className="hero-art group-image" href={heroArtwork ? `/artwork/${heroArtwork.slug}` : "/gallery"}>
-            <img
+            <LazyImage
               alt={heroArtwork ? `${heroArtwork.title} artwork` : "Silent Echoes installation artwork"}
+              priority
               src={detailUrl(heroArtwork?.media[0]?.url) || "/artisan/hero-installation.jpg"}
             />
             <div className="image-caption image-caption-overlay">
@@ -70,7 +72,7 @@ export default async function HomePage() {
                 key={card.title}
               >
                 <div className="collection-image">
-                  <img alt={`${card.title} collection`} src={card.image} />
+                  <LazyImage alt={`${card.title} collection`} src={card.image} />
                 </div>
                 <h3>{card.title}</h3>
                 <p>{card.count}</p>

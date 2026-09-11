@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { Lightbox } from "@/components/artwork/Lightbox";
+import { LazyImage } from "@/components/LazyImage";
 
 export function ArtworkGallery({ images, title }) {
   const [index, setIndex] = useState(0);
@@ -23,7 +24,7 @@ export function ArtworkGallery({ images, title }) {
         onClick={() => open(index)}
         type="button"
       >
-        <img alt={active.alt} src={active.src} />
+        <LazyImage alt={active.alt} priority src={active.src} />
         <span className="artwork-zoom-hint" aria-hidden="true">
           <ZoomIcon />
           Click to zoom
@@ -41,7 +42,7 @@ export function ArtworkGallery({ images, title }) {
               onClick={() => setIndex(thumbIndex)}
               type="button"
             >
-              <img alt="" src={image.thumb} />
+              <LazyImage alt="" src={image.thumb} />
             </button>
           ))}
         </div>

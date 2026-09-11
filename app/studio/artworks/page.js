@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
+import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { ArtworkStatusActions } from "@/components/studio/ArtworkStatusActions";
 import { ShareButton } from "@/components/ShareButton";
@@ -46,7 +47,7 @@ export default async function StudioArtworksPage() {
             {artworks.map((artwork) => (
               <div className="order-history-row" key={artwork.id}>
                 <Link className="order-history-image" href={`/studio/artworks/${artwork.id}/edit`}>
-                  <img
+                  <LazyImage
                     alt={artwork.title}
                     src={thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                   />

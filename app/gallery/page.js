@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
+import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
 import { thumbUrl } from "@/lib/images";
@@ -69,7 +70,7 @@ export default async function GalleryPage({ searchParams }) {
             {artworks.map((artwork) => (
               <Link className="more-card artwork-card group-image" href={`/artwork/${artwork.slug}`} key={artwork.id}>
                 <div>
-                  <img
+                  <LazyImage
                     alt={`${artwork.title} artwork`}
                     src={thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                   />

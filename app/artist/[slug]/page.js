@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
+import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { PortfolioGrid } from "@/components/artwork/PortfolioGrid";
 import { ShareButton } from "@/components/ShareButton";
@@ -115,6 +116,11 @@ export default async function ArtistProfilePage({ params }) {
           ) : null}
           {artist.bio ? <p>{artist.bio}</p> : null}
           {artist.location ? <p className="artist-location">{artist.location}</p> : null}
+          {!artist.artworks.length && portfolio.length ? (
+            <p className="artist-availability">
+              No pieces listed for sale right now — {artist.displayName.split(" ")[0]} is taking commissions.
+            </p>
+          ) : null}
           <div className="artist-header-actions">
             <Link
               className="button button-primary"
@@ -139,7 +145,7 @@ export default async function ArtistProfilePage({ params }) {
               {artist.artworks.map((artwork) => (
                 <Link className="more-card artwork-card group-image" href={`/artwork/${artwork.slug}`} key={artwork.id}>
                   <div>
-                    <img
+                    <LazyImage
                       alt={`${artwork.title} artwork`}
                       src={thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                     />
@@ -150,16 +156,16 @@ export default async function ArtistProfilePage({ params }) {
               ))}
             </div>
           </>
-        ) : (
-          <p className="empty-state">
-            {portfolio.length
-              ? `${artist.displayName} has no pieces listed for sale right now, but takes commissions — see past work below.`
-              : "This artist has not published any work yet."}
-          </p>
+        ) : portfolio.length ? null : (
+          <p className="empty-state">This artist has not published any work yet.</p>
         )}
 
         {portfolio.length ? (
-          <section className="more-section portfolio-section">
+          <section
+            className={
+              artist.artworks.length ? "more-section portfolio-section" : "more-section portfolio-section is-lead"
+            }
+          >
             <div className="section-heading inline-heading">
               <h2>Past Work</h2>
               <p className="portfolio-section-note">

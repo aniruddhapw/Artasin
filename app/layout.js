@@ -1,4 +1,6 @@
 import "./globals.css";
+import { Suspense } from "react";
+import { RouteProgress } from "@/components/RouteProgress";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
@@ -64,7 +66,16 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
           type="application/ld+json"
         />
+        {/* The fade-in starts at opacity 0 and is cleared by the image's onLoad
+            handler. Without scripting that never fires, so every photo would be
+            invisible — force them visible instead. */}
+        <noscript>
+          <style>{".lazy-image{opacity:1!important}"}</style>
+        </noscript>
         <ServiceWorkerRegister />
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
         {children}
       </body>
     </html>

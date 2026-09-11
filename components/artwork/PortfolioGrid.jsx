@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Lightbox } from "@/components/artwork/Lightbox";
+import { LazyImage } from "@/components/LazyImage";
 
 /**
  * Public showcase of an artist's past work. Every piece opens in the same zoom
@@ -29,7 +30,7 @@ export function PortfolioGrid({ pieces, artistName }) {
               onClick={() => setOpenIndex(index)}
               type="button"
             >
-              <img alt={`${piece.title} by ${artistName}`} src={piece.thumb} />
+              <LazyImage alt={`${piece.title} by ${artistName}`} src={piece.thumb} />
             </button>
             <figcaption>
               <h3>{piece.title}</h3>

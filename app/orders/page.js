@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Footer } from "@/components/Footer";
+import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -59,7 +60,7 @@ export default async function OrdersPage() {
             {orders.map((order) => (
               <Link className="order-history-row" href={`/orders/${order.id}`} key={order.id}>
                 <div className="order-history-image">
-                  <img
+                  <LazyImage
                     alt={order.artwork?.title || "Commission order"}
                     src={thumbUrl(order.artwork?.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                   />

@@ -2788,6 +2788,18 @@ textarea::placeholder {
   margin-top: var(--section);
 }
 
+/* When there are no listings above it, Past Work is the first thing on the page
+   and does not need a full section gap pushing it down. */
+.portfolio-section.is-lead {
+  margin-top: 0;
+}
+
+.artist-availability {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
 .portfolio-section-note {
   margin: 0;
   color: var(--muted);
@@ -3069,5 +3081,129 @@ textarea::placeholder {
   .share-sheet {
     right: auto;
     left: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Loading feedback — route progress, skeletons, image fade-in
+   --------------------------------------------------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Sits above the sticky nav (z-index 60) so it is visible on every page. */
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 120;
+  height: 2px;
+  background: transparent;
+  pointer-events: none;
+}
+
+.route-progress-bar {
+  height: 100%;
+  background: var(--primary);
+  transition: width 180ms ease-out;
+}
+
+@keyframes skeleton-sweep {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  display: block;
+  background-color: var(--surface-low);
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-low) 0%,
+    var(--surface-container) 50%,
+    var(--surface-low) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+.skeleton-line {
+  max-width: 100%;
+}
+
+.skeleton-header {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+
+.skeleton-card {
+  display: grid;
+  gap: 10px;
+}
+
+.skeleton-stack {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.skeleton-gap {
+  height: 48px;
+}
+
+/* Fade a photo in once it has decoded, so a grid never snaps from blank to
+   image. The container underneath carries its own surface colour. */
+.lazy-image {
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+
+.lazy-image.is-loaded {
+  opacity: 1;
+}
+
+/* Shimmer the space an image will fill until it arrives. :has() keeps this
+   purely visual — the element is removed from the flow by the image on top. */
+.collection-image:has(.lazy-image:not(.is-loaded)),
+.more-card div:has(.lazy-image:not(.is-loaded)),
+.portfolio-card-image:has(.lazy-image:not(.is-loaded)),
+.order-history-image:has(.lazy-image:not(.is-loaded)),
+.hero-art:has(.lazy-image:not(.is-loaded)) {
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-low) 0%,
+    var(--surface-container) 50%,
+    var(--surface-low) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .collection-image:has(.lazy-image:not(.is-loaded)),
+  .more-card div:has(.lazy-image:not(.is-loaded)),
+  .portfolio-card-image:has(.lazy-image:not(.is-loaded)),
+  .order-history-image:has(.lazy-image:not(.is-loaded)),
+  .hero-art:has(.lazy-image:not(.is-loaded)) {
+    animation: none;
+  }
+
+  .lazy-image {
+    transition: none;
   }
 }
