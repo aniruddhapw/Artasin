@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { BecomeArtistForm } from "@/components/account/BecomeArtistForm";
 import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
@@ -30,6 +31,9 @@ export default async function AccountPage() {
         </header>
 
         <section className="account-layout">
+          {user.role === "BUYER" && !user.artistProfile ? (
+            <BecomeArtistForm defaultName={`${user.firstName} ${user.lastName}`} />
+          ) : null}
           <article className="dashboard-card">
             <h2>Your Details</h2>
             <dl className="order-confirmation-detail-list">

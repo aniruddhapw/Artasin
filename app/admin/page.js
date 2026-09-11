@@ -49,6 +49,9 @@ export default async function AdminDashboardPage() {
             <p>Platform-wide gross merchandise value, commission revenue, and marketplace health.</p>
           </div>
           <div className="studio-header-actions">
+            <Link className="button button-secondary" href="/admin/buyers">
+              Collectors
+            </Link>
             <Link className="button button-secondary" href="/admin/artworks">
               Moderate Listings
             </Link>
@@ -62,7 +65,7 @@ export default async function AdminDashboardPage() {
           <Kpi caption={`${settledOrders.length} settled orders`} title="Gross Merchandise Value" value={serializeMoney(gmvCents).formatted} />
           <Kpi caption="Platform earnings" title="Commission Revenue" value={serializeMoney(commissionRevenueCents).formatted} />
           <Kpi caption="Verified studio accounts" href="/admin/artists" title="Artists" value={String(artistCount)} />
-          <Kpi caption="Registered collectors" title="Buyers" value={String(buyerCount)} />
+          <Kpi caption="Registered collectors" href="/admin/buyers" title="Buyers" value={String(buyerCount)} />
           <Kpi
             caption={disputedCount ? "Needs attention" : "All clear"}
             href="/admin/disputes"

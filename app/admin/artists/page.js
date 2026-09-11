@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { AdminArtistRow } from "@/components/admin/AdminArtistRow";
@@ -36,9 +37,19 @@ export default async function AdminArtistsPage() {
     <>
       <Nav active="collections" />
       <main className="page request-page">
-        <header className="request-header">
-          <h1>Artists &amp; Payouts</h1>
-          <p>Approve new studios, adjust per-artist commission rates, and process outstanding payouts.</p>
+        <header className="request-header studio-header-row">
+          <div>
+            <h1>Artists &amp; Payouts</h1>
+            <p>Approve new studios, adjust per-artist commission rates, and process outstanding payouts.</p>
+          </div>
+          <div className="studio-header-actions">
+            <Link className="button button-secondary" href="/admin/buyers">
+              Collectors
+            </Link>
+            <Link className="button button-secondary" href="/admin/artworks">
+              Artworks
+            </Link>
+          </div>
         </header>
 
         <div className="admin-artist-table">
