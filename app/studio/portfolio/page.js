@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { ShareLinkRow } from "@/components/ShareButton";
 import { PortfolioManager } from "@/components/studio/PortfolioManager";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -36,6 +37,18 @@ export default async function StudioPortfolioPage() {
             Manage Listings
           </Link>
         </header>
+
+        <section className="share-profile-card">
+          <div className="share-profile-intro">
+            <h2>Share your profile</h2>
+            <p>Your past work appears here for anyone who opens this link.</p>
+          </div>
+          <ShareLinkRow
+            path={`/artist/${user.artistProfile.slug}`}
+            text="My work on ARTISAN — original pieces and commissions."
+            title={`${user.artistProfile.displayName} on ARTISAN`}
+          />
+        </section>
 
         <section className="request-layout studio-form-layout">
           <PortfolioManager pieces={pieces} />

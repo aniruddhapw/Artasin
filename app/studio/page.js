@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Icon } from "@/components/Icon";
 import { Nav } from "@/components/Nav";
 import { OrderShipAction } from "@/components/studio/OrderShipAction";
+import { ShareLinkRow } from "@/components/ShareButton";
 import { VerificationBanner } from "@/components/studio/VerificationBanner";
 import { YearSelector } from "@/components/studio/YearSelector";
 import { getAuthUser } from "@/lib/auth";
@@ -104,6 +105,21 @@ export default async function StudioPage({ searchParams }) {
             </Link>
           </div>
         </header>
+
+        <section className="share-profile-card">
+          <div className="share-profile-intro">
+            <h2>Your public profile</h2>
+            <p>
+              Send this link to anyone — WhatsApp, Instagram bio, or a client. It shows your listings, your past
+              work, and a button for them to request a commission.
+            </p>
+          </div>
+          <ShareLinkRow
+            path={`/artist/${user.artistProfile.slug}`}
+            text={`My work on ARTISAN — original pieces and commissions.`}
+            title={`${user.artistProfile.displayName} on ARTISAN`}
+          />
+        </section>
 
         <section className="studio-grid">
           <div className="studio-left">

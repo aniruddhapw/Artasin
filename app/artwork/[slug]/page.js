@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArtworkGallery } from "@/components/artwork/ArtworkGallery";
 import { Footer } from "@/components/Footer";
+import { ShareButton } from "@/components/ShareButton";
 import { Nav } from "@/components/Nav";
 import { StarRating } from "@/components/StarRating";
 import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
-import { galleryImages, thumbUrl } from "@/lib/images";
+import { galleryImages, ogUrl, thumbUrl } from "@/lib/images";
 
 async function getArtwork(slug) {
   return prisma.artwork.findUnique({
@@ -34,13 +35,22 @@ export async function generateMetadata({ params }) {
   if (!artwork || artwork.status === "DRAFT" || artwork.status === "ARCHIVED") {
     return { title: "Artwork Not Found" };
   }
+  const description = artwork.description.slice(0, 160);
+  const previewSource = artwork.media[0]?.url;
+
   return {
     title: `${artwork.title}`,
-    description: artwork.description.slice(0, 160),
+    description,
     openGraph: {
-      title: artwork.title,
-      description: artwork.description.slice(0, 160),
-      images: artwork.media[0]?.url ? [artwork.media[0].url] : undefined
+      title: `${artwork.title} by ${artwork.artist.displayName}`,
+      description,
+      images: previewSource ? [{ url: ogUrl(previewSource), width: 1200, height: 630 }] : undefined
+    },
+    twitter: {
+      card: previewSource ? "summary_large_image" : "summary",
+      title: `${artwork.title} by ${artwork.artist.displayName}`,
+      description,
+      images: previewSource ? [ogUrl(previewSource)] : undefined
     }
   };
 }
@@ -139,6 +149,12 @@ export default async function ArtworkDetailPage({ params }) {
               >
                 Inquire for Commission
               </Link>
+              <ShareButton
+                className="button button-secondary"
+                path={`/artwork/${artwork.slug}`}
+                text={`${artwork.title} by ${artwork.artist.displayName} on ARTISAN`}
+                title={artwork.title}
+              />
             </div>
             {artwork.artist.bio ? (
               <div className="artist-note">

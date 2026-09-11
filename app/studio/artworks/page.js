@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { ArtworkStatusActions } from "@/components/studio/ArtworkStatusActions";
+import { ShareButton } from "@/components/ShareButton";
 import { VerificationBanner } from "@/components/studio/VerificationBanner";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -60,6 +61,15 @@ export default async function StudioArtworksPage() {
                 </div>
                 <div className="order-history-meta">
                   <span className="tag">{artwork.status}</span>
+                  {artwork.status === "PUBLISHED" || artwork.status === "SOLD" ? (
+                    <ShareButton
+                      className="small-outline"
+                      label="Share"
+                      path={`/artwork/${artwork.slug}`}
+                      text={`${artwork.title} — my work on ARTISAN`}
+                      title={artwork.title}
+                    />
+                  ) : null}
                   <ArtworkStatusActions
                     artworkId={artwork.id}
                     canPublish={user.artistProfile.verificationStatus === "APPROVED"}
