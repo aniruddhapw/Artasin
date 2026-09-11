@@ -1,7 +1,9 @@
 import "./globals.css";
 import { Suspense } from "react";
+import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { RouteProgress } from "@/components/RouteProgress";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { getTranslations } from "@/lib/i18n";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 const siteDescription =
@@ -58,9 +60,11 @@ const structuredData = {
   }
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const { locale, messages } = await getTranslations();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>
         <script
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -76,7 +80,9 @@ export default function RootLayout({ children }) {
         <Suspense fallback={null}>
           <RouteProgress />
         </Suspense>
-        {children}
+        <LocaleProvider locale={locale} messages={messages}>
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );

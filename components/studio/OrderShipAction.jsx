@@ -3,14 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 const nextStatusByStatus = {
-  PAID: { label: "Start Fulfillment", next: "IN_PROGRESS" },
-  IN_PROGRESS: { label: "Mark Shipped", next: "SHIPPED" },
-  SHIPPED: { label: "Mark Delivered", next: "DELIVERED" }
+  PAID: { labelKey: "studio.startFulfillment", next: "IN_PROGRESS" },
+  IN_PROGRESS: { labelKey: "studio.markShipped", next: "SHIPPED" },
+  SHIPPED: { labelKey: "studio.markDelivered", next: "DELIVERED" }
 };
 
 export function OrderShipAction({ orderId, status }) {
+  const t = useT();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -43,7 +45,7 @@ export function OrderShipAction({ orderId, status }) {
   return (
     <>
       <button className="small-outline" disabled={isSubmitting} onClick={handleClick} type="button">
-        {isSubmitting ? "Updating..." : action.label}
+        {isSubmitting ? "Updating..." : t(action.labelKey)}
       </button>
       {error ? <p className="auth-error auth-error-inline">{error}</p> : null}
     </>

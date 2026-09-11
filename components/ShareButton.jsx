@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 /**
  * Resolves a site-relative path to an absolute URL.
@@ -23,8 +24,10 @@ function useShareUrl(path) {
   return `${(origin || "").replace(/\/$/, "")}${path}`;
 }
 
-export function ShareButton({ path, title, text, label = "Share", className = "button button-secondary" }) {
+export function ShareButton({ path, title, text, label, className = "button button-secondary" }) {
+  const t = useT();
   const url = useShareUrl(path);
+  const buttonLabel = label || t("studio.share");
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [canUseNativeShare, setCanUseNativeShare] = useState(false);
@@ -112,7 +115,7 @@ export function ShareButton({ path, title, text, label = "Share", className = "b
         type="button"
       >
         <ShareIcon />
-        {copied ? "Link copied" : label}
+        {copied ? t("studio.linkCopied") : buttonLabel}
       </button>
 
       {isOpen ? (
@@ -160,7 +163,7 @@ export function ShareLinkRow({ path, title, text, note }) {
         <p className="share-link-url">{url.replace(/^https?:\/\//, "")}</p>
         {note ? <p className="share-link-note">{note}</p> : null}
       </div>
-      <ShareButton className="button button-primary" label="Share" path={path} text={text} title={title} />
+      <ShareButton className="button button-primary" path={path} text={text} title={title} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap");
 
 :root {
   --surface: #f9f9f7;
@@ -3308,4 +3308,105 @@ textarea::placeholder {
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Marathi / Devanagari
+   --------------------------------------------------------------------------- */
+
+/* Inter has no Devanagari glyphs, so without this Marathi falls back to whatever
+   the device happens to have and looks unrelated to the rest of the page.
+   Playfair has none either, so headings use the same family at a heavier weight
+   rather than an accidental system serif. */
+:root[lang="mr"] body,
+:root[lang="mr"] input,
+:root[lang="mr"] textarea,
+:root[lang="mr"] select,
+:root[lang="mr"] button {
+  font-family: "Noto Sans Devanagari", Inter, system-ui, sans-serif;
+}
+
+:root[lang="mr"] h1,
+:root[lang="mr"] h2,
+:root[lang="mr"] h3,
+:root[lang="mr"] .request-header h1,
+:root[lang="mr"] .studio-header h1 {
+  font-family: "Noto Sans Devanagari", "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* Devanagari sits taller than Latin; the tight display sizes clip matras. */
+:root[lang="mr"] .request-header h1,
+:root[lang="mr"] .studio-header h1 {
+  font-size: 46px;
+  line-height: 1.35;
+}
+
+:root[lang="mr"] .tag,
+:root[lang="mr"] .small-outline,
+:root[lang="mr"] label span,
+:root[lang="mr"] legend {
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.language-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  /* The nav row is tight; without this the Devanagari label is squeezed and
+     overflows its own button. */
+  white-space: nowrap;
+}
+
+.language-option {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.language-option[lang="mr"] {
+  font-family: "Noto Sans Devanagari", Inter, sans-serif;
+}
+
+.language-option:hover:not(:disabled) {
+  background: var(--surface-low);
+  color: var(--text);
+}
+
+.language-option.is-active {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.language-option:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  :root[lang="mr"] .request-header h1,
+  :root[lang="mr"] .studio-header h1 {
+    font-size: 32px;
+  }
+}
+
+.auth-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }

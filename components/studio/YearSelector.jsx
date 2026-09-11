@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function YearSelector({ year, currentYear }) {
+  const t = useT();
   const router = useRouter();
 
   return (
@@ -13,8 +15,8 @@ export function YearSelector({ year, currentYear }) {
         router.push(selected === String(currentYear) ? "/studio" : `/studio?year=${selected}`);
       }}
     >
-      <option value={currentYear}>This Year</option>
-      <option value={currentYear - 1}>Last Year</option>
+      <option value={currentYear}>{t("studio.thisYear")}</option>
+      <option value={currentYear - 1}>{t("studio.lastYear")}</option>
     </select>
   );
 }

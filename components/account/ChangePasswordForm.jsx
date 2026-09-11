@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function ChangePasswordForm({ hasPassword }) {
+  const t = useT();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +50,7 @@ export function ChangePasswordForm({ hasPassword }) {
     <form className="auth-form account-form" onSubmit={handleSubmit}>
       {hasPassword ? (
         <label>
-          <span>Current Password</span>
+          <span>{t("account.currentPassword")}</span>
           <input autoComplete="current-password" name="currentPassword" required type="password" />
         </label>
       ) : (
@@ -58,7 +60,7 @@ export function ChangePasswordForm({ hasPassword }) {
         </p>
       )}
       <label>
-        <span>{hasPassword ? "New Password" : "Password"}</span>
+        <span>{hasPassword ? t("account.newPassword") : t("auth.password")}</span>
         <input
           autoComplete="new-password"
           minLength={8}
@@ -69,13 +71,13 @@ export function ChangePasswordForm({ hasPassword }) {
         />
       </label>
       <label>
-        <span>Confirm Password</span>
+        <span>{t("account.confirmPassword")}</span>
         <input autoComplete="new-password" minLength={8} name="confirmPassword" required type="password" />
       </label>
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       {success ? <p className="account-success" role="status">{success}</p> : null}
       <button className="button button-primary" disabled={isSubmitting} type="submit">
-        {isSubmitting ? "Saving..." : hasPassword ? "Update Password" : "Set Password"}
+        {isSubmitting ? t("common.saving") : hasPassword ? t("account.updatePassword") : t("account.setPassword")}
       </button>
     </form>
   );

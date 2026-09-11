@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function ArtworkStatusActions({ artworkId, status, canPublish }) {
+  const t = useT();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -50,7 +52,7 @@ export function ArtworkStatusActions({ artworkId, status, canPublish }) {
           title={canPublish ? undefined : "Requires admin verification"}
           type="button"
         >
-          Publish
+          {t("artworks.publish")}
         </button>
       ) : null}
       {status === "PUBLISHED" ? (
@@ -60,11 +62,11 @@ export function ArtworkStatusActions({ artworkId, status, canPublish }) {
           onClick={() => updateStatus("DRAFT")}
           type="button"
         >
-          Unpublish
+          {t("artworks.unpublish")}
         </button>
       ) : null}
       <button className="small-outline" disabled={isSubmitting} onClick={archiveArtwork} type="button">
-        Archive
+        {t("artworks.archive")}
       </button>
       {error ? <p className="auth-error auth-error-inline">{error}</p> : null}
     </div>

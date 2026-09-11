@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 const MAX_PIECES = 24;
 
 const emptyDraft = { title: "", medium: "", year: "", description: "", imageUrl: "" };
 
 export function PortfolioManager({ pieces: initialPieces }) {
+  const t = useT();
   const router = useRouter();
   const [pieces, setPieces] = useState(initialPieces);
   const [draft, setDraft] = useState(emptyDraft);
@@ -168,12 +170,18 @@ export function PortfolioManager({ pieces: initialPieces }) {
     <div className="portfolio-manager">
       <form className="request-form portfolio-form" onSubmit={handleSubmit}>
         <fieldset>
-          <legend>{isEditing ? "Edit Past Work" : "Add Past Work"}</legend>
+          <legend>{isEditing ? t("portfolio.editPastWork") : t("portfolio.addPastWork")}</legend>
 
           <label className="upload-box upload-box-stacked">
-            <span>{isUploading ? "Uploading..." : draft.imageUrl ? "Replace Photo" : "Upload Photo"}</span>
+            <span>
+              {isUploading
+                ? t("artwork.form.uploading")
+                : draft.imageUrl
+                  ? t("portfolio.replacePhoto")
+                  : t("portfolio.uploadPhoto")}
+            </span>
             <small>
-              JPG, PNG, WEBP, or GIF. Max 8MB. One clear photo of the finished piece — collectors can zoom in on it.
+              {t("portfolio.photoHint")}
             </small>
             <input accept="image/*" disabled={isUploading} onChange={handleUpload} type="file" />
           </label>
@@ -185,7 +193,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
           ) : null}
 
           <label>
-            <span>Title</span>
+            <span>{t("portfolio.pieceTitle")}</span>
             <input
               maxLength={160}
               onChange={(event) => updateDraft("title", event.target.value)}
@@ -198,7 +206,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
 
           <div className="auth-two-col">
             <label>
-              <span>Medium (Optional)</span>
+              <span>{t("portfolio.medium")}</span>
               <input
                 maxLength={160}
                 onChange={(event) => updateDraft("medium", event.target.value)}
@@ -208,7 +216,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
               />
             </label>
             <label>
-              <span>Year (Optional)</span>
+              <span>{t("portfolio.year")}</span>
               <input
                 max={new Date().getFullYear()}
                 min="1000"
@@ -220,9 +228,9 @@ export function PortfolioManager({ pieces: initialPieces }) {
           </div>
 
           <label>
-            <span>Notes (Optional)</span>
+            <span>{t("portfolio.notes")}</span>
             <small className="field-hint">
-              Context that helps someone judge a commission — who it was for, how long it took, what made it difficult.
+              {t("portfolio.notesHint")}
             </small>
             <textarea
               maxLength={2000}
@@ -239,7 +247,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
         <div className="portfolio-form-actions">
           {isEditing ? (
             <button className="button button-secondary" onClick={cancelEdit} type="button">
-              Cancel
+              {t("common.cancel")}
             </button>
           ) : null}
           <button
@@ -247,7 +255,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
             disabled={isSaving || isUploading || isFull}
             type="submit"
           >
-            {isSaving ? "Saving..." : isEditing ? "Save Changes" : "Add to Portfolio"}
+            {isSaving ? t("common.saving") : isEditing ? t("artwork.form.saveChanges") : t("portfolio.addToPortfolio")}
           </button>
         </div>
         {isFull ? (
@@ -259,9 +267,9 @@ export function PortfolioManager({ pieces: initialPieces }) {
 
       <section className="portfolio-list-section">
         <div className="section-heading inline-heading">
-          <h2>Your Portfolio</h2>
+          <h2>{t("portfolio.yourPortfolio")}</h2>
           <span className="artist-directory-count">
-            {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
+            {pieces.length} {pieces.length === 1 ? t("portfolio.piece") : t("portfolio.pieces")}
           </span>
         </div>
 
@@ -299,7 +307,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
                     &#8595;
                   </button>
                   <button className="small-outline" onClick={() => startEdit(piece)} type="button">
-                    Edit
+                    {t("common.edit")}
                   </button>
                   <button
                     className="small-outline"
@@ -307,7 +315,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
                     onClick={() => handleDelete(piece)}
                     type="button"
                   >
-                    Remove
+                    {t("common.remove")}
                   </button>
                 </div>
               </div>
@@ -315,8 +323,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
           </div>
         ) : (
           <p className="empty-state">
-            Nothing here yet. Add work you have already completed — it is what collectors look at when deciding
-            whether to commission you, especially before you have anything listed for sale.
+            {t("portfolio.empty")}
           </p>
         )}
       </section>

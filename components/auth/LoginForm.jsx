@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 
 const oauthErrors = {
@@ -13,6 +14,7 @@ const oauthErrors = {
 };
 
 export function LoginForm() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState(oauthErrors[searchParams.get("error")] || "");
@@ -53,7 +55,7 @@ export function LoginForm() {
   return (
     <>
       <div className="auth-form-header">
-        <h2>Sign In</h2>
+        <h2>{t("auth.signIn.title")}</h2>
         <p>
           New to ARTISAN? <Link href="/signup">Create an account</Link>
         </p>
@@ -64,7 +66,7 @@ export function LoginForm() {
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
-          <span>Email Address</span>
+          <span>{t("auth.email")}</span>
           <input
             autoComplete="email"
             name="email"
@@ -74,7 +76,7 @@ export function LoginForm() {
           />
         </label>
         <label>
-          <span>Password</span>
+          <span>{t("auth.password")}</span>
           <input
             autoComplete="current-password"
             name="password"
@@ -86,7 +88,7 @@ export function LoginForm() {
         <div className="auth-options">
           <label className="check-row">
             <input name="remember" type="checkbox" />
-            <span>Keep me signed in</span>
+            <span>{t("auth.keepSignedIn")}</span>
           </label>
           <Link href="/forgot-password">Forgot password?</Link>
         </div>

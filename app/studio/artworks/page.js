@@ -7,6 +7,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { VerificationBanner } from "@/components/studio/VerificationBanner";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getTranslations } from "@/lib/i18n";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 
@@ -16,6 +17,7 @@ export const metadata = {
 
 export default async function StudioArtworksPage() {
   const user = await getAuthUser();
+  const { t } = await getTranslations();
   const artworks = await prisma.artwork.findMany({
     where: { artistId: user.artistProfile.id, status: { not: "ARCHIVED" } },
     include: { media: { take: 1, orderBy: { sortOrder: "asc" } } },
@@ -29,15 +31,15 @@ export default async function StudioArtworksPage() {
         <VerificationBanner verificationStatus={user.artistProfile.verificationStatus} />
         <header className="request-header studio-header-row">
           <div>
-            <h1>Your Artworks</h1>
-            <p>Manage listings, pricing, and publication status.</p>
+            <h1>{t("artworks.title")}</h1>
+            <p>{t("artworks.subtitle")}</p>
           </div>
           <div className="studio-header-actions">
             <Link className="button button-secondary" href="/studio/portfolio">
-              Portfolio
+              {t("studio.managePortfolio")}
             </Link>
             <Link className="button button-primary" href="/studio/artworks/new">
-              List New Artwork
+              {t("studio.listNewArtwork")}
             </Link>
           </div>
         </header>
@@ -61,11 +63,10 @@ export default async function StudioArtworksPage() {
                   </p>
                 </div>
                 <div className="order-history-meta">
-                  <span className="tag">{artwork.status}</span>
+                  <span className="tag">{t(`status.${artwork.status}`)}</span>
                   {artwork.status === "PUBLISHED" || artwork.status === "SOLD" ? (
                     <ShareButton
                       className="small-outline"
-                      label="Share"
                       path={`/artwork/${artwork.slug}`}
                       text={`${artwork.title} — my work on ARTISAN`}
                       title={artwork.title}

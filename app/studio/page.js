@@ -8,6 +8,7 @@ import { VerificationBanner } from "@/components/studio/VerificationBanner";
 import { YearSelector } from "@/components/studio/YearSelector";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getTranslations } from "@/lib/i18n";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
@@ -28,6 +29,7 @@ const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 export default async function StudioPage({ searchParams }) {
   const params = await searchParams;
   const user = await getAuthUser();
+  const { t } = await getTranslations();
   const artistId = user.artistProfile.id;
   const currentYear = new Date().getFullYear();
   const requestedYear = Number(params?.year);
@@ -90,28 +92,27 @@ export default async function StudioPage({ searchParams }) {
         <VerificationBanner verificationStatus={user.artistProfile.verificationStatus} />
         <header className="studio-header studio-header-row">
           <div>
-            <h1>Studio Dashboard</h1>
-            <p>Overview of your recent sales, active commissions, and shipping logistics.</p>
+            <h1>{t("studio.title")}</h1>
+            <p>{t("studio.subtitle")}</p>
           </div>
           <div className="studio-header-actions">
             <Link className="button button-secondary" href="/studio/portfolio">
-              Portfolio
+              {t("studio.managePortfolio")}
             </Link>
             <Link className="button button-secondary" href="/studio/artworks">
-              Manage Artworks
+              {t("studio.manageArtworks")}
             </Link>
             <Link className="button button-primary" href="/studio/artworks/new">
-              List New Artwork
+              {t("studio.listNewArtwork")}
             </Link>
           </div>
         </header>
 
         <section className="share-profile-card">
           <div className="share-profile-intro">
-            <h2>Your public profile</h2>
+            <h2>{t("studio.shareProfile.title")}</h2>
             <p>
-              Send this link to anyone — WhatsApp, Instagram bio, or a client. It shows your listings, your past
-              work, and a button for them to request a commission.
+              {t("studio.shareProfile.body")}
             </p>
           </div>
           <ShareLinkRow
@@ -125,25 +126,25 @@ export default async function StudioPage({ searchParams }) {
           <div className="studio-left">
             <div className="kpi-grid">
               <Kpi
-                caption={`${orders.length} total order${orders.length === 1 ? "" : "s"}`}
-                title="Total Revenue"
+                caption={t("studio.totalOrders", { count: orders.length })}
+                title={t("studio.revenue")}
                 value={serializeMoney(totalRevenueCents).formatted}
               />
               <Kpi
-                caption={pendingRequestsCount ? `${pendingRequestsCount} require attention` : "All caught up"}
-                title="Pending Requests"
+                caption={pendingRequestsCount ? t("studio.requireAttention", { count: pendingRequestsCount }) : t("studio.allCaughtUp")}
+                title={t("studio.pendingRequests")}
                 value={String(pendingRequestsCount)}
               />
               <Kpi
-                caption={activeOrdersCount ? `${activeOrdersCount} in fulfillment` : "Nothing in progress"}
-                title="Active Orders"
+                caption={activeOrdersCount ? t("studio.inFulfillment", { count: activeOrdersCount }) : t("studio.nothingInProgress")}
+                title={t("studio.activeOrders")}
                 value={String(activeOrdersCount)}
               />
             </div>
 
             <article className="dashboard-card sales-card">
               <div className="card-heading">
-                <h2>Sales Overview</h2>
+                <h2>{t("studio.salesOverview")}</h2>
                 <YearSelector currentYear={currentYear} year={selectedYear} />
               </div>
               <div className="bar-chart">
@@ -163,7 +164,7 @@ export default async function StudioPage({ searchParams }) {
 
             <article className="dashboard-card list-card">
               <div className="card-heading">
-                <h2>Next Payout</h2>
+                <h2>{t("studio.nextPayout")}</h2>
               </div>
               <p className="payout-figure">{serializeMoney(nextPayoutCents).formatted}</p>
               <p className="payout-caption">
@@ -176,8 +177,8 @@ export default async function StudioPage({ searchParams }) {
           <aside className="studio-right">
             <article className="dashboard-card list-card">
               <div className="card-heading">
-                <h2>Pending Requests</h2>
-                <Link href="/studio/commissions">View All</Link>
+                <h2>{t("studio.pendingRequests")}</h2>
+                <Link href="/studio/commissions">{t("studio.viewAll")}</Link>
               </div>
               <div className="dashboard-list">
                 {pendingRequests.length ? (
@@ -192,7 +193,7 @@ export default async function StudioPage({ searchParams }) {
                           From: {request.buyer.firstName} {request.buyer.lastName[0]}.
                         </p>
                       </div>
-                      <span className="tag">{request.status.replace(/_/g, " ")}</span>
+                      <span className="tag">{t(`status.${request.status}`, undefined) || request.status.replace(/_/g, " ")}</span>
                     </Link>
                   ))
                 ) : (
@@ -203,8 +204,8 @@ export default async function StudioPage({ searchParams }) {
 
             <article className="dashboard-card list-card">
               <div className="card-heading">
-                <h2>Active Orders</h2>
-                <Link href="/orders">View All</Link>
+                <h2>{t("studio.activeOrders")}</h2>
+                <Link href="/orders">{t("studio.viewAll")}</Link>
               </div>
               <div className="dashboard-list">
                 {activeOrders.length ? (

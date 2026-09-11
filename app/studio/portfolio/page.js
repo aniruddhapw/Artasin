@@ -5,6 +5,7 @@ import { ShareLinkRow } from "@/components/ShareButton";
 import { PortfolioManager } from "@/components/studio/PortfolioManager";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getTranslations } from "@/lib/i18n";
 
 export const metadata = {
   title: "Portfolio"
@@ -12,6 +13,7 @@ export const metadata = {
 
 export default async function StudioPortfolioPage() {
   const user = await getAuthUser();
+  const { t } = await getTranslations();
   const pieces = await prisma.portfolioPiece.findMany({
     where: { artistId: user.artistProfile.id },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }]
@@ -23,7 +25,7 @@ export default async function StudioPortfolioPage() {
       <main className="page request-page">
         <header className="request-header studio-header-row">
           <div>
-            <h1>Portfolio</h1>
+            <h1>{t("portfolio.title")}</h1>
             <p>
               Show work you have already made, whether or not it is for sale here. This is what collectors look
               at when they are deciding who to commission — it appears on your{" "}
@@ -40,7 +42,7 @@ export default async function StudioPortfolioPage() {
 
         <section className="share-profile-card">
           <div className="share-profile-intro">
-            <h2>Share your profile</h2>
+            <h2>{t("studio.shareProfile.title")}</h2>
             <p>Your past work appears here for anyone who opens this link.</p>
           </div>
           <ShareLinkRow

@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { ensureSlug, slugify } from "@/lib/slug";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 const categories = ["Painting", "Sculpture", "Digital Art", "Photography"];
 const MAX_IMAGES = 5;
 
 export function ArtworkForm({ artwork, verificationStatus }) {
+  const t = useT();
   const canPublish = verificationStatus === "APPROVED";
   const router = useRouter();
   const isEditing = Boolean(artwork);
@@ -122,9 +124,9 @@ export function ArtworkForm({ artwork, verificationStatus }) {
   return (
     <form className="request-form" onSubmit={handleSubmit}>
       <fieldset>
-        <legend>Artwork Details</legend>
+        <legend>{t("artwork.form.detailsLegend")}</legend>
         <label>
-          <span>Title</span>
+          <span>{t("artwork.form.title")}</span>
           <input
             defaultValue={artwork?.title}
             name="title"
@@ -138,10 +140,9 @@ export function ArtworkForm({ artwork, verificationStatus }) {
           />
         </label>
         <label>
-          <span>URL Slug</span>
+          <span>{t("artwork.form.slug")}</span>
           <small className="field-hint">
-            The web address for this piece. Generated from the title — edit it if you like. Leave it blank and
-            we&rsquo;ll create one for you.
+            {t("artwork.form.slugHint")}
           </small>
           <input
             minLength={3}
@@ -155,15 +156,15 @@ export function ArtworkForm({ artwork, verificationStatus }) {
           />
         </label>
         <label>
-          <span>Description</span>
+          <span>{t("artwork.form.description")}</span>
           <textarea defaultValue={artwork?.description} name="description" required rows={4} />
         </label>
         <div className="auth-two-col">
           <label>
-            <span>Category</span>
+            <span>{t("artwork.form.category")}</span>
             <select defaultValue={artwork?.category || ""} name="category" required>
               <option disabled value="">
-                Select a category...
+                {t("artwork.form.selectCategory")}
               </option>
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -173,65 +174,63 @@ export function ArtworkForm({ artwork, verificationStatus }) {
             </select>
           </label>
           <label>
-            <span>Medium</span>
+            <span>{t("artwork.form.medium")}</span>
             <input defaultValue={artwork?.medium} name="medium" placeholder="Oil on Canvas" required type="text" />
           </label>
         </div>
         <div className="auth-two-col">
           <label>
-            <span>Dimensions</span>
+            <span>{t("artwork.form.dimensions")}</span>
             <input defaultValue={artwork?.dimensions} name="dimensions" placeholder="48 x 60 in" required type="text" />
           </label>
           <label>
-            <span>Year</span>
+            <span>{t("artwork.form.year")}</span>
             <input defaultValue={artwork?.year} name="year" type="number" />
           </label>
         </div>
         <div className="auth-two-col">
           <label>
-            <span>Price (₹)</span>
+            <span>{t("artwork.form.price")}</span>
             <input defaultValue={artwork ? artwork.priceCents / 100 : ""} min="1" name="price" required step="0.01" type="number" />
           </label>
           <label>
-            <span>Status</span>
+            <span>{t("artwork.form.status")}</span>
             <select defaultValue={artwork?.status || "DRAFT"} name="status">
-              <option value="DRAFT">Draft</option>
+              <option value="DRAFT">{t("artwork.form.draft")}</option>
               <option disabled={!canPublish} value="PUBLISHED">
-                Published{canPublish ? "" : " (requires verification)"}
+                {canPublish ? t("artwork.form.published") : t("artwork.form.publishedNeedsVerification")}
               </option>
             </select>
           </label>
         </div>
         <div className="auth-two-col">
           <label>
-            <span>Ships From (Optional)</span>
+            <span>{t("artwork.form.shipsFrom")}</span>
             <input defaultValue={artwork?.shipsFrom} name="shipsFrom" type="text" />
           </label>
           <label>
-            <span>Authenticity (Optional)</span>
+            <span>{t("artwork.form.authenticity")}</span>
             <input defaultValue={artwork?.authenticity} name="authenticity" placeholder="Signed Certificate" type="text" />
           </label>
         </div>
         <label>
-          <span>Edition (Optional)</span>
+          <span>{t("artwork.form.edition")}</span>
           <input defaultValue={artwork?.edition} name="edition" type="text" />
         </label>
       </fieldset>
 
       <fieldset>
-        <legend>Artwork Images</legend>
+        <legend>{t("artwork.form.imagesLegend")}</legend>
         <label className="upload-box upload-box-stacked">
           <span>
             {isUploading
-              ? "Uploading..."
+              ? t("artwork.form.uploading")
               : images.length
-                ? "Add Another Image"
-                : "Upload Images"}
+                ? t("artwork.form.addAnotherImage")
+                : t("artwork.form.uploadImages")}
           </span>
           <small>
-            JPG, PNG, WEBP, or GIF. Max 8MB each, up to {MAX_IMAGES} images. The first image is the one buyers see
-            in the gallery — add detail shots, side angles, or the piece hung on a wall so collectors can zoom in
-            and inspect it.
+            {t("artwork.form.imageHint")}
           </small>
           <input
             accept="image/*"
@@ -246,7 +245,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
             {images.map((url, position) => (
               <div className="artwork-image-card" key={url}>
                 <img alt={`Artwork preview ${position + 1}`} src={url} />
-                <span className="primary-flag">{position === 0 ? "Primary" : `Image ${position + 1}`}</span>
+                <span className="primary-flag">{position === 0 ? t("artwork.form.primary") : `${position + 1}`}</span>
                 <div className="artwork-image-actions">
                   <button
                     aria-label="Move image earlier"
@@ -272,13 +271,13 @@ export function ArtworkForm({ artwork, verificationStatus }) {
             ))}
           </div>
         ) : (
-          <p className="upload-confirmation">No images yet — the gallery placeholder will be used.</p>
+          <p className="upload-confirmation">{t("artwork.form.noImages")}</p>
         )}
       </fieldset>
 
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       <button className="button button-primary request-submit" disabled={isSubmitting || isUploading} type="submit">
-        {isSubmitting ? "Saving..." : isEditing ? "Save Changes" : "Create Artwork"}
+        {isSubmitting ? t("common.saving") : isEditing ? t("artwork.form.saveChanges") : t("artwork.form.create")}
       </button>
     </form>
   );

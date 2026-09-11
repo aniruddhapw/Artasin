@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { ensureSlug } from "@/lib/slug";
 
 export function SignupForm() {
+  const t = useT();
   const router = useRouter();
   const [role, setRole] = useState("BUYER");
   const [error, setError] = useState("");
@@ -101,20 +103,20 @@ export function SignupForm() {
         </div>
         <div className="auth-two-col">
           <label>
-            <span>First Name</span>
+            <span>{t("auth.firstName")}</span>
             <input autoComplete="given-name" name="firstName" placeholder="Elena" required type="text" />
           </label>
           <label>
-            <span>Last Name</span>
+            <span>{t("auth.lastName")}</span>
             <input autoComplete="family-name" name="lastName" placeholder="Rossi" required type="text" />
           </label>
         </div>
         <label>
-          <span>Email Address</span>
+          <span>{t("auth.email")}</span>
           <input autoComplete="email" name="email" placeholder="name@example.com" required type="email" />
         </label>
         <label>
-          <span>Password</span>
+          <span>{t("auth.password")}</span>
           <input
             autoComplete="new-password"
             minLength={8}
