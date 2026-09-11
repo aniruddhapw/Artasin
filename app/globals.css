@@ -626,6 +626,11 @@ dd {
   width: 100%;
 }
 
+.stack-actions .share-control {
+  display: flex;
+  width: 100%;
+}
+
 .artist-note {
   margin-top: 48px;
 }
@@ -2781,7 +2786,26 @@ textarea::placeholder {
    --------------------------------------------------------------------------- */
 
 .artist-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
   margin-top: 24px;
+}
+
+/* Side by side these two overflow a phone and wrap ragged, so stack them. */
+@media (max-width: 520px) {
+  .artist-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* .button sets width: fit-content, which blocks the stretch. */
+  .artist-header-actions .button,
+  .artist-header-actions .share-control,
+  .artist-header-actions .share-control > button {
+    width: 100%;
+  }
 }
 
 .portfolio-section {
