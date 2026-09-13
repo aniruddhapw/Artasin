@@ -48,7 +48,7 @@ export function SignupForm() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to create account"));
+        throw new Error(formatApiError(payload, t("error.createAccount"), t));
       }
 
       router.push(role === "ARTIST" ? "/studio" : "/");

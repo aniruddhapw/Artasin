@@ -2,13 +2,17 @@ import { z } from "zod";
 import { created, fail, handleApiError, mediaUrlSchema, moneyToCents, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ensureSlug } from "@/lib/slug";
 
 const createArtworkSchema = z.object({
   title: z.string().min(1),
+  // Derived from the title on the server. Still accepted so existing API
+  // clients keep working, but the studio form no longer sends one.
   slug: z
     .string()
     .min(3, "must be at least 3 characters")
-    .regex(/^[a-z0-9-]+$/, "can only use lowercase letters, numbers, and hyphens"),
+    .regex(/^[a-z0-9-]+$/, "can only use lowercase letters, numbers, and hyphens")
+    .optional(),
   description: z.string().min(1),
   category: z.string().min(1),
   medium: z.string().min(1),
@@ -31,6 +35,25 @@ const createArtworkSchema = z.object({
     .max(5, { message: "You can attach up to 5 images" })
     .default([])
 });
+
+
+/**
+ * Two artists can easily title a piece "Sunset". Now that nobody edits the slug
+ * by hand, a collision has to resolve itself rather than surfacing a unique
+ * constraint error the artist cannot act on.
+ */
+async function uniqueArtworkSlug(preferred) {
+  const base = ensureSlug(preferred, "artwork");
+  let candidate = base;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const clash = await prisma.artwork.findUnique({ where: { slug: candidate }, select: { id: true } });
+    if (!clash) {
+      return candidate;
+    }
+    candidate = `${base}-${Math.random().toString(36).slice(2, 7)}`;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
 
 export async function GET(request) {
   try {
@@ -79,7 +102,7 @@ export async function POST(request) {
       data: {
         artistId: user.artistProfile.id,
         title: input.title,
-        slug: input.slug,
+        slug: await uniqueArtworkSlug(input.slug || input.title),
         description: input.description,
         category: input.category,
         medium: input.medium,

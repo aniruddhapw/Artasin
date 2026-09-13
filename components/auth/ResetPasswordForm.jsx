@@ -22,7 +22,7 @@ export function ResetPasswordForm() {
     const formData = new FormData(event.currentTarget);
     const password = String(formData.get("password"));
     if (password !== String(formData.get("confirmPassword"))) {
-      setError("Those passwords don't match");
+      setError(t("error.passwordsDoNotMatch"));
       return;
     }
 
@@ -35,7 +35,7 @@ export function ResetPasswordForm() {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to reset your password"));
+        throw new Error(formatApiError(payload, t("error.resetPassword"), t));
       }
       setDone(true);
       setTimeout(() => router.push("/login"), 2000);

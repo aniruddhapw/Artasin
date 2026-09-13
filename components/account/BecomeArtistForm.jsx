@@ -3,16 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
-import { ensureSlug, slugify } from "@/lib/slug";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 const disciplines = ["Painting", "Sculpture", "Digital Art", "Photography", "Mixed Media"];
 
 export function BecomeArtistForm({ defaultName }) {
+  const t = useT();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [displayName, setDisplayName] = useState(defaultName || "");
-  const [slug, setSlug] = useState(slugify(defaultName || ""));
-  const [slugEdited, setSlugEdited] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -24,7 +23,6 @@ export function BecomeArtistForm({ defaultName }) {
     const formData = new FormData(event.currentTarget);
     const body = {
       displayName: displayName.trim(),
-      slug: slug || ensureSlug(displayName, "artist"),
       discipline: formData.get("discipline") || undefined,
       location: formData.get("location") || undefined
     };
@@ -37,7 +35,7 @@ export function BecomeArtistForm({ defaultName }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to open your studio"));
+        throw new Error(formatApiError(payload, t("error.openStudio"), t));
       }
       // The session cookie was reissued with the new role, so a refresh is what
       // lets the rest of the app (and the edge proxy) see the artist account.
@@ -52,14 +50,12 @@ export function BecomeArtistForm({ defaultName }) {
   if (!isOpen) {
     return (
       <article className="dashboard-card">
-        <h2>Sell Your Own Work</h2>
+        <h2>{t("account.becomeArtist.title")}</h2>
         <p className="field-hint" style={{ marginTop: 0 }}>
-          You are set up as a collector. If you also make art, you can open a studio on this same account — you
-          keep your order history and sign in exactly as you do now. An admin reviews new studios before you can
-          publish work for sale, but you can build your portfolio straight away.
+          {t("account.becomeArtist.body")}
         </p>
         <button className="button button-primary" onClick={() => setIsOpen(true)} type="button">
-          Open an Artist Studio
+          {t("account.becomeArtist.cta")}
         </button>
       </article>
     );
@@ -67,42 +63,24 @@ export function BecomeArtistForm({ defaultName }) {
 
   return (
     <article className="dashboard-card">
-      <h2>Open an Artist Studio</h2>
+      <h2>{t("account.becomeArtist.cta")}</h2>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
-          <span>Studio Name</span>
-          <small className="field-hint">The name collectors will see on your work.</small>
+          <span>{t("auth.studioName")}</span>
+          <small className="field-hint">{t("account.becomeArtist.nameHint")}</small>
           <input
             maxLength={160}
-            onChange={(event) => {
-              setDisplayName(event.target.value);
-              if (!slugEdited) {
-                setSlug(slugify(event.target.value));
-              }
-            }}
+            onChange={(event) => setDisplayName(event.target.value)}
             required
             type="text"
             value={displayName}
           />
         </label>
-        <label>
-          <span>Studio URL</span>
-          <small className="field-hint">artasin.in/artist/{slug || "your-name"}</small>
-          <input
-            minLength={3}
-            onChange={(event) => {
-              setSlugEdited(true);
-              setSlug(event.target.value);
-            }}
-            pattern="[a-z0-9-]+"
-            value={slug}
-          />
-        </label>
         <div className="auth-two-col">
           <label>
-            <span>Discipline (Optional)</span>
+            <span>{t("auth.discipline")}</span>
             <select defaultValue="" name="discipline">
-              <option value="">Select...</option>
+              <option value="">{t("common.selectPlaceholder")}</option>
               {disciplines.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -111,17 +89,17 @@ export function BecomeArtistForm({ defaultName }) {
             </select>
           </label>
           <label>
-            <span>Location (Optional)</span>
+            <span>{t("auth.location")}</span>
             <input name="location" placeholder="Pune, Maharashtra" type="text" />
           </label>
         </div>
         {error ? <p className="auth-error" role="alert">{error}</p> : null}
         <div className="portfolio-form-actions">
           <button className="button button-secondary" onClick={() => setIsOpen(false)} type="button">
-            Cancel
+            {t("common.cancel")}
           </button>
           <button className="button button-primary" disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Opening..." : "Open Studio"}
+            {isSubmitting ? t("account.becomeArtist.opening") : t("account.becomeArtist.openStudio")}
           </button>
         </div>
       </form>

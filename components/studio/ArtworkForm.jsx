@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
-import { ensureSlug, slugify } from "@/lib/slug";
 import { useT } from "@/components/i18n/LocaleProvider";
 
 const categories = ["Painting", "Sculpture", "Digital Art", "Photography"];
@@ -14,8 +13,6 @@ export function ArtworkForm({ artwork, verificationStatus }) {
   const canPublish = verificationStatus === "APPROVED";
   const router = useRouter();
   const isEditing = Boolean(artwork);
-  const [slug, setSlug] = useState(artwork?.slug || "");
-  const [slugEdited, setSlugEdited] = useState(isEditing);
   const [images, setImages] = useState(() => (artwork?.media || []).map((item) => item.url));
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
@@ -31,7 +28,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       return;
     }
     if (files.length > remainingSlots) {
-      setError(`You can add ${remainingSlots} more image${remainingSlots === 1 ? "" : "s"} (${MAX_IMAGES} maximum).`);
+      setError(t("error.maxImages"));
       return;
     }
 
@@ -45,7 +42,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
         const response = await fetch("/api/uploads", { method: "POST", body: formData });
         const payload = await response.json();
         if (!response.ok) {
-          throw new Error(formatApiError(payload, "Upload failed"));
+          throw new Error(formatApiError(payload, t("error.uploadFailed"), t));
         }
         uploaded.push(payload.url);
       }
@@ -83,7 +80,6 @@ export function ArtworkForm({ artwork, verificationStatus }) {
     const year = formData.get("year");
     const body = {
       title,
-      slug: slug || ensureSlug(title),
       description: formData.get("description"),
       category: formData.get("category"),
       medium: formData.get("medium"),
@@ -110,7 +106,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to save artwork"));
+        throw new Error(formatApiError(payload, t("error.saveArtwork"), t));
       }
 
       router.push("/studio/artworks");
@@ -130,29 +126,8 @@ export function ArtworkForm({ artwork, verificationStatus }) {
           <input
             defaultValue={artwork?.title}
             name="title"
-            onChange={(event) => {
-              if (!slugEdited) {
-                setSlug(slugify(event.target.value));
-              }
-            }}
             required
             type="text"
-          />
-        </label>
-        <label>
-          <span>{t("artwork.form.slug")}</span>
-          <small className="field-hint">
-            {t("artwork.form.slugHint")}
-          </small>
-          <input
-            minLength={3}
-            name="slug"
-            onChange={(event) => {
-              setSlugEdited(true);
-              setSlug(event.target.value);
-            }}
-            pattern="[a-z0-9-]+"
-            value={slug}
           />
         </label>
         <label>

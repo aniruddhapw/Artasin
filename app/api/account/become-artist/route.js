@@ -4,6 +4,20 @@ import { createSessionToken, getAuthUser, publicUser, setSessionCookie } from "@
 import { prisma } from "@/lib/db";
 import { ensureSlug } from "@/lib/slug";
 
+/** Two artists can share a name; the studio URL still has to be unique. */
+async function uniqueArtistSlug(preferred) {
+  const base = ensureSlug(preferred, "artist");
+  let candidate = base;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const clash = await prisma.artistProfile.findUnique({ where: { slug: candidate }, select: { id: true } });
+    if (!clash) {
+      return candidate;
+    }
+    candidate = `${base}-${Math.random().toString(36).slice(2, 7)}`;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
 const becomeArtistSchema = z.object({
   displayName: z.string().min(1, { message: "is required" }).max(160),
   slug: z
@@ -29,14 +43,8 @@ export async function POST(request) {
     }
 
     const input = becomeArtistSchema.parse(await request.json());
-    const slug = input.slug || ensureSlug(input.displayName, "artist");
-
-    const existing = await prisma.artistProfile.findUnique({ where: { slug } });
-    if (existing) {
-      return fail("That studio URL is already taken. Please choose another.", 409, {
-        fieldErrors: { slug: ["is already taken"] }
-      });
-    }
+    // Artists no longer choose this, so a clash has to resolve itself.
+    const slug = await uniqueArtistSlug(input.slug || input.displayName);
 
     // Role and profile must move together, or the account ends up gated out of
     // /studio while owning a profile (or the reverse).

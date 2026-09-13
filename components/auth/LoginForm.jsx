@@ -40,7 +40,7 @@ export function LoginForm() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to sign in"));
+        throw new Error(formatApiError(payload, t("error.signIn"), t));
       }
 
       const fallback = payload.user.role === "ARTIST" ? "/studio" : "/";

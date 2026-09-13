@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function ProfileForm({ artistProfile }) {
+  const t = useT();
   const router = useRouter();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -33,7 +35,7 @@ export function ProfileForm({ artistProfile }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to save profile"));
+        throw new Error(formatApiError(payload, t("error.saveProfile"), t));
       }
       setSuccess(true);
       router.refresh();

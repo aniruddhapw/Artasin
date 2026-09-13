@@ -26,7 +26,7 @@ export function ForgotPasswordForm() {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to send a reset link"));
+        throw new Error(formatApiError(payload, t("error.sendResetLink"), t));
       }
       setSent(true);
     } catch (submitError) {

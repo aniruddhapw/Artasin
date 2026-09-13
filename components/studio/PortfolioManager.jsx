@@ -41,7 +41,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
       const response = await fetch("/api/uploads", { method: "POST", body: formData });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Upload failed"));
+        throw new Error(formatApiError(payload, t("error.uploadFailed"), t));
       }
       updateDraft("imageUrl", payload.url);
     } catch (uploadError) {
@@ -74,7 +74,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
     setError("");
 
     if (!draft.imageUrl) {
-      setError("Add a photo of the piece first.");
+      setError(t("error.photoFirst"));
       return;
     }
 
@@ -95,7 +95,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to save this piece"));
+        throw new Error(formatApiError(payload, t("error.savePiece"), t));
       }
 
       setPieces((current) =>
@@ -121,7 +121,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
     try {
       const response = await fetch(`/api/portfolio/${piece.id}`, { method: "DELETE" });
       if (!response.ok) {
-        throw new Error(formatApiError(await response.json(), "Unable to remove this piece"));
+        throw new Error(formatApiError(await response.json(), t("error.removePiece"), t));
       }
       setPieces((current) => current.filter((row) => row.id !== piece.id));
       if (editingId === piece.id) {
@@ -160,7 +160,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
       router.refresh();
     } catch (moveError) {
       setPieces(pieces);
-      setError("Could not save the new order. Please try again.");
+      setError(t("error.reorderFailed"));
     } finally {
       setBusyId(null);
     }
