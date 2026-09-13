@@ -5,17 +5,69 @@ import { Icon } from "@/components/Icon";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
-import { detailUrl } from "@/lib/images";
+import { detailUrl, thumbUrl } from "@/lib/images";
 import { collectionCards, mediums } from "@/data/artisan";
 
+const FEATURED_ARTIST_LIMIT = 4;
+const PREVIEW_IMAGES_PER_ARTIST = 3;
+
+/**
+ * Artists are featured on the strength of the work they have actually uploaded,
+ * counting past work as well as listings. Ranking by published artworks alone
+ * hid every artist who has a portfolio but nothing for sale yet — which is most
+ * artists when they first join, and exactly the people worth surfacing.
+ */
 async function getTrendingArtists() {
   const artistProfiles = await prisma.artistProfile.findMany({
-    where: { verificationStatus: "APPROVED" },
-    include: { _count: { select: { artworks: { where: { status: "PUBLISHED" } } } } },
-    orderBy: { artworks: { _count: "desc" } },
-    take: 3
+    where: {
+      verificationStatus: "APPROVED",
+      OR: [{ artworks: { some: { status: "PUBLISHED" } } }, { portfolioPieces: { some: {} } }]
+    },
+    include: {
+      // Sold pieces still show what an artist can do, so they count as preview
+      // material even though they are no longer for sale.
+      artworks: {
+        where: { status: { in: ["PUBLISHED", "SOLD"] } },
+        include: { media: { take: 1, orderBy: { sortOrder: "asc" } } },
+        orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+        take: PREVIEW_IMAGES_PER_ARTIST
+      },
+      portfolioPieces: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        take: PREVIEW_IMAGES_PER_ARTIST
+      },
+      _count: {
+        select: { artworks: { where: { status: "PUBLISHED" } }, portfolioPieces: true }
+      }
+    }
   });
-  return artistProfiles;
+
+  return artistProfiles
+    .map((artist) => {
+      const listingPreviews = artist.artworks
+        .filter((artwork) => artwork.media[0]?.url)
+        .map((artwork) => ({ url: artwork.media[0].url, href: `/artwork/${artwork.slug}`, title: artwork.title }));
+      const portfolioPreviews = artist.portfolioPieces.map((piece) => ({
+        url: piece.imageUrl,
+        href: `/artist/${artist.slug}`,
+        title: piece.title
+      }));
+
+      return {
+        id: artist.id,
+        slug: artist.slug,
+        displayName: artist.displayName,
+        discipline: artist.discipline,
+        forSaleCount: artist._count.artworks,
+        totalWorks: artist._count.artworks + artist._count.portfolioPieces,
+        // Listings lead, because those are the pieces a visitor can actually buy.
+        previews: [...listingPreviews, ...portfolioPreviews].slice(0, PREVIEW_IMAGES_PER_ARTIST)
+      };
+    })
+    // An artist with no usable image would render as a row of placeholders.
+    .filter((artist) => artist.previews.length)
+    .sort((a, b) => b.totalWorks - a.totalWorks || a.displayName.localeCompare(b.displayName))
+    .slice(0, FEATURED_ARTIST_LIMIT);
 }
 
 async function getHeroArtwork() {
@@ -81,18 +133,45 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="artists-band section-pad" id="artists">
-          <h2>Trending Artists</h2>
-          <div className="artist-grid">
-            {artists.map((artist) => (
-              <Link className="artist-card" href={`/artist/${artist.slug}`} key={artist.id}>
-                <ArtistAvatar name={artist.displayName} />
-                <h3>{artist.displayName}</h3>
-                <p>{artist.discipline || "Artist"}</p>
+        {artists.length ? (
+          <section className="artists-band section-pad" id="artists">
+            <div className="section-heading inline-heading">
+              <h2>Trending Artists</h2>
+              <Link className="text-link" href="/artists">
+                View All Artists
               </Link>
-            ))}
-          </div>
-        </section>
+            </div>
+            <div className="artist-grid">
+              {artists.map((artist) => (
+                <article className="artist-card" key={artist.id}>
+                  <div className="artist-card-works">
+                    {artist.previews.map((preview) => (
+                      <Link
+                        className="artist-card-work group-image"
+                        href={preview.href}
+                        key={`${artist.id}-${preview.url}`}
+                        title={preview.title}
+                      >
+                        <LazyImage alt={`${preview.title} by ${artist.displayName}`} src={thumbUrl(preview.url)} />
+                      </Link>
+                    ))}
+                  </div>
+                  <Link className="artist-card-identity" href={`/artist/${artist.slug}`}>
+                    <ArtistAvatar name={artist.displayName} />
+                    <div>
+                      <h3>{artist.displayName}</h3>
+                      <p>{artist.discipline || "Artist"}</p>
+                      <p className="artist-card-count">
+                        {artist.totalWorks} {artist.totalWorks === 1 ? "work" : "works"}
+                        {artist.forSaleCount ? ` · ${artist.forSaleCount} for sale` : " · taking commissions"}
+                      </p>
+                    </div>
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="section-pad bordered-section">
           <h2 className="medium-heading">Explore Mediums</h2>

@@ -443,6 +443,13 @@ legend {
   background: var(--surface-lowest);
 }
 
+/* The band used to be a centred column; its heading now sits in a normal
+   inline-heading row, so the old centring and 64px gap have to be undone there. */
+.artists-band .section-heading h2 {
+  margin-bottom: 0;
+  text-align: left;
+}
+
 .artists-band h2 {
   margin-bottom: 64px;
   text-align: center;
@@ -450,14 +457,89 @@ legend {
 
 .artist-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--gutter);
 }
 
+/* The card now leads with the artist's actual work rather than a monogram, so
+   it reads left-aligned like the rest of the grid cards on the site. */
 .artist-card {
   display: grid;
-  justify-items: center;
-  text-align: center;
+  gap: 14px;
+  align-content: start;
+  justify-items: stretch;
+  text-align: left;
+}
+
+.artist-card-works {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: repeat(2, 1fr);
+  gap: 4px;
+  aspect-ratio: 3 / 2;
+}
+
+/* The first piece takes the tall left column; the rest stack beside it. A lone
+   piece simply fills the frame. */
+.artist-card-work:first-child {
+  grid-row: span 2;
+}
+
+.artist-card-work:only-child {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.artist-card-works:has(.artist-card-work:nth-child(2):last-child) .artist-card-work {
+  grid-row: span 2;
+}
+
+.artist-card-work {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface-low);
+}
+
+.artist-card-work img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 700ms ease;
+}
+
+.artist-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The standalone avatar is 192px for the old centred card; inline beside a name
+   it needs to be a small monogram. */
+.artist-card-identity .artist-avatar {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0;
+}
+
+.artist-card-identity .artist-avatar span {
+  font-size: 14px;
+}
+
+.artist-card-identity h3 {
+  margin: 0 0 2px;
+  font-size: 17px;
+}
+
+.artist-card-identity p {
+  margin: 0;
+}
+
+.artist-card-count {
+  margin-top: 2px;
+  font-size: 13px;
 }
 
 .artist-avatar {
@@ -3362,9 +3444,12 @@ textarea::placeholder {
   white-space: nowrap;
 }
 
-.language-option {
+/* .nav-actions button zeroes padding and forces inline-grid on anything inside
+   the nav, so these need two classes to outrank it. */
+.language-toggle .language-option {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
   min-height: 30px;
   padding: 4px 10px;
@@ -3378,21 +3463,25 @@ textarea::placeholder {
   transition: background 160ms ease, color 160ms ease;
 }
 
-.language-option[lang="mr"] {
+.language-toggle .language-option + .language-option {
+  border-left: 1px solid var(--line);
+}
+
+.language-toggle .language-option[lang="mr"] {
   font-family: "Noto Sans Devanagari", Inter, sans-serif;
 }
 
-.language-option:hover:not(:disabled) {
+.language-toggle .language-option:hover:not(:disabled) {
   background: var(--surface-low);
   color: var(--text);
 }
 
-.language-option.is-active {
+.language-toggle .language-option.is-active {
   background: var(--primary);
   color: var(--on-primary);
 }
 
-.language-option:disabled {
+.language-toggle .language-option:disabled {
   opacity: 0.6;
   cursor: default;
 }
@@ -3409,4 +3498,16 @@ textarea::placeholder {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .artist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .artist-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
