@@ -68,7 +68,7 @@ export default async function StudioArtworksPage() {
                     <ShareButton
                       className="small-outline"
                       path={`/artwork/${artwork.slug}`}
-                      text={`${artwork.title} — my work on ARTISAN`}
+                      text={`${artwork.title} — my work on ARTASIN`}
                       title={artwork.title}
                     />
                   ) : null}

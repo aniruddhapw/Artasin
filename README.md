@@ -1,4 +1,4 @@
-# Artisan Exchange
+# Artasin
 
 A minimalist, editorial-style art marketplace built with Next.js (App Router) and Prisma/PostgreSQL. Artists list original paintings, sculpture, digital art, and photography; collectors browse, purchase, and commission bespoke work; the platform takes a commission on every transaction.
 
@@ -52,7 +52,7 @@ See `.env.example` for the full list. Key ones:
 | `MEETING_PROVIDER` | Label stored on scheduled meetings; swap for a real calendar/video integration later. |
 | `EMAIL_PROVIDER` | `console` (default in local dev — logs the email instead of sending it) or `resend`. Auto-selects `resend` if `RESEND_API_KEY` is set — see [Notifications](#notifications). |
 | `RESEND_API_KEY` | Required when `EMAIL_PROVIDER=resend`. From your Resend dashboard. |
-| `EMAIL_FROM` | Sender shown on outgoing emails, e.g. `ARTISAN <notifications@yourdomain.com>`. Requires a verified sending domain in Resend. |
+| `EMAIL_FROM` | Sender shown on outgoing emails, e.g. `ARTASIN <notifications@yourdomain.com>`. Requires a verified sending domain in Resend. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Enables "Continue with Google" on `/login` and `/signup` when both are set — see [Auth](#auth). Omit either one and the button redirects to `/login?error=google_not_configured` instead of erroring. |
 
 ## Architecture Notes

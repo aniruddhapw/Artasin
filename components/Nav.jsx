@@ -16,7 +16,7 @@ export async function Nav({ active = "collections" }) {
     <nav className="top-nav">
       <div className="nav-inner">
         <Link className="brand" href="/">
-          ARTISAN
+          ARTASIN
         </Link>
         <div className="nav-links">
           {navItems.map((item) => (

@@ -51,20 +51,20 @@ export async function generateMetadata({ params }) {
   const previewSource = await getPreviewImage(artist.id, artist.portfolioPieces[0]?.imageUrl);
   const description =
     artist.bio?.slice(0, 160) ||
-    `${artist.discipline || "Artist"}${artist.location ? ` in ${artist.location}` : ""} on ARTISAN — original work and commissions.`;
+    `${artist.discipline || "Artist"}${artist.location ? ` in ${artist.location}` : ""} on ARTASIN — original work and commissions.`;
 
   return {
     title: `${artist.displayName}`,
     description,
     openGraph: {
       type: "profile",
-      title: `${artist.displayName} on ARTISAN`,
+      title: `${artist.displayName} on ARTASIN`,
       description,
       images: previewSource ? [{ url: ogUrl(previewSource), width: 1200, height: 630 }] : undefined
     },
     twitter: {
       card: previewSource ? "summary_large_image" : "summary",
-      title: `${artist.displayName} on ARTISAN`,
+      title: `${artist.displayName} on ARTASIN`,
       description,
       images: previewSource ? [ogUrl(previewSource)] : undefined
     }
@@ -130,8 +130,8 @@ export default async function ArtistProfilePage({ params }) {
             </Link>
             <ShareButton
               path={`/artist/${artist.slug}`}
-              text={`${artist.displayName} on ARTISAN — original work and commissions.`}
-              title={`${artist.displayName} on ARTISAN`}
+              text={`${artist.displayName} on ARTASIN — original work and commissions.`}
+              title={`${artist.displayName} on ARTASIN`}
             />
           </div>
         </header>

@@ -6,7 +6,7 @@ export function AuthShell({ children, eyebrow, title, body }) {
     <main className="auth-page">
       <div className="auth-topbar">
         <Link className="auth-brand" href="/">
-          ARTISAN
+          ARTASIN
         </Link>
         {/* Sign-in is the first screen an artist meets, so the language switch
             has to be reachable before they are through it. */}

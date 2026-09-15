@@ -5,7 +5,7 @@ import { Nav } from "@/components/Nav";
 export const metadata = {
   title: "Privacy Policy",
   description:
-    "How ARTISAN collects, uses, stores, and protects your personal data, and the rights you have over it."
+    "How ARTASIN collects, uses, stores, and protects your personal data, and the rights you have over it."
 };
 
 const LAST_UPDATED = "8 September 2026";
@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2>1. Who we are</h2>
             <p>
-              ARTISAN (&ldquo;ARTISAN&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) is an online marketplace at{" "}
+              ARTASIN (&ldquo;ARTASIN&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) is an online marketplace at{" "}
               <strong>artasin.in</strong> where independent artists list original artwork for sale and accept
               custom commissions. The site is operated as a sole proprietorship by Aniruddha Wankhade.
             </p>
@@ -60,7 +60,7 @@ export default function PrivacyPolicyPage() {
                 checkout, so an artist can ship your purchase.
               </li>
               <li>
-                <strong>Artist profile</strong> — if you sell on ARTISAN: your display name, studio URL, bio,
+                <strong>Artist profile</strong> — if you sell on ARTASIN: your display name, studio URL, bio,
                 discipline, location, and website.
               </li>
               <li>
@@ -188,7 +188,7 @@ export default function PrivacyPolicyPage() {
             <h2>6. Where your data is stored</h2>
             <p>
               Our database and hosting are located outside India (primarily in the United States), and our email
-              provider delivers through infrastructure in the Asia-Pacific region. By using ARTISAN you understand
+              provider delivers through infrastructure in the Asia-Pacific region. By using ARTASIN you understand
               that your personal data is transferred to and stored on servers outside India. We choose established
               providers that maintain appropriate technical and organisational safeguards.
             </p>
@@ -251,7 +251,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2>10. Children</h2>
             <p>
-              ARTISAN is not intended for anyone under 18. We do not knowingly collect data from children. If you
+              ARTASIN is not intended for anyone under 18. We do not knowingly collect data from children. If you
               believe a child has given us personal data, contact us and we will delete it.
             </p>
           </section>

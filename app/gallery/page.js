@@ -8,7 +8,7 @@ import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
   title: "Collection",
-  description: "Browse the full ARTISAN collection of paintings, sculpture, digital art, and photography."
+  description: "Browse the full ARTASIN collection of paintings, sculpture, digital art, and photography."
 };
 
 const categories = ["Painting", "Sculpture", "Digital Art", "Photography"];

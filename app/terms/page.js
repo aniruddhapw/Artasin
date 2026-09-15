@@ -5,7 +5,7 @@ import { Nav } from "@/components/Nav";
 export const metadata = {
   title: "Terms of Service",
   description:
-    "The terms that govern buying, selling, and commissioning original artwork on the ARTISAN marketplace."
+    "The terms that govern buying, selling, and commissioning original artwork on the ARTASIN marketplace."
 };
 
 const LAST_UPDATED = "8 September 2026";
@@ -25,7 +25,7 @@ export default function TermsPage() {
           <section>
             <h2>1. About these terms</h2>
             <p>
-              These terms are an agreement between you and ARTISAN, an online marketplace at{" "}
+              These terms are an agreement between you and ARTASIN, an online marketplace at{" "}
               <strong>artasin.in</strong> operated as a sole proprietorship by Aniruddha Wankhade. By creating an
               account, browsing, buying, selling, or commissioning work here, you agree to them. If you do not
               agree, please do not use the site.
@@ -37,9 +37,9 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>2. What ARTISAN is — and is not</h2>
+            <h2>2. What ARTASIN is — and is not</h2>
             <p>
-              ARTISAN is a <strong>marketplace intermediary</strong>. We provide the platform where independent
+              ARTASIN is a <strong>marketplace intermediary</strong>. We provide the platform where independent
               artists list their own original work and accept commissions from collectors. We are not the seller,
               creator, or owner of the artwork listed here.
             </p>
@@ -100,7 +100,7 @@ export default function TermsPage() {
 
             <h3>Fees and payouts</h3>
             <p>
-              ARTISAN charges a commission on each completed sale. The default rate is 15%, and the rate that
+              ARTASIN charges a commission on each completed sale. The default rate is 15%, and the rate that
               applies to your account is shown on your Studio Dashboard alongside your revenue share. We may change
               commission rates with reasonable notice; the rate in effect at the time of a sale is the rate that
               applies to it.
@@ -112,7 +112,7 @@ export default function TermsPage() {
 
             <h3>Licence you grant us</h3>
             <p>
-              You keep full copyright in your artwork. You grant ARTISAN a non-exclusive, royalty-free licence to
+              You keep full copyright in your artwork. You grant ARTASIN a non-exclusive, royalty-free licence to
               display, reproduce, and distribute images of your listed work and your studio profile for the purpose
               of operating, promoting, and marketing the marketplace. This licence ends when you remove a listing,
               except for copies already used in past marketing or retained in our records.
@@ -235,7 +235,7 @@ export default function TermsPage() {
           <section>
             <h2>11. Intellectual property</h2>
             <p>
-              Artists retain copyright in their artwork. ARTISAN retains all rights in the site itself — its name,
+              Artists retain copyright in their artwork. ARTASIN retains all rights in the site itself — its name,
               branding, design, and software. Nothing in these terms transfers ownership of either to you.
             </p>
             <p>
@@ -269,7 +269,7 @@ export default function TermsPage() {
           <section>
             <h2>14. Limitation of liability</h2>
             <p>
-              To the maximum extent permitted by law, ARTISAN is not liable for indirect, incidental,
+              To the maximum extent permitted by law, ARTASIN is not liable for indirect, incidental,
               consequential, or punitive damages, or for lost profits, data, or goodwill. Our total liability for
               any claim relating to an order is limited to the commission we actually received on that order, and
               our total liability for any other claim is limited to ₹10,000.
@@ -293,7 +293,7 @@ export default function TermsPage() {
             <h2>16. Changes to these terms</h2>
             <p>
               We may update these terms. The date at the top of this page shows when they last changed, and we will
-              notify you of significant changes by email or a notice on the site. Continuing to use ARTISAN after a
+              notify you of significant changes by email or a notice on the site. Continuing to use ARTASIN after a
               change means you accept the updated terms.
             </p>
           </section>

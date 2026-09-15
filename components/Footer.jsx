@@ -8,7 +8,7 @@ export async function Footer({ variant = "full" }) {
     <footer className={`footer footer--${variant}`}>
       <div className="footer-grid">
         <div className="footer-brand">
-          <Link href="/">ARTISAN</Link>
+          <Link href="/">ARTASIN</Link>
           {variant === "full" ? (
             <p>
               A curated gallery space for the discerning collector. Minimalism,

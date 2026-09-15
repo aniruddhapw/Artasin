@@ -47,8 +47,8 @@ export default async function StudioPortfolioPage() {
           </div>
           <ShareLinkRow
             path={`/artist/${user.artistProfile.slug}`}
-            text="My work on ARTISAN — original pieces and commissions."
-            title={`${user.artistProfile.displayName} on ARTISAN`}
+            text="My work on ARTASIN — original pieces and commissions."
+            title={`${user.artistProfile.displayName} on ARTASIN`}
           />
         </section>
 

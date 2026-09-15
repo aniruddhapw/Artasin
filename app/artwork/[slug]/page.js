@@ -153,7 +153,7 @@ export default async function ArtworkDetailPage({ params }) {
               <ShareButton
                 className="button button-secondary"
                 path={`/artwork/${artwork.slug}`}
-                text={`${artwork.title} by ${artwork.artist.displayName} on ARTISAN`}
+                text={`${artwork.title} by ${artwork.artist.displayName} on ARTASIN`}
                 title={artwork.title}
               />
             </div>

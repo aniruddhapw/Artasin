@@ -35,7 +35,7 @@ export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail }) {
         amount: payment.amountCents,
         currency: payment.currency,
         order_id: payment.intentId,
-        name: "ARTISAN",
+        name: "ARTASIN",
         description: "Original artwork purchase",
         prefill: {
           name: shippingAddress.fullName,

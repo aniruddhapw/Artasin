@@ -1,7 +1,7 @@
 export default function manifest() {
   return {
-    name: "ARTISAN | Original Art & Custom Commissions",
-    short_name: "ARTISAN",
+    name: "ARTASIN | Original Art & Custom Commissions",
+    short_name: "ARTASIN",
     description:
       "Shop original paintings, sculpture, and photography from independent artists, or commission a custom piece made for your space.",
     start_url: "/",

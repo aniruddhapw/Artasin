@@ -12,8 +12,8 @@ const siteDescription =
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "ARTISAN | Original Art & Custom Commissions",
-    template: "%s | ARTISAN"
+    default: "ARTASIN | Original Art & Custom Commissions",
+    template: "%s | ARTASIN"
   },
   description: siteDescription,
   keywords: [
@@ -25,20 +25,20 @@ export const metadata = {
   ],
   openGraph: {
     type: "website",
-    siteName: "ARTISAN",
-    title: "ARTISAN | Original Art & Custom Commissions",
+    siteName: "ARTASIN",
+    title: "ARTASIN | Original Art & Custom Commissions",
     description: siteDescription,
     url: siteUrl
   },
   twitter: {
     card: "summary_large_image",
-    title: "ARTISAN | Original Art & Custom Commissions",
+    title: "ARTASIN | Original Art & Custom Commissions",
     description: siteDescription
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black",
-    title: "ARTISAN"
+    title: "ARTASIN"
   }
 };
 
@@ -50,7 +50,7 @@ export const viewport = {
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "ARTISAN",
+  name: "ARTASIN",
   url: siteUrl,
   description: siteDescription,
   potentialAction: {
