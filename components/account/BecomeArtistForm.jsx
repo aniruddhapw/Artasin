@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { artistDisciplines } from "@/data/artisan";
 
-const disciplines = ["Painting", "Sculpture", "Digital Art", "Photography", "Mixed Media"];
 
 export function BecomeArtistForm({ defaultName }) {
   const t = useT();
@@ -81,9 +81,9 @@ export function BecomeArtistForm({ defaultName }) {
             <span>{t("auth.discipline")}</span>
             <select defaultValue="" name="discipline">
               <option value="">{t("common.selectPlaceholder")}</option>
-              {disciplines.map((item) => (
+              {artistDisciplines.map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {t(`discipline.${item}`)}
                 </option>
               ))}
             </select>

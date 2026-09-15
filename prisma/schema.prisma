@@ -79,6 +79,7 @@ model User {
   artistProfile   ArtistProfile?
   buyerOrders     Order[]             @relation("BuyerOrders")
   commissionBriefs CommissionRequest[] @relation("BuyerCommissionRequests")
+  cartItems       CartItem[]
   messages        Message[]
   meetings        Meeting[]           @relation("BuyerMeetings")
   reviews         Review[]
@@ -157,6 +158,7 @@ model Artwork {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   artist         ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  cartItems      CartItem[]
   media          ArtworkMedia[]
   orders         Order[]
   reviews        Review[]
@@ -169,6 +171,21 @@ model ArtworkMedia {
   alt       String
   sortOrder Int     @default(0)
   artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+}
+
+/// A buyer's saved-for-checkout list. Every artwork is a unique original, so an
+/// item is a reference rather than a quantity — the same piece cannot be in one
+/// cart twice, and it disappears for everyone once it sells.
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  artworkId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artworkId])
+  @@index([userId])
 }
 
 model Order {

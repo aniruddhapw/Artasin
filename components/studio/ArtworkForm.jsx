@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { artworkCategories } from "@/data/artisan";
+import { Spinner } from "@/components/Spinner";
 
-const categories = ["Painting", "Sculpture", "Digital Art", "Photography"];
 const MAX_IMAGES = 5;
 
 export function ArtworkForm({ artwork, verificationStatus }) {
@@ -141,7 +142,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
               <option disabled value="">
                 {t("artwork.form.selectCategory")}
               </option>
-              {categories.map((category) => (
+              {artworkCategories.map((category) => (
                 <option key={category} value={category}>
                   {t(`category.${category}`)}
                 </option>
@@ -198,11 +199,13 @@ export function ArtworkForm({ artwork, verificationStatus }) {
         <legend>{t("artwork.form.imagesLegend")}</legend>
         <label className="upload-box upload-box-stacked">
           <span>
-            {isUploading
-              ? t("artwork.form.uploading")
-              : images.length
-                ? t("artwork.form.addAnotherImage")
-                : t("artwork.form.uploadImages")}
+            {isUploading ? (
+              <Spinner label={t("artwork.form.uploading")} />
+            ) : images.length ? (
+              t("artwork.form.addAnotherImage")
+            ) : (
+              t("artwork.form.uploadImages")
+            )}
           </span>
           <small>
             {t("artwork.form.imageHint")}
@@ -216,7 +219,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
           />
         </label>
         {images.length ? (
-          <div className="artwork-image-grid">
+          <div className={isUploading ? "artwork-image-grid upload-busy" : "artwork-image-grid"}>
             {images.map((url, position) => (
               <div className="artwork-image-card" key={url}>
                 <img alt={`Artwork preview ${position + 1}`} src={url} />
@@ -252,7 +255,13 @@ export function ArtworkForm({ artwork, verificationStatus }) {
 
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       <button className="button button-primary request-submit" disabled={isSubmitting || isUploading} type="submit">
-        {isSubmitting ? t("common.saving") : isEditing ? t("artwork.form.saveChanges") : t("artwork.form.create")}
+        {isSubmitting ? (
+          <Spinner label={t("common.saving")} />
+        ) : isEditing ? (
+          t("artwork.form.saveChanges")
+        ) : (
+          t("artwork.form.create")
+        )}
       </button>
     </form>
   );

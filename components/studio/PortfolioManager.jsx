@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { Spinner } from "@/components/Spinner";
 
 const MAX_PIECES = 24;
 
@@ -174,11 +175,13 @@ export function PortfolioManager({ pieces: initialPieces }) {
 
           <label className="upload-box upload-box-stacked">
             <span>
-              {isUploading
-                ? t("artwork.form.uploading")
-                : draft.imageUrl
-                  ? t("portfolio.replacePhoto")
-                  : t("portfolio.uploadPhoto")}
+              {isUploading ? (
+                <Spinner label={t("artwork.form.uploading")} />
+              ) : draft.imageUrl ? (
+                t("portfolio.replacePhoto")
+              ) : (
+                t("portfolio.uploadPhoto")
+              )}
             </span>
             <small>
               {t("portfolio.photoHint")}
@@ -255,7 +258,13 @@ export function PortfolioManager({ pieces: initialPieces }) {
             disabled={isSaving || isUploading || isFull}
             type="submit"
           >
-            {isSaving ? t("common.saving") : isEditing ? t("artwork.form.saveChanges") : t("portfolio.addToPortfolio")}
+            {isSaving ? (
+              <Spinner label={t("common.saving")} />
+            ) : isEditing ? (
+              t("artwork.form.saveChanges")
+            ) : (
+              t("portfolio.addToPortfolio")
+            )}
           </button>
         </div>
         {isFull ? (

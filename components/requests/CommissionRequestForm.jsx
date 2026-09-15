@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { Icon } from "@/components/Icon";
+import { Spinner } from "@/components/Spinner";
 
 const artworkTypes = ["Painting", "Sculpture", "Digital Art", "Photography"];
 const budgetRanges = [
@@ -157,7 +158,7 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
         <legend>Reference Material</legend>
         <label className="upload-box">
           <Icon name="uploadFile" size={40} />
-          <strong>{isUploading ? "Uploading..." : "Upload Reference Images"}</strong>
+          <strong>{isUploading ? <Spinner label="Uploading..." /> : "Upload Reference Images"}</strong>
           <small>Drag and drop or click to browse. Max 5 files (JPG, PNG, PDF).</small>
           <input accept=".jpg,.jpeg,.png,.pdf" disabled={isUploading} multiple onChange={handleFilesChange} type="file" />
         </label>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { artistDisciplines } from "@/data/artisan";
 
 export function ProfileForm({ artistProfile }) {
   const t = useT();
@@ -61,7 +62,14 @@ export function ProfileForm({ artistProfile }) {
         <div className="auth-two-col">
           <label>
             <span>Discipline</span>
-            <input defaultValue={artistProfile.discipline || ""} name="discipline" placeholder="Oil on Canvas" type="text" />
+            <select defaultValue={artistProfile.discipline || ""} name="discipline">
+              <option value="">{t("common.selectPlaceholder")}</option>
+              {artistDisciplines.map((item) => (
+                <option key={item} value={item}>
+                  {t(`discipline.${item}`)}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             <span>Location</span>

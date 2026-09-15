@@ -4,6 +4,7 @@ import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { getAuthUser } from "@/lib/auth";
+import { getCart } from "@/lib/cart";
 import { prisma } from "@/lib/db";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
@@ -14,25 +15,35 @@ export const metadata = {
 
 export default async function CheckoutPage({ searchParams }) {
   const params = await searchParams;
+  const fromCart = params?.fromCart === "1";
   const artworkId = typeof params?.artworkId === "string" ? params.artworkId : undefined;
   const commissionRequestId =
     typeof params?.commissionRequestId === "string" ? params.commissionRequestId : undefined;
 
-  if (!artworkId && !commissionRequestId) {
+  if (!fromCart && !artworkId && !commissionRequestId) {
     redirect("/gallery");
   }
 
   const user = await getAuthUser();
   if (!user) {
-    const target = artworkId
+    const target = fromCart
+      ? "/checkout?fromCart=1"
+      : artworkId
       ? `/checkout?artworkId=${artworkId}`
       : `/checkout?commissionRequestId=${commissionRequestId}`;
     redirect(`/login?redirect=${encodeURIComponent(target)}`);
   }
 
   let summary = null;
+  let cartSummary = null;
 
-  if (artworkId) {
+  if (fromCart) {
+    const cart = await getCart(user.id);
+    if (!cart.available.length) {
+      redirect("/cart");
+    }
+    cartSummary = cart;
+  } else if (artworkId) {
     const artwork = await prisma.artwork.findUnique({
       where: { id: artworkId },
       include: {
@@ -84,24 +95,52 @@ export default async function CheckoutPage({ searchParams }) {
         <section className="request-layout">
           <div className="process-column">
             <h2>Order Summary</h2>
-            <div className="checkout-summary">
-              <div className="checkout-summary-image">
-                <img alt={`${summary.title} artwork`} src={summary.image} />
-              </div>
-              <div>
-                <h3>{summary.title}</h3>
-                <p className="byline">
-                  by <Link href={summary.artistHref}>{summary.artistName}</Link>
+            {cartSummary ? (
+              <>
+                {cartSummary.available.map((item) => (
+                  <div className="checkout-summary" key={item.id}>
+                    <div className="checkout-summary-image">
+                      <img
+                        alt={`${item.artwork.title} artwork`}
+                        src={thumbUrl(item.artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
+                      />
+                    </div>
+                    <div>
+                      <h3>{item.artwork.title}</h3>
+                      <p className="byline">
+                        by <Link href={`/artist/${item.artwork.artist.slug}`}>{item.artwork.artist.displayName}</Link>
+                      </p>
+                      <p className="price">
+                        {serializeMoney(item.artwork.priceCents, item.artwork.currency).formatted}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <p className="price checkout-cart-total">
+                  {serializeMoney(cartSummary.subtotalCents).formatted}
                 </p>
-                <p className="price">{summary.price.formatted}</p>
+              </>
+            ) : (
+              <div className="checkout-summary">
+                <div className="checkout-summary-image">
+                  <img alt={`${summary.title} artwork`} src={summary.image} />
+                </div>
+                <div>
+                  <h3>{summary.title}</h3>
+                  <p className="byline">
+                    by <Link href={summary.artistHref}>{summary.artistName}</Link>
+                  </p>
+                  <p className="price">{summary.price.formatted}</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <CheckoutForm
             artworkId={artworkId}
             commissionRequestId={commissionRequestId}
             defaultEmail={user.email}
+            fromCart={fromCart}
           />
         </section>
       </main>

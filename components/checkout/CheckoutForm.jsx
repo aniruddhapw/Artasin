@@ -19,7 +19,7 @@ function loadRazorpayScript() {
   });
 }
 
-export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail }) {
+export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail, fromCart = false }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,6 +73,32 @@ export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail }) {
     };
 
     try {
+      if (fromCart) {
+        // Each piece becomes its own order, so settle them one by one and land
+        // the buyer on their order list rather than a single order page.
+        const cartResponse = await fetch("/api/orders/cart", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shippingAddress })
+        });
+        const cartPayload = await cartResponse.json();
+        if (!cartResponse.ok) {
+          throw new Error(cartPayload.error || "Unable to create your orders");
+        }
+
+        for (const created of cartPayload.orders) {
+          await fetch(`/api/orders/${created.id}/pay`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({})
+          });
+        }
+
+        router.push("/orders");
+        router.refresh();
+        return;
+      }
+
       const createResponse = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

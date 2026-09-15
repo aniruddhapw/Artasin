@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { ArtworkGallery } from "@/components/artwork/ArtworkGallery";
 import { Footer } from "@/components/Footer";
 import { ShareButton } from "@/components/ShareButton";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { StarRating } from "@/components/StarRating";
+import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 import { galleryImages, ogUrl, thumbUrl } from "@/lib/images";
@@ -87,6 +89,17 @@ export default async function ArtworkDetailPage({ params }) {
     })
   ]);
 
+  const viewer = await getAuthUser();
+  const isOwnWork = viewer?.artistProfile?.id === artwork.artistId;
+  const inCart = viewer
+    ? Boolean(
+        await prisma.cartItem.findUnique({
+          where: { userId_artworkId: { userId: viewer.id, artworkId: artwork.id } },
+          select: { id: true }
+        })
+      )
+    : false;
+
   const price = serializeMoney(artwork.priceCents, artwork.currency);
   const images = galleryImages(artwork.media, artwork.title);
   const isAvailable = artwork.status === "PUBLISHED";
@@ -136,9 +149,14 @@ export default async function ArtworkDetailPage({ params }) {
             </dl>
             <div className="stack-actions">
               {isAvailable ? (
-                <Link className="button button-primary" href={`/checkout?artworkId=${artwork.id}`}>
-                  Purchase
-                </Link>
+                <>
+                  <Link className="button button-primary" href={`/checkout?artworkId=${artwork.id}`}>
+                    Purchase
+                  </Link>
+                  {isOwnWork ? null : (
+                    <AddToCartButton artworkId={artwork.id} inCart={inCart} isSignedIn={Boolean(viewer)} />
+                  )}
+                </>
               ) : (
                 <button className="button button-primary" disabled type="button">
                   Sold
