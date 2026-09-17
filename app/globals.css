@@ -770,7 +770,8 @@ dd {
 
 .request-page,
 .studio-page,
-.legal-page {
+.legal-page,
+.blog-post-page {
   max-width: var(--container);
   margin: 0 auto;
   padding: 80px var(--desktop-margin) var(--section);
@@ -2333,6 +2334,7 @@ textarea::placeholder {
   .request-page,
   .studio-page,
   .auth-page,
+  .blog-post-page,
   .footer-grid {
     padding-left: var(--mobile-margin);
     padding-right: var(--mobile-margin);
@@ -3799,9 +3801,7 @@ textarea::placeholder {
   line-height: 1.5;
 }
 
-.blog-post-page .page {
-  max-width: var(--container);
-}
+
 
 .blog-post {
   max-width: 720px;
