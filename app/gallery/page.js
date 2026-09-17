@@ -5,13 +5,12 @@ import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
+import { artworkCategories as categories } from "@/data/artisan";
 
 export const metadata = {
   title: "Collection",
-  description: "Browse the full ARTASIN collection of paintings, sculpture, digital art, and photography."
+  description: "Browse the full ARTASIN collection of original art across every medium."
 };
-
-const categories = ["Painting", "Sculpture", "Digital Art", "Photography"];
 
 export default async function GalleryPage({ searchParams }) {
   const params = await searchParams;

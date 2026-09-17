@@ -5,8 +5,7 @@ import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { Icon } from "@/components/Icon";
 import { Spinner } from "@/components/Spinner";
-
-const artworkTypes = ["Painting", "Sculpture", "Digital Art", "Photography"];
+import { artworkCategories } from "@/data/artisan";
 const budgetRanges = [
   { label: "₹5,000 - ₹10,000", min: 5000, max: 10000 },
   { label: "₹10,000 - ₹25,000", min: 10000, max: 25000 },
@@ -116,7 +115,7 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
             <option disabled value="">
               Select a type...
             </option>
-            {artworkTypes.map((type) => (
+            {artworkCategories.map((type) => (
               <option key={type} value={type}>
                 {type}
               </option>
