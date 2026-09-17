@@ -99,6 +99,9 @@ export default async function StudioPage({ searchParams }) {
             <Link className="button button-secondary" href="/studio/portfolio">
               {t("studio.managePortfolio")}
             </Link>
+            <Link className="button button-secondary" href="/studio/blog">
+              {t("blog.title")}
+            </Link>
             <Link className="button button-secondary" href="/studio/artworks">
               {t("studio.manageArtworks")}
             </Link>

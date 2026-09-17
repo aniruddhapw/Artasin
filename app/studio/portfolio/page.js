@@ -35,9 +35,14 @@ export default async function StudioPortfolioPage() {
               .
             </p>
           </div>
-          <Link className="button button-secondary" href="/studio/artworks">
-            {t("studio.manageListings")}
-          </Link>
+          <div className="studio-header-actions">
+            <Link className="button button-secondary" href="/studio/blog">
+              {t("blog.title")}
+            </Link>
+            <Link className="button button-secondary" href="/studio/artworks">
+              {t("studio.manageListings")}
+            </Link>
+          </div>
         </header>
 
         <section className="share-profile-card">

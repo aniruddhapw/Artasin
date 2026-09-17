@@ -7,7 +7,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 export const revalidate = 3600;
 
 export default async function sitemap() {
-  const [artworks, artists] = await Promise.all([
+  const [artworks, artists, posts] = await Promise.all([
     prisma.artwork.findMany({
       where: { status: "PUBLISHED" },
       select: { slug: true, updatedAt: true }
@@ -15,12 +15,17 @@ export default async function sitemap() {
     prisma.artistProfile.findMany({
       where: { verificationStatus: "APPROVED" },
       select: { slug: true, updatedAt: true }
+    }),
+    prisma.blogPost.findMany({
+      where: { status: "PUBLISHED" },
+      select: { slug: true, updatedAt: true }
     })
   ]);
 
   const staticRoutes = [
     { url: `${siteUrl}/`, changeFrequency: "daily", priority: 1 },
     { url: `${siteUrl}/gallery`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${siteUrl}/blog`, changeFrequency: "daily", priority: 0.6 },
     { url: `${siteUrl}/artists`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/requests`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${siteUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
@@ -41,5 +46,12 @@ export default async function sitemap() {
     priority: 0.7
   }));
 
-  return [...staticRoutes, ...artworkRoutes, ...artistRoutes];
+  const blogRoutes = posts.map((post) => ({
+    url: `${siteUrl}/blog/${post.slug}`,
+    lastModified: post.updatedAt,
+    changeFrequency: "monthly",
+    priority: 0.5
+  }));
+
+  return [...staticRoutes, ...artworkRoutes, ...artistRoutes, ...blogRoutes];
 }

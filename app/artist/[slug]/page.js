@@ -8,6 +8,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { StarRating } from "@/components/StarRating";
 import { prisma } from "@/lib/db";
 import { detailUrl, fullUrl, ogUrl, thumbUrl } from "@/lib/images";
+import { youtubeThumbnail } from "@/lib/youtube";
 import { serializeMoney } from "@/lib/api";
 
 async function getArtist(slug) {
@@ -48,7 +49,13 @@ export async function generateMetadata({ params }) {
   }
   // The display query only returns work that is still for sale, but a sold piece
   // is just as good for a link preview — often it is the artist's best.
-  const previewSource = await getPreviewImage(artist.id, artist.portfolioPieces[0]?.imageUrl);
+  const firstPortfolioPiece = artist.portfolioPieces[0];
+  const firstPortfolioPreview = firstPortfolioPiece
+    ? firstPortfolioPiece.mediaType === "VIDEO"
+      ? youtubeThumbnail(firstPortfolioPiece.videoUrl)
+      : firstPortfolioPiece.imageUrl
+    : undefined;
+  const previewSource = await getPreviewImage(artist.id, firstPortfolioPreview);
   const description =
     artist.bio?.slice(0, 160) ||
     `${artist.discipline || "Artist"}${artist.location ? ` in ${artist.location}` : ""} on ARTASIN — original work and commissions.`;
@@ -79,18 +86,36 @@ export default async function ArtistProfilePage({ params }) {
     notFound();
   }
 
-  const portfolio = artist.portfolioPieces.map((piece) => ({
-    id: piece.id,
-    title: piece.title,
-    medium: piece.medium,
-    year: piece.year,
-    description: piece.description,
-    thumb: thumbUrl(piece.imageUrl),
-    detail: detailUrl(piece.imageUrl),
-    full: fullUrl(piece.imageUrl)
-  }));
+  const portfolio = artist.portfolioPieces.map((piece) => {
+    if (piece.mediaType === "VIDEO") {
+      const thumb = youtubeThumbnail(piece.videoUrl);
+      return {
+        id: piece.id,
+        title: piece.title,
+        medium: piece.medium,
+        year: piece.year,
+        description: piece.description,
+        mediaType: "VIDEO",
+        videoId: piece.videoUrl,
+        thumb,
+        detail: thumb,
+        full: thumb
+      };
+    }
+    return {
+      id: piece.id,
+      title: piece.title,
+      medium: piece.medium,
+      year: piece.year,
+      description: piece.description,
+      mediaType: "IMAGE",
+      thumb: thumbUrl(piece.imageUrl),
+      detail: detailUrl(piece.imageUrl),
+      full: fullUrl(piece.imageUrl)
+    };
+  });
 
-  const [reviews, reviewAggregate] = await Promise.all([
+  const [reviews, reviewAggregate, blogPosts] = await Promise.all([
     prisma.review.findMany({
       where: { artistId: artist.id },
       include: { buyer: { select: { firstName: true, lastName: true } } },
@@ -101,6 +126,11 @@ export default async function ArtistProfilePage({ params }) {
       where: { artistId: artist.id },
       _avg: { rating: true },
       _count: true
+    }),
+    prisma.blogPost.findMany({
+      where: { artistId: artist.id, status: "PUBLISHED" },
+      orderBy: { publishedAt: "desc" },
+      take: 3
     })
   ]);
 
@@ -181,6 +211,33 @@ export default async function ArtistProfilePage({ params }) {
               >
                 Request a Commission
               </Link>
+            </div>
+          </section>
+        ) : null}
+
+        {blogPosts.length ? (
+          <section className="more-section">
+            <div className="section-heading inline-heading">
+              <h2>Journal</h2>
+              <Link className="text-link" href={`/blog?artist=${artist.slug}`}>
+                View All
+              </Link>
+            </div>
+            <div className="blog-grid">
+              {blogPosts.map((post) => (
+                <Link className="blog-card group-image" href={`/blog/${post.slug}`} key={post.id}>
+                  <div className="blog-card-image">
+                    <LazyImage
+                      alt={post.title}
+                      src={post.coverImageUrl || "/artisan/artwork-placeholder.svg"}
+                    />
+                  </div>
+                  <div className="blog-card-body">
+                    <h3>{post.title}</h3>
+                    {post.excerpt ? <p className="blog-card-excerpt">{post.excerpt}</p> : null}
+                  </div>
+                </Link>
+              ))}
             </div>
           </section>
         ) : null}

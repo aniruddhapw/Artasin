@@ -5,10 +5,11 @@ import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { Spinner } from "@/components/Spinner";
+import { extractYouTubeId, youtubeThumbnail } from "@/lib/youtube";
 
 const MAX_PIECES = 24;
 
-const emptyDraft = { title: "", medium: "", year: "", description: "", imageUrl: "" };
+const emptyDraft = { title: "", medium: "", year: "", description: "", mediaType: "IMAGE", imageUrl: "", videoUrl: "" };
 
 export function PortfolioManager({ pieces: initialPieces }) {
   const t = useT();
@@ -59,7 +60,9 @@ export function PortfolioManager({ pieces: initialPieces }) {
       medium: piece.medium || "",
       year: piece.year ? String(piece.year) : "",
       description: piece.description || "",
-      imageUrl: piece.imageUrl
+      mediaType: piece.mediaType || "IMAGE",
+      imageUrl: piece.imageUrl || "",
+      videoUrl: piece.videoUrl || ""
     });
     setError("");
   }
@@ -74,7 +77,14 @@ export function PortfolioManager({ pieces: initialPieces }) {
     event.preventDefault();
     setError("");
 
-    if (!draft.imageUrl) {
+    let videoId = null;
+    if (draft.mediaType === "VIDEO") {
+      videoId = extractYouTubeId(draft.videoUrl);
+      if (!videoId) {
+        setError(t("portfolio.invalidYouTubeUrl"));
+        return;
+      }
+    } else if (!draft.imageUrl) {
       setError(t("error.photoFirst"));
       return;
     }
@@ -84,7 +94,9 @@ export function PortfolioManager({ pieces: initialPieces }) {
       medium: draft.medium.trim() || undefined,
       year: draft.year ? Number(draft.year) : undefined,
       description: draft.description.trim() || undefined,
-      imageUrl: draft.imageUrl
+      mediaType: draft.mediaType,
+      imageUrl: draft.mediaType === "IMAGE" ? draft.imageUrl : undefined,
+      videoUrl: draft.mediaType === "VIDEO" ? videoId : undefined
     };
 
     setIsSaving(true);
@@ -173,25 +185,71 @@ export function PortfolioManager({ pieces: initialPieces }) {
         <fieldset>
           <legend>{isEditing ? t("portfolio.editPastWork") : t("portfolio.addPastWork")}</legend>
 
-          <label className="upload-box upload-box-stacked">
-            <span>
-              {isUploading ? (
-                <Spinner label={t("artwork.form.uploading")} />
-              ) : draft.imageUrl ? (
-                t("portfolio.replacePhoto")
-              ) : (
-                t("portfolio.uploadPhoto")
-              )}
-            </span>
-            <small>
-              {t("portfolio.photoHint")}
-            </small>
-            <input accept="image/*" disabled={isUploading} onChange={handleUpload} type="file" />
-          </label>
+          <div className="media-type-toggle" role="radiogroup" aria-label={t("portfolio.mediaType")}>
+            <button
+              aria-checked={draft.mediaType === "IMAGE"}
+              className={draft.mediaType === "IMAGE" ? "media-type-option is-active" : "media-type-option"}
+              onClick={() => updateDraft("mediaType", "IMAGE")}
+              role="radio"
+              type="button"
+            >
+              {t("portfolio.photo")}
+            </button>
+            <button
+              aria-checked={draft.mediaType === "VIDEO"}
+              className={draft.mediaType === "VIDEO" ? "media-type-option is-active" : "media-type-option"}
+              onClick={() => updateDraft("mediaType", "VIDEO")}
+              role="radio"
+              type="button"
+            >
+              {t("portfolio.youtubeVideo")}
+            </button>
+          </div>
 
-          {draft.imageUrl ? (
-            <div className="artwork-image-preview portfolio-draft-preview">
-              <img alt="Portfolio piece preview" src={draft.imageUrl} />
+          {draft.mediaType === "IMAGE" ? (
+            <>
+              <label className="upload-box upload-box-stacked">
+                <span>
+                  {isUploading ? (
+                    <Spinner label={t("artwork.form.uploading")} />
+                  ) : draft.imageUrl ? (
+                    t("portfolio.replacePhoto")
+                  ) : (
+                    t("portfolio.uploadPhoto")
+                  )}
+                </span>
+                <small>
+                  {t("portfolio.photoHint")}
+                </small>
+                <input accept="image/*" disabled={isUploading} onChange={handleUpload} type="file" />
+              </label>
+
+              {draft.imageUrl ? (
+                <div className="artwork-image-preview portfolio-draft-preview">
+                  <img alt="Portfolio piece preview" src={draft.imageUrl} />
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <label>
+              <span>{t("portfolio.youtubeUrl")}</span>
+              <small className="field-hint">{t("portfolio.youtubeUrlHint")}</small>
+              <input
+                inputMode="url"
+                onChange={(event) => updateDraft("videoUrl", event.target.value)}
+                placeholder="https://youtube.com/watch?v=..."
+                type="text"
+                value={draft.videoUrl}
+              />
+            </label>
+          )}
+
+          {draft.mediaType === "VIDEO" && extractYouTubeId(draft.videoUrl) ? (
+            <div className="artwork-image-preview portfolio-draft-preview portfolio-video-preview">
+              <img alt="YouTube video preview" src={youtubeThumbnail(extractYouTubeId(draft.videoUrl))} />
+              <span className="video-play-badge" aria-hidden="true">
+                &#9658;
+              </span>
             </div>
           ) : null}
 
@@ -287,7 +345,16 @@ export function PortfolioManager({ pieces: initialPieces }) {
             {pieces.map((piece, index) => (
               <div className="order-history-row portfolio-row" key={piece.id}>
                 <div className="order-history-image">
-                  <img alt={piece.title} src={piece.imageUrl} />
+                  {piece.mediaType === "VIDEO" ? (
+                    <span className="portfolio-row-video">
+                      <img alt={piece.title} src={youtubeThumbnail(piece.videoUrl)} />
+                      <span className="video-play-badge" aria-hidden="true">
+                        &#9658;
+                      </span>
+                    </span>
+                  ) : (
+                    <img alt={piece.title} src={piece.imageUrl} />
+                  )}
                 </div>
                 <div className="order-history-details">
                   <h3>{piece.title}</h3>

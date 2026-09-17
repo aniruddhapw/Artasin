@@ -2,7 +2,8 @@ export const navItems = [
   { href: "/", label: "Collections", key: "collections" },
   { href: "/artists", label: "Artists", key: "artists" },
   { href: "/requests", label: "Requests", key: "requests" },
-  { href: "/gallery", label: "Exhibitions", key: "exhibitions" }
+  { href: "/gallery", label: "Exhibitions", key: "exhibitions" },
+  { href: "/blog", label: "Journal", key: "journal" }
 ];
 
 export const collectionCards = [

@@ -18,6 +18,16 @@ enum VerificationStatus {
   REJECTED
 }
 
+enum PortfolioMediaType {
+  IMAGE
+  VIDEO
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
 enum ArtworkStatus {
   DRAFT
   PUBLISHED
@@ -116,6 +126,7 @@ model ArtistProfile {
   customRequests     CommissionRequest[]
   orders             Order[]
   payouts            Payout[]
+  blogPosts          BlogPost[]
   portfolioPieces    PortfolioPiece[]
   reviews            Review[]
 }
@@ -123,20 +134,49 @@ model ArtistProfile {
 /// Past work an artist has already completed elsewhere. Not for sale — it exists
 /// so collectors can judge an artist's range before commissioning them, which
 /// matters most for artists who have nothing listed on the marketplace yet.
+/// A piece can be a photo of finished work or a YouTube video — a process
+/// recording, a walkthrough, a timelapse. Exactly one of imageUrl/videoUrl is
+/// set, chosen by mediaType; both stay nullable at the schema level since
+/// Prisma cannot express "exactly one of" as a constraint, and it is enforced
+/// in the API layer instead.
 model PortfolioPiece {
-  id          String        @id @default(cuid())
+  id          String             @id @default(cuid())
   artistId    String
   title       String
   description String?
   medium      String?
   year        Int?
-  imageUrl    String
-  sortOrder   Int           @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  artist      ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  mediaType   PortfolioMediaType @default(IMAGE)
+  imageUrl    String?
+  videoUrl    String?
+  sortOrder   Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  artist      ArtistProfile      @relation(fields: [artistId], references: [id], onDelete: Cascade)
 
   @@index([artistId])
+}
+
+/// Long-form writing an artist publishes on their own — process notes, studio
+/// updates, exhibition write-ups. Kept intentionally simple: plain paragraphs
+/// rather than rich text, since nothing else on the site renders formatted
+/// content and a markdown/HTML pipeline is a much larger surface to secure.
+model BlogPost {
+  id           String         @id @default(cuid())
+  artistId     String
+  title        String
+  slug         String         @unique
+  excerpt      String?
+  body         String
+  coverImageUrl String?
+  status       BlogPostStatus @default(DRAFT)
+  publishedAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  artist       ArtistProfile  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@index([artistId])
+  @@index([status, publishedAt])
 }
 
 model Artwork {

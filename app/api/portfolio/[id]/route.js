@@ -2,6 +2,7 @@ import { z } from "zod";
 import { fail, handleApiError, mediaUrlSchema, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { extractYouTubeId } from "@/lib/youtube";
 
 const updatePieceSchema = z.object({
   title: z.string().min(1, { message: "is required" }).max(160).optional(),
@@ -14,7 +15,9 @@ const updatePieceSchema = z.object({
     .max(new Date().getFullYear(), { message: "cannot be in the future" })
     .nullable()
     .optional(),
+  mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
   imageUrl: mediaUrlSchema.optional(),
+  videoUrl: z.string().max(500).optional(),
   sortOrder: z.number().int().min(0).optional()
 });
 
@@ -36,6 +39,34 @@ async function loadOwnedPiece(request, id) {
   return { piece, artistId: user.artistProfile.id };
 }
 
+/**
+ * A reorder-only PATCH (just { sortOrder }) never touches media and should not
+ * be forced to resupply an image or video URL. Anything that names mediaType,
+ * imageUrl, or videoUrl is a real edit and gets the same exactly-one-of check
+ * new pieces go through.
+ */
+function resolveMediaUpdate(input, existing) {
+  const touchesMedia = "mediaType" in input || "imageUrl" in input || "videoUrl" in input;
+  if (!touchesMedia) {
+    return { data: {} };
+  }
+
+  const mediaType = input.mediaType || existing.mediaType;
+  if (mediaType === "VIDEO") {
+    const videoId = extractYouTubeId(input.videoUrl ?? existing.videoUrl);
+    if (!videoId) {
+      return { error: fail("Validation failed", 422, { fieldErrors: { videoUrl: ["must be a YouTube link"] } }) };
+    }
+    return { data: { mediaType: "VIDEO", videoUrl: videoId, imageUrl: null } };
+  }
+
+  const imageUrl = input.imageUrl ?? existing.imageUrl;
+  if (!imageUrl) {
+    return { error: fail("Validation failed", 422, { fieldErrors: { imageUrl: ["is required"] } }) };
+  }
+  return { data: { mediaType: "IMAGE", imageUrl, videoUrl: null } };
+}
+
 export async function PATCH(request, context) {
   try {
     const { id } = await context.params;
@@ -45,7 +76,22 @@ export async function PATCH(request, context) {
     }
 
     const input = updatePieceSchema.parse(await request.json());
-    const updated = await prisma.portfolioPiece.update({ where: { id: piece.id }, data: input });
+    const media = resolveMediaUpdate(input, piece);
+    if (media.error) {
+      return media.error;
+    }
+
+    const updated = await prisma.portfolioPiece.update({
+      where: { id: piece.id },
+      data: {
+        title: input.title,
+        description: input.description,
+        medium: input.medium,
+        year: input.year,
+        sortOrder: input.sortOrder,
+        ...media.data
+      }
+    });
 
     return ok({ piece: updated });
   } catch (error) {

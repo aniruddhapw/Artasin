@@ -2,10 +2,11 @@ import { z } from "zod";
 import { created, fail, handleApiError, mediaUrlSchema, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { extractYouTubeId } from "@/lib/youtube";
 
 const MAX_PIECES = 24;
 
-const portfolioPieceSchema = z.object({
+const basePieceSchema = z.object({
   title: z.string().min(1, { message: "is required" }).max(160),
   description: z.string().max(2000).optional(),
   medium: z.string().max(160).optional(),
@@ -15,8 +16,29 @@ const portfolioPieceSchema = z.object({
     .min(1000, { message: "must be a real year" })
     .max(new Date().getFullYear(), { message: "cannot be in the future" })
     .optional(),
-  imageUrl: mediaUrlSchema
+  mediaType: z.enum(["IMAGE", "VIDEO"]).default("IMAGE"),
+  imageUrl: mediaUrlSchema.optional(),
+  videoUrl: z.string().max(500).optional()
 });
+
+/**
+ * mediaType picks which of imageUrl/videoUrl is required — Zod's object schema
+ * cannot express that on its own, so it is checked after parsing and the video
+ * URL is normalised to a bare id at the same time, which is what gets stored.
+ */
+function resolveMedia(input) {
+  if (input.mediaType === "VIDEO") {
+    const videoId = extractYouTubeId(input.videoUrl);
+    if (!videoId) {
+      return { error: fail("Validation failed", 422, { fieldErrors: { videoUrl: ["must be a YouTube link"] } }) };
+    }
+    return { data: { mediaType: "VIDEO", videoUrl: videoId, imageUrl: null } };
+  }
+  if (!input.imageUrl) {
+    return { error: fail("Validation failed", 422, { fieldErrors: { imageUrl: ["is required"] } }) };
+  }
+  return { data: { mediaType: "IMAGE", imageUrl: input.imageUrl, videoUrl: null } };
+}
 
 async function requireArtist(request) {
   const user = await getAuthUser(request);
@@ -52,7 +74,11 @@ export async function POST(request) {
       return error;
     }
 
-    const input = portfolioPieceSchema.parse(await request.json());
+    const input = basePieceSchema.parse(await request.json());
+    const media = resolveMedia(input);
+    if (media.error) {
+      return media.error;
+    }
 
     const count = await prisma.portfolioPiece.count({ where: { artistId } });
     if (count >= MAX_PIECES) {
@@ -60,7 +86,15 @@ export async function POST(request) {
     }
 
     const piece = await prisma.portfolioPiece.create({
-      data: { ...input, artistId, sortOrder: count }
+      data: {
+        title: input.title,
+        description: input.description,
+        medium: input.medium,
+        year: input.year,
+        artistId,
+        sortOrder: count,
+        ...media.data
+      }
     });
 
     return created({ piece });
