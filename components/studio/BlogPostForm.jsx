@@ -1,12 +1,39 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { formatApiError } from "@/lib/formErrors";
 
-const MAX_BODY_LENGTH = 20000;
+// RichTextEditor is client-only (Tiptap mounts directly onto the DOM), and
+// this form is itself already a client component, so there is no server
+// render to keep in sync with — loading it dynamically with ssr:false lets
+// the editor mount synchronously on first client render instead of leaving a
+// brief gap after the page paints where the DOM node does not exist yet and
+// anything typed into it is silently lost.
+const RichTextEditor = dynamic(
+  () => import("@/components/studio/RichTextEditor").then((mod) => mod.RichTextEditor),
+  { loading: () => <div className="rte rte-loading" />, ssr: false }
+);
+
+const MAX_BODY_LENGTH = 50000;
+
+/**
+ * A pre-submit check only — whether the editor has any actual content
+ * (visible text, or an image with nothing else). The real, security-relevant
+ * sanitization and the matching server-side blank check happen in the API
+ * (lib/sanitizeBlogHtml.js), which does not ship to the browser.
+ */
+function isBlankRichText(html) {
+  if (typeof document === "undefined" || !html) {
+    return !html;
+  }
+  const parsed = document.createElement("div");
+  parsed.innerHTML = html;
+  return !parsed.textContent.trim() && !parsed.querySelector("img");
+}
 
 export function BlogPostForm({ post }) {
   const t = useT();
@@ -47,12 +74,22 @@ export function BlogPostForm({ post }) {
 
   async function submitAs(status) {
     setError("");
+
+    if (!title.trim()) {
+      setError(`${t("blog.form.title")}: ${t("error.required")}`);
+      return;
+    }
+    if (isBlankRichText(body)) {
+      setError(`${t("blog.form.body")}: ${t("error.required")}`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     const body_ = {
       title: title.trim(),
       excerpt: excerpt.trim() || undefined,
-      body: body.trim(),
+      body,
       coverImageUrl: coverImageUrl || undefined,
       status
     };
@@ -81,8 +118,6 @@ export function BlogPostForm({ post }) {
   function handleSubmit(event) {
     event.preventDefault();
   }
-
-  const bodyRemaining = MAX_BODY_LENGTH - body.length;
 
   return (
     <form className="request-form" onSubmit={handleSubmit}>
@@ -113,14 +148,7 @@ export function BlogPostForm({ post }) {
 
         <label>
           <span>{t("blog.form.body")}</span>
-          <textarea
-            maxLength={MAX_BODY_LENGTH}
-            onChange={(event) => setBody(event.target.value)}
-            required
-            rows={16}
-            value={body}
-          />
-          <small className="field-hint">{t("blog.form.charsLeft", { count: bodyRemaining })}</small>
+          <RichTextEditor content={body} onChange={setBody} placeholder={t("blog.form.bodyPlaceholder")} />
         </label>
       </fieldset>
 

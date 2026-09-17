@@ -1,14 +1,15 @@
 import { z } from "zod";
 import { fail, handleApiError, ok } from "@/lib/api";
+import { isBlankBlogHtml, sanitizeBlogHtml } from "@/lib/sanitizeBlogHtml";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-const MAX_BODY_LENGTH = 20000;
+const MAX_BODY_LENGTH = 50000;
 
 const updatePostSchema = z.object({
   title: z.string().min(1, { message: "is required" }).max(200).optional(),
   excerpt: z.string().max(300).nullable().optional(),
-  body: z.string().min(1, { message: "is required" }).max(MAX_BODY_LENGTH).optional(),
+  body: z.string().max(MAX_BODY_LENGTH).optional(),
   coverImageUrl: z.string().nullable().optional(),
   status: z.enum(["DRAFT", "PUBLISHED"]).optional()
 });
@@ -40,6 +41,13 @@ export async function PATCH(request, context) {
     }
 
     const input = updatePostSchema.parse(await request.json());
+
+    if (input.body !== undefined) {
+      input.body = sanitizeBlogHtml(input.body);
+      if (isBlankBlogHtml(input.body)) {
+        return fail("Validation failed", 422, { fieldErrors: { body: ["is required"] } });
+      }
+    }
 
     // publishedAt is set the first time a post goes live and never moves again,
     // so re-saving a published post — or unpublishing and republishing it later

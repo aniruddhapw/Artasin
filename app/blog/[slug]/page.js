@@ -5,6 +5,7 @@ import { Nav } from "@/components/Nav";
 import { ShareButton } from "@/components/ShareButton";
 import { prisma } from "@/lib/db";
 import { ogUrl } from "@/lib/images";
+import { sanitizeBlogHtml } from "@/lib/sanitizeBlogHtml";
 
 const dateFormat = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", year: "numeric" });
 
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }) {
   if (!post || post.status !== "PUBLISHED") {
     return { title: "Post Not Found" };
   }
-  const description = post.excerpt || post.body.slice(0, 160);
+  const description = post.excerpt || sanitizeBlogHtml(post.body).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
   return {
     title: post.title,
     description,
@@ -54,10 +55,10 @@ export default async function BlogPostPage({ params }) {
     take: 3
   });
 
-  // Plain paragraphs rather than markdown or HTML — an artist's blank line
-  // becomes a paragraph break, nothing more, and there is no injected markup
-  // to sanitise.
-  const paragraphs = post.body.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
+  // The body is sanitized again here — cheap, and a real backstop if some
+  // future code path ever writes to BlogPost.body without going through the
+  // API, which is the only place this is currently sanitized on the way in.
+  const bodyHtml = sanitizeBlogHtml(post.body);
 
   return (
     <>
@@ -78,11 +79,7 @@ export default async function BlogPostPage({ params }) {
             </div>
           ) : null}
 
-          <div className="blog-post-body">
-            {paragraphs.map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
-            ))}
-          </div>
+          <div className="blog-post-body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
 
           <div className="blog-post-actions">
             <ShareButton
