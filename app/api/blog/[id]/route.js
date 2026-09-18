@@ -3,6 +3,7 @@ import { fail, handleApiError, ok } from "@/lib/api";
 import { isBlankBlogHtml, sanitizeBlogHtml } from "@/lib/sanitizeBlogHtml";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { notifyBlogPostPublished } from "@/lib/blogNotifications";
 
 const MAX_BODY_LENGTH = 50000;
 
@@ -65,6 +66,10 @@ export async function PATCH(request, context) {
         publishedAt: becomingPublished ? new Date() : undefined
       }
     });
+
+    if (becomingPublished) {
+      await notifyBlogPostPublished(updated);
+    }
 
     return ok({ post: updated });
   } catch (error) {

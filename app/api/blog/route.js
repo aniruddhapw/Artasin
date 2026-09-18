@@ -4,6 +4,7 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ensureSlug } from "@/lib/slug";
 import { isBlankBlogHtml, sanitizeBlogHtml } from "@/lib/sanitizeBlogHtml";
+import { notifyBlogPostPublished } from "@/lib/blogNotifications";
 
 // The body is now HTML from a rich text editor rather than plain text, so the
 // same visible content takes noticeably more characters to store.
@@ -85,6 +86,10 @@ export async function POST(request) {
         publishedAt: input.status === "PUBLISHED" ? new Date() : null
       }
     });
+
+    if (post.status === "PUBLISHED") {
+      await notifyBlogPostPublished(post);
+    }
 
     return created({ post });
   } catch (error) {
