@@ -2,8 +2,6 @@ import { z } from "zod";
 import { created, fail, handleApiError } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { sendEmail } from "@/lib/email";
-import { newCommissionMessageEmail } from "@/lib/emails";
 import { sendPushToUser } from "@/lib/push";
 
 const messageSchema = z.object({
@@ -45,7 +43,10 @@ export async function POST(request, context) {
     });
 
     // Notify whichever side didn't just send this — the buyer if an artist
-    // wrote it, or the artist if the buyer did.
+    // wrote it, or the artist if the buyer did. Push goes out immediately
+    // (it's free and this is exactly what it's for); email is deferred to
+    // the daily follow-up cron (see app/api/cron/message-followups) so an
+    // active back-and-forth doesn't email on every single message.
     const senderName = `${user.firstName} ${user.lastName}`;
     const recipient = isBuyer
       ? commissionRequest.artist
@@ -58,10 +59,6 @@ export async function POST(request, context) {
         ? `${siteUrl}/studio/commissions/${id}`
         : `${siteUrl}/commissions/${id}`;
 
-      await sendEmail({
-        to: recipient.email,
-        ...newCommissionMessageEmail(commissionRequest, senderName, input.body, threadUrl)
-      });
       await sendPushToUser(recipient.id, {
         title: `New message from ${senderName}`,
         body: input.body.length > 120 ? `${input.body.slice(0, 120)}…` : input.body,

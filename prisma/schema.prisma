@@ -303,6 +303,12 @@ model Message {
   commissionRequestId String
   body                String
   createdAt           DateTime          @default(now())
+  // Set once the daily follow-up cron emails the recipient about this
+  // message because it was still unanswered 6+ hours after it was sent.
+  // Messages get a push notification immediately, but the email is
+  // deferred to this follow-up check to avoid emailing on every message
+  // in an active back-and-forth.
+  followupEmailSentAt DateTime?
   sender              User              @relation(fields: [senderId], references: [id])
   commissionRequest   CommissionRequest @relation(fields: [commissionRequestId], references: [id], onDelete: Cascade)
 }

@@ -55,6 +55,7 @@ See `.env.example` for the full list. Key ones:
 | `EMAIL_FROM` | Sender shown on outgoing emails, e.g. `ARTASIN <notifications@yourdomain.com>`. Requires a verified sending domain in Resend. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Enables "Continue with Google" on `/login` and `/signup` when both are set — see [Auth](#auth). Omit either one and the button redirects to `/login?error=google_not_configured` instead of erroring. |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Enable browser push notifications for commission messages (`VAPID_PUBLIC_KEY` and `NEXT_PUBLIC_VAPID_PUBLIC_KEY` are the same value — one read server-side, one inlined client-side). Generate a pair with `npx web-push generate-vapid-keys`. Omit all three and the app just skips sending pushes. |
+| `CRON_SECRET` | Authenticates Vercel's daily cron invocation of `/api/cron/message-followups` (see [`vercel.json`](vercel.json)) — without it, the endpoint rejects every request, including Vercel's own. A random string of 16+ characters; Vercel sends it back as the `Authorization: Bearer` header automatically once it's set as an env var. |
 
 ## Architecture Notes
 
