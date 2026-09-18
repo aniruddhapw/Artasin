@@ -5,7 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export const metadata = {
-  title: "Commission Requests"
+  title: "Custom Artwork Requests"
 };
 
 export default async function StudioCommissionsPage() {
@@ -21,7 +21,7 @@ export default async function StudioCommissionsPage() {
       <Nav active="requests" />
       <main className="page request-page">
         <header className="request-header">
-          <h1>Commission Requests</h1>
+          <h1>Custom Artwork Requests</h1>
           <p>Review briefs, send quotes, and manage bespoke work in progress.</p>
         </header>
 

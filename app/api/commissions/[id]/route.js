@@ -49,7 +49,7 @@ export async function GET(request, context) {
     const { id } = await context.params;
     const commissionRequest = await loadRequest(id);
     if (!commissionRequest) {
-      return fail("Commission request not found", 404);
+      return fail("Custom artwork request not found", 404);
     }
 
     const isBuyer = commissionRequest.buyerId === user.id;
@@ -79,7 +79,7 @@ export async function PATCH(request, context) {
       include: { buyer: { select: { email: true } } }
     });
     if (!commissionRequest) {
-      return fail("Commission request not found", 404);
+      return fail("Custom artwork request not found", 404);
     }
     if (commissionRequest.artistId !== user.artistProfile.id) {
       return fail("You cannot manage this request", 403);

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { processSteps } from "@/data/artisan";
 
 export const metadata = {
-  title: "Commission a Masterpiece"
+  title: "Request Custom Artwork"
 };
 
 export default async function RequestsPage({ searchParams }) {
@@ -23,10 +23,10 @@ export default async function RequestsPage({ searchParams }) {
       <Nav active="requests" />
       <main className="page request-page">
         <header className="request-header">
-          <h1>Commission a Masterpiece</h1>
+          <h1>Request Custom Artwork</h1>
           <p>
             Work directly with our curated artists to bring your unique vision
-            to life. The commission process is a collaborative journey,
+            to life. Requesting custom artwork is a collaborative journey,
             beginning with your initial concept and culminating in a bespoke work
             of art.
           </p>

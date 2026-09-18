@@ -9,7 +9,7 @@ import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
-  title: "Commission Request"
+  title: "Custom Artwork Request"
 };
 
 export default async function StudioCommissionDetailPage({ params }) {

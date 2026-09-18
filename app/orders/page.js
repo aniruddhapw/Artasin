@@ -61,12 +61,12 @@ export default async function OrdersPage() {
               <Link className="order-history-row" href={`/orders/${order.id}`} key={order.id}>
                 <div className="order-history-image">
                   <LazyImage
-                    alt={order.artwork?.title || "Commission order"}
+                    alt={order.artwork?.title || "Custom artwork order"}
                     src={thumbUrl(order.artwork?.media[0]?.url) || "/artisan/artwork-placeholder.svg"}
                   />
                 </div>
                 <div className="order-history-details">
-                  <h3>{order.artwork?.title || "Custom Commission"}</h3>
+                  <h3>{order.artwork?.title || "Custom Artwork"}</h3>
                   <p>
                     {user.role === "ARTIST" ? "Buyer order" : order.artist.displayName} · Order #
                     {order.id.slice(-8).toUpperCase()}

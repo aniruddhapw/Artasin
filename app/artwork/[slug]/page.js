@@ -166,7 +166,7 @@ export default async function ArtworkDetailPage({ params }) {
                 className="button button-secondary"
                 href={`/requests?artistId=${artwork.artist.id}&artistName=${encodeURIComponent(artwork.artist.displayName)}`}
               >
-                Inquire for Commission
+                Request Custom Artwork
               </Link>
               <ShareButton
                 className="button button-secondary"

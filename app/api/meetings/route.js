@@ -24,7 +24,7 @@ export async function POST(request) {
     });
 
     if (!commissionRequest) {
-      return fail("Commission request not found", 404);
+      return fail("Custom artwork request not found", 404);
     }
 
     const isBuyer = commissionRequest.buyerId === user.id;

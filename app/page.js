@@ -163,7 +163,7 @@ export default async function HomePage() {
                       <p>{artist.discipline || "Artist"}</p>
                       <p className="artist-card-count">
                         {artist.totalWorks} {artist.totalWorks === 1 ? "work" : "works"}
-                        {artist.forSaleCount ? ` · ${artist.forSaleCount} for sale` : " · taking commissions"}
+                        {artist.forSaleCount ? ` · ${artist.forSaleCount} for sale` : " · taking custom requests"}
                       </p>
                     </div>
                   </Link>

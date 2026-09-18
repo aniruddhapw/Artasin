@@ -148,7 +148,7 @@ export default async function ArtistProfilePage({ params }) {
           {artist.location ? <p className="artist-location">{artist.location}</p> : null}
           {!artist.artworks.length && portfolio.length ? (
             <p className="artist-availability">
-              No pieces listed for sale right now — {artist.displayName.split(" ")[0]} is taking commissions.
+              No pieces listed for sale right now — {artist.displayName.split(" ")[0]} is taking custom requests.
             </p>
           ) : null}
           <div className="artist-header-actions">
@@ -156,11 +156,11 @@ export default async function ArtistProfilePage({ params }) {
               className="button button-primary"
               href={`/requests?artistId=${artist.id}&artistName=${encodeURIComponent(artist.displayName)}`}
             >
-              Commission {artist.displayName.split(" ")[0]}
+              Request Custom Artwork
             </Link>
             <ShareButton
               path={`/artist/${artist.slug}`}
-              text={`${artist.displayName} on ARTASIN — original work and commissions.`}
+              text={`${artist.displayName} on ARTASIN — original work and custom pieces.`}
               title={`${artist.displayName} on ARTASIN`}
             />
           </div>
@@ -209,7 +209,7 @@ export default async function ArtistProfilePage({ params }) {
                 className="button button-primary"
                 href={`/requests?artistId=${artist.id}&artistName=${encodeURIComponent(artist.displayName)}`}
               >
-                Request a Commission
+                Request Custom Artwork
               </Link>
             </div>
           </section>

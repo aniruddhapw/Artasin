@@ -219,7 +219,7 @@ export default async function StudioPage({ searchParams }) {
                       </div>
                       <p>
                         <span className={order.status === "SHIPPED" ? "dot active-dot" : "dot"} />
-                        {order.artwork?.title || "Commission"} · {order.status.replace(/_/g, " ")}
+                        {order.artwork?.title || "Custom Piece"} · {order.status.replace(/_/g, " ")}
                       </p>
                       <OrderShipAction orderId={order.id} status={order.status} />
                     </div>

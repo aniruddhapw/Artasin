@@ -46,14 +46,14 @@ export function NavUserMenu({ user }) {
               <>
                 <Link href="/studio">Studio Dashboard</Link>
                 <Link href="/studio/artworks">Manage Artworks</Link>
-                <Link href="/studio/commissions">Commission Requests</Link>
+                <Link href="/studio/commissions">Custom Artwork Requests</Link>
                 <Link href="/studio/profile">Studio Profile</Link>
               </>
             ) : null}
             {user.role === "BUYER" ? (
               <>
                 <Link href="/orders">My Orders</Link>
-                <Link href="/commissions">My Commissions</Link>
+                <Link href="/commissions">My Custom Requests</Link>
               </>
             ) : null}
             {user.role === "ADMIN" ? <Link href="/admin">Admin Dashboard</Link> : null}

@@ -6,7 +6,7 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export const metadata = {
-  title: "My Commission Requests"
+  title: "My Custom Artwork Requests"
 };
 
 export default async function BuyerCommissionsPage() {
@@ -27,8 +27,8 @@ export default async function BuyerCommissionsPage() {
       <main className="page request-page">
         <header className="request-header studio-header-row">
           <div>
-            <h1>My Commission Requests</h1>
-            <p>Track briefs, quotes, and progress with your commissioned artists.</p>
+            <h1>My Custom Artwork Requests</h1>
+            <p>Track briefs, quotes, and progress on your custom requests.</p>
           </div>
           <Link className="button button-primary" href="/requests">
             New Request
