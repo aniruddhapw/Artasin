@@ -54,6 +54,7 @@ See `.env.example` for the full list. Key ones:
 | `RESEND_API_KEY` | Required when `EMAIL_PROVIDER=resend`. From your Resend dashboard. |
 | `EMAIL_FROM` | Sender shown on outgoing emails, e.g. `ARTASIN <notifications@yourdomain.com>`. Requires a verified sending domain in Resend. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Enables "Continue with Google" on `/login` and `/signup` when both are set — see [Auth](#auth). Omit either one and the button redirects to `/login?error=google_not_configured` instead of erroring. |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Enable browser push notifications for commission messages (`VAPID_PUBLIC_KEY` and `NEXT_PUBLIC_VAPID_PUBLIC_KEY` are the same value — one read server-side, one inlined client-side). Generate a pair with `npx web-push generate-vapid-keys`. Omit all three and the app just skips sending pushes. |
 
 ## Architecture Notes
 

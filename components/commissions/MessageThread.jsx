@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { NotificationOptIn } from "@/components/commissions/NotificationOptIn";
 import { formatApiError } from "@/lib/formErrors";
 
 export function MessageThread({ commissionRequestId, messages, currentUserId }) {
@@ -38,6 +39,7 @@ export function MessageThread({ commissionRequestId, messages, currentUserId }) 
 
   return (
     <div className="message-thread">
+      <NotificationOptIn />
       <div className="message-list">
         {messages.length ? (
           messages.map((message) => (

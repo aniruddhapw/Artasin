@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { created, handleApiError } from "@/lib/api";
+import { created, handleApiError, rateLimited } from "@/lib/api";
 import { createSessionToken, hashPassword, publicUser, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { checkRateLimit, rateLimitKeyForIp } from "@/lib/rateLimit";
 
 const signupSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
@@ -24,6 +25,18 @@ const signupSchema = z.object({
 
 export async function POST(request) {
   try {
+    // Signups don't have a stable identifier to key off before the account
+    // exists (unlike login/forgot-password, which can key on the target
+    // email), so this is IP-only — the main lever available against a
+    // script creating many accounts from one source.
+    const ipLimit = await checkRateLimit(rateLimitKeyForIp("signup", request), {
+      max: 10,
+      windowMs: 60 * 60 * 1000
+    });
+    if (ipLimit.limited) {
+      return rateLimited(ipLimit.retryAfterSeconds);
+    }
+
     const input = signupSchema.parse(await request.json());
     const passwordHash = await hashPassword(input.password);
 

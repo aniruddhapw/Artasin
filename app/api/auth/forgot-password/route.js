@@ -1,9 +1,10 @@
 import crypto from "node:crypto";
 import { z } from "zod";
-import { handleApiError, ok } from "@/lib/api";
+import { handleApiError, ok, rateLimited } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { passwordResetEmail } from "@/lib/emails";
+import { checkRateLimit, rateLimitKeyForIp, rateLimitKeyForValue } from "@/lib/rateLimit";
 
 const forgotSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase())
@@ -14,6 +15,24 @@ const TOKEN_TTL_MINUTES = 60;
 export async function POST(request) {
   try {
     const input = forgotSchema.parse(await request.json());
+
+    // IP limit against a script working through a list of addresses; email
+    // limit against a single target being email-bombed by repeated requests.
+    const ipLimit = await checkRateLimit(rateLimitKeyForIp("forgot-password", request), {
+      max: 10,
+      windowMs: 60 * 60 * 1000
+    });
+    if (ipLimit.limited) {
+      return rateLimited(ipLimit.retryAfterSeconds);
+    }
+    const emailLimit = await checkRateLimit(rateLimitKeyForValue("forgot-password", input.email), {
+      max: 4,
+      windowMs: 60 * 60 * 1000
+    });
+    if (emailLimit.limited) {
+      return rateLimited(emailLimit.retryAfterSeconds);
+    }
+
     const user = await prisma.user.findUnique({ where: { email: input.email } });
 
     // Only send a reset for accounts that can actually use one. Google-only

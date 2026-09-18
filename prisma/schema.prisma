@@ -94,6 +94,7 @@ model User {
   meetings        Meeting[]           @relation("BuyerMeetings")
   reviews         Review[]
   passwordResets  PasswordResetToken[]
+  pushSubscriptions PushSubscription[]
 }
 
 model PasswordResetToken {
@@ -346,4 +347,27 @@ model Review {
   buyer     User          @relation(fields: [buyerId], references: [id])
   artist    ArtistProfile @relation(fields: [artistId], references: [id])
   artwork   Artwork?      @relation(fields: [artworkId], references: [id])
+}
+
+// One row per rate-limit bucket (e.g. "signup:ip:1.2.3.4"). Hit counts and
+// their window are updated in place by a single atomic upsert in lib/rateLimit.js
+// rather than read-then-write, so concurrent requests on different serverless
+// instances can't race each other into undercounting.
+model RateLimitHit {
+  key         String   @id
+  windowStart DateTime
+  count       Int      @default(1)
+}
+
+// One row per browser/device a user has enabled notifications on — a user
+// can have several (phone, laptop, ...). endpoint is unique because it's
+// the push service's own identifier for that specific subscription.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
