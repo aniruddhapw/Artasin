@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { Icon } from "@/components/Icon";
 
 export function NavUserMenu({ user }) {
   const router = useRouter();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   if (!user) {
     return (
-      <Link aria-label="Sign in" href="/login">
+      <Link aria-label={t("nav.signIn")} className="nav-profile" href="/login">
         <Icon name="user" />
       </Link>
     );
@@ -26,10 +28,10 @@ export function NavUserMenu({ user }) {
   }
 
   return (
-    <div className="user-menu">
+    <div className="user-menu nav-profile">
       <button
         aria-expanded={open}
-        aria-label="Account menu"
+        aria-label={t("nav.accountMenu")}
         onClick={() => setOpen((value) => !value)}
         type="button"
       >
@@ -44,23 +46,23 @@ export function NavUserMenu({ user }) {
           <div className="user-menu-links">
             {user.role === "ARTIST" ? (
               <>
-                <Link href="/studio">Studio Dashboard</Link>
-                <Link href="/studio/artworks">Manage Artworks</Link>
-                <Link href="/studio/commissions">Custom Artwork Requests</Link>
-                <Link href="/studio/profile">Studio Profile</Link>
+                <Link href="/studio">{t("nav.studioDashboard")}</Link>
+                <Link href="/studio/artworks">{t("nav.manageArtworks")}</Link>
+                <Link href="/studio/commissions">{t("nav.customArtworkRequests")}</Link>
+                <Link href="/studio/profile">{t("nav.studioProfile")}</Link>
               </>
             ) : null}
             {user.role === "BUYER" ? (
               <>
-                <Link href="/orders">My Orders</Link>
-                <Link href="/commissions">My Custom Requests</Link>
+                <Link href="/orders">{t("nav.myOrders")}</Link>
+                <Link href="/commissions">{t("nav.myCustomRequests")}</Link>
               </>
             ) : null}
-            {user.role === "ADMIN" ? <Link href="/admin">Admin Dashboard</Link> : null}
-            <Link href="/account">Account Settings</Link>
+            {user.role === "ADMIN" ? <Link href="/admin">{t("nav.adminDashboard")}</Link> : null}
+            <Link href="/account">{t("nav.accountSettings")}</Link>
           </div>
           <button disabled={isSigningOut} onClick={handleSignOut} type="button">
-            {isSigningOut ? "Signing out..." : "Sign Out"}
+            {isSigningOut ? t("nav.signingOut") : t("nav.signOut")}
           </button>
         </div>
       ) : null}

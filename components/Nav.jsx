@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { MobileMenu } from "@/components/MobileMenu";
 import { NavSearch } from "@/components/NavSearch";
 import { NavUserMenu } from "@/components/NavUserMenu";
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
@@ -48,6 +49,7 @@ export async function Nav({ active }) {
             {cartCount ? <span className="cart-badge">{cartCount}</span> : null}
           </Link>
           <NavUserMenu user={user} />
+          <MobileMenu user={user} />
         </div>
       </div>
     </nav>

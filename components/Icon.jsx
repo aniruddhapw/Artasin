@@ -62,6 +62,13 @@ const paths = {
       <path d="M12 17v-6" />
       <path d="m9.5 13.5 2.5-2.5 2.5 2.5" />
     </>
+  ),
+  menu: (
+    <>
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
+    </>
   )
 };
 

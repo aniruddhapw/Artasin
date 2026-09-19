@@ -168,6 +168,13 @@ legend,
   position: relative;
 }
 
+/* There's no room on a phone for both a profile icon and a hamburger, so on
+   mobile the drawer trigger replaces the profile icon entirely (.nav-profile
+   below); desktop keeps the profile icon and hides this instead. */
+.nav-actions button.mobile-menu-trigger {
+  display: none;
+}
+
 .user-menu-panel {
   position: absolute;
   top: calc(100% + 18px);
@@ -2316,6 +2323,23 @@ textarea::placeholder {
     padding: 12px var(--mobile-margin);
   }
 
+  .nav-actions button.mobile-menu-trigger {
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--primary);
+  }
+
+  /* The drawer trigger above replaces the profile icon on mobile, so hide it
+     here regardless of which element it renders as (a signed-out Link, or
+     the signed-in user-menu div). */
+  .nav-actions > a.nav-profile,
+  .nav-actions > div.nav-profile {
+    display: none;
+  }
+
   .sign-in {
     display: none;
   }
@@ -3392,6 +3416,140 @@ textarea::placeholder {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile nav drawer — replaces the profile icon on mobile for every role
+   --------------------------------------------------------------------------- */
+
+.mobile-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mobile-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 12, 12, 0.5);
+  animation: drawer-fade-in 220ms ease both;
+}
+
+.mobile-drawer-panel {
+  position: relative;
+  width: 50%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--surface-lowest);
+  border-left: 1px solid var(--line);
+  animation: drawer-slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mobile-drawer-close {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.mobile-drawer-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 20px;
+  gap: 16px;
+}
+
+.mobile-drawer-account {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mobile-drawer-links {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.mobile-drawer-links a {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mobile-drawer-links a:hover {
+  color: var(--primary);
+}
+
+.mobile-drawer-signout {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mobile-drawer-signout:hover {
+  opacity: 0.7;
+}
+
+.mobile-drawer-signout:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+@keyframes drawer-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drawer-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-drawer-backdrop,
+  .mobile-drawer-panel {
+    animation: none;
   }
 }
 
