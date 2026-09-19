@@ -33,7 +33,7 @@ export async function Nav({ active }) {
           ))}
         </div>
         <div className="nav-actions">
-          <LanguageToggle />
+          {user?.role !== "BUYER" ? <LanguageToggle /> : null}
           {!user ? (
             <Link className="sign-in" href="/login">
               {t("nav.signIn")}
