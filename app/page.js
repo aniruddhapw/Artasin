@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Icon } from "@/components/Icon";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import { prisma } from "@/lib/db";
 import { detailUrl, thumbUrl } from "@/lib/images";
 import { collectionCards, mediums } from "@/data/artisan";
@@ -83,7 +84,8 @@ export default async function HomePage() {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
+      <ScrollReveal />
       <main className="page">
         <section className="gallery-hero section-pad">
           <div className="hero-copy">
@@ -110,7 +112,7 @@ export default async function HomePage() {
         </section>
 
         <section className="section-pad bordered-section">
-          <div className="section-heading inline-heading">
+          <div className="section-heading inline-heading" data-reveal>
             <h2>Curated Collections</h2>
             <Link className="text-link" href="/gallery">
               View All
@@ -120,8 +122,10 @@ export default async function HomePage() {
             {collectionCards.map((card, index) => (
               <Link
                 className={`collection-card group-image ${index === 1 ? "offset-card" : ""}`}
+                data-reveal
                 href={card.href}
                 key={card.title}
+                style={{ "--reveal-delay": `${index * 150}ms` }}
               >
                 <div className="collection-image">
                   <LazyImage alt={`${card.title} collection`} src={card.image} />
@@ -135,15 +139,20 @@ export default async function HomePage() {
 
         {artists.length ? (
           <section className="artists-band section-pad" id="artists">
-            <div className="section-heading inline-heading">
+            <div className="section-heading inline-heading" data-reveal>
               <h2>Trending Artists</h2>
               <Link className="text-link" href="/artists">
                 View All Artists
               </Link>
             </div>
             <div className="artist-grid">
-              {artists.map((artist) => (
-                <article className="artist-card" key={artist.id}>
+              {artists.map((artist, index) => (
+                <article
+                  className="artist-card"
+                  data-reveal
+                  key={artist.id}
+                  style={{ "--reveal-delay": `${index * 150}ms` }}
+                >
                   <div className="artist-card-works">
                     {artist.previews.map((preview) => (
                       <Link
@@ -174,10 +183,17 @@ export default async function HomePage() {
         ) : null}
 
         <section className="section-pad bordered-section">
-          <h2 className="medium-heading">Explore Mediums</h2>
+          <h2 className="medium-heading" data-reveal>
+            Explore Mediums
+          </h2>
           <div className="medium-list">
-            {mediums.map((medium) => (
-              <Link href={`/gallery?category=${encodeURIComponent(medium.category)}`} key={medium.category}>
+            {mediums.map((medium, index) => (
+              <Link
+                data-reveal
+                href={`/gallery?category=${encodeURIComponent(medium.category)}`}
+                key={medium.category}
+                style={{ "--reveal-delay": `${index * 100}ms` }}
+              >
                 <span>{medium.label}</span>
                 <Icon name="arrowRight" />
               </Link>
