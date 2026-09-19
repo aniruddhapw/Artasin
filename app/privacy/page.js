@@ -13,7 +13,7 @@ const LAST_UPDATED = "8 September 2026";
 export default function PrivacyPolicyPage() {
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page legal-page">
         <header className="request-header">
           <p className="byline">Legal</p>

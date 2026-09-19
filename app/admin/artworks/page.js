@@ -23,7 +23,7 @@ export default async function AdminArtworksPage() {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page request-page">
         <header className="request-header">
           <h1>Moderate Listings</h1>

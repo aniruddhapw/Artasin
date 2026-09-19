@@ -8,7 +8,7 @@ import { navItems } from "@/data/artisan";
 import { getCartCount } from "@/lib/cart";
 import { getTranslations } from "@/lib/i18n";
 
-export async function Nav({ active = "collections" }) {
+export async function Nav({ active }) {
   const authUser = await getAuthUser();
   const user = authUser ? publicUser(authUser) : null;
   const { t } = await getTranslations();

@@ -23,7 +23,7 @@ export default async function AdminDisputesPage() {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page request-page">
         <header className="request-header">
           <h1>Disputes</h1>

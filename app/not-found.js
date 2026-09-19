@@ -9,7 +9,7 @@ export const metadata = {
 export default function NotFound() {
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page request-page">
         <header className="request-header">
           <h1>Page Not Found</h1>

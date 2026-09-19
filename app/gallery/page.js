@@ -38,7 +38,7 @@ export default async function GalleryPage({ searchParams }) {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav active="exhibitions" />
       <main className="page request-page">
         <header className="request-header">
           <h1>The Collection</h1>

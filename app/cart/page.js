@@ -37,7 +37,7 @@ export default async function CartPage() {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page request-page">
         <header className="request-header">
           <h1>{t("cart.title")}</h1>

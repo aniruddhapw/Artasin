@@ -56,7 +56,7 @@ export default async function OrderDetailPage({ params }) {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page request-page">
         <div className="order-confirmation">
           <div>

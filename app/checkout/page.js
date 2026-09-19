@@ -85,7 +85,7 @@ export default async function CheckoutPage({ searchParams }) {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page request-page">
         <header className="request-header">
           <h1>Checkout</h1>

@@ -35,7 +35,7 @@ export default async function AdminArtistsPage() {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page request-page">
         <header className="request-header studio-header-row">
           <div>

@@ -44,7 +44,7 @@ export default async function OrdersPage() {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page request-page">
         <header className="request-header">
           <h1>Order History</h1>

@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <>
-      <Nav active="collections" />
+      <Nav />
       <main className="page studio-page">
         <header className="studio-header studio-header-row">
           <div>
