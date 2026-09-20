@@ -18,6 +18,7 @@ const paths = {
     </>
   ),
   arrowRight: <path d="M5 12h14m-5-5 5 5-5 5" />,
+  check: <path d="m5 13 4 4 10-10" />,
   globe: (
     <>
       <circle cx="12" cy="12" r="9" />

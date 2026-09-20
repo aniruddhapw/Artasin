@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { formatApiError } from "@/lib/formErrors";
@@ -11,7 +11,8 @@ import { ensureSlug } from "@/lib/slug";
 export function SignupForm() {
   const t = useT();
   const router = useRouter();
-  const [role, setRole] = useState("BUYER");
+  const searchParams = useSearchParams();
+  const [role, setRole] = useState(searchParams.get("role") === "artist" ? "ARTIST" : "BUYER");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 

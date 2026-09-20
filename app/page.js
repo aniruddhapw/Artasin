@@ -115,6 +115,65 @@ export default async function HomePage() {
           </Link>
         </section>
 
+        <section className="path-section section-pad bordered-section">
+          <div className="path-heading">
+            <h2>How will you use Artasin?</h2>
+            <p>Whether you&apos;re collecting or creating, browsing, commissioning, and messaging all happen in one place.</p>
+          </div>
+          <div className="path-grid">
+            <div className="path-card">
+              <div className="path-card-top">
+                <span className="tag">Collector &amp; Patron</span>
+                <Icon className="path-card-arrow" name="arrowRight" />
+              </div>
+              <h3>I am a Collector</h3>
+              <p>
+                Browse original paintings, sculpture, digital art, and photography — or commission a piece built
+                around your space and budget.
+              </p>
+              <ul>
+                <li>
+                  <Icon name="check" size={16} /> Message artists directly on every commission
+                </li>
+                <li>
+                  <Icon name="check" size={16} /> Secure checkout, including UPI
+                </li>
+                <li>
+                  <Icon name="check" size={16} /> Leave a review once your piece arrives
+                </li>
+              </ul>
+              <Link className="button button-primary" href="/signup?role=buyer">
+                Join as Collector
+              </Link>
+            </div>
+            <div className="path-card">
+              <div className="path-card-top">
+                <span className="tag">Artist &amp; Creator</span>
+                <Icon className="path-card-arrow" name="arrowRight" />
+              </div>
+              <h3>I am an Artist</h3>
+              <p>
+                List original work, showcase a portfolio, and take on bespoke commissions with buyers who reach out
+                directly.
+              </p>
+              <ul>
+                <li>
+                  <Icon name="check" size={16} /> Keep your share of every sale
+                </li>
+                <li>
+                  <Icon name="check" size={16} /> Quote and manage commission briefs in one thread
+                </li>
+                <li>
+                  <Icon name="check" size={16} /> A verified profile once your work is reviewed
+                </li>
+              </ul>
+              <Link className="button button-secondary" href="/signup?role=artist">
+                Apply as Artist
+              </Link>
+            </div>
+          </div>
+        </section>
+
         <section className="section-pad bordered-section">
           <div className="section-heading inline-heading" data-reveal>
             <h2>Curated Collections</h2>
