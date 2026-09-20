@@ -49,7 +49,9 @@ export async function generateMetadata({ params }) {
   if (!artwork || artwork.status === "DRAFT" || artwork.status === "ARCHIVED") {
     return { title: "Artwork Not Found" };
   }
-  const description = truncate(artwork.description);
+  // Next.js silently drops the description meta tags entirely if the string
+  // contains a raw newline, which a multi-paragraph description always has.
+  const description = truncate(artwork.description.replace(/\s+/g, " ").trim());
   const previewSource = artwork.media[0]?.url;
 
   return {

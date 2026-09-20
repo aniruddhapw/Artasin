@@ -731,6 +731,10 @@ dd {
 .artist-note p {
   font-size: 16px;
   line-height: 1.6;
+  /* These come from a plain textarea, so the line breaks an artist typed are
+     the only paragraph structure the text has — plain HTML would otherwise
+     collapse them all onto one line. */
+  white-space: pre-line;
 }
 
 .more-section {
