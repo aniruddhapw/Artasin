@@ -5,7 +5,8 @@ import { Nav } from "@/components/Nav";
 export const metadata = {
   title: "Privacy Policy",
   description:
-    "How ARTASIN collects, uses, stores, and protects your personal data, and the rights you have over it."
+    "How ARTASIN collects, uses, stores, and protects your personal data, and the rights you have over it.",
+  alternates: { canonical: "/privacy" }
 };
 
 const LAST_UPDATED = "8 September 2026";

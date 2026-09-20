@@ -6,7 +6,8 @@ import { prisma } from "@/lib/db";
 
 export const metadata = {
   title: "Journal",
-  description: "Process notes, studio updates, and stories from the artists on ARTASIN."
+  description: "Process notes, studio updates, and stories from the artists on ARTASIN.",
+  alternates: { canonical: "/blog" }
 };
 
 const dateFormat = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" });

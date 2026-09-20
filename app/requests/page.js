@@ -5,7 +5,8 @@ import { prisma } from "@/lib/db";
 import { processSteps } from "@/data/artisan";
 
 export const metadata = {
-  title: "Request Custom Artwork"
+  title: "Request Custom Artwork",
+  alternates: { canonical: "/requests" }
 };
 
 export default async function RequestsPage({ searchParams }) {

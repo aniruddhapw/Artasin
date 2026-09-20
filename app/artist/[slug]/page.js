@@ -63,6 +63,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `${artist.displayName}`,
     description,
+    alternates: { canonical: `/artist/${artist.slug}` },
     openGraph: {
       type: "profile",
       title: `${artist.displayName} on ARTASIN`,

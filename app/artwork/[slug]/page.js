@@ -44,6 +44,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `${artwork.title}`,
     description,
+    alternates: { canonical: `/artwork/${artwork.slug}` },
     openGraph: {
       title: `${artwork.title} by ${artwork.artist.displayName}`,
       description,

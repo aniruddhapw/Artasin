@@ -4,7 +4,8 @@ import { getTranslations } from "@/lib/i18n";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
 export const metadata = {
-  title: "Set a New Password"
+  title: "Set a New Password",
+  alternates: { canonical: "/reset-password" }
 };
 
 export default async function ResetPasswordPage() {

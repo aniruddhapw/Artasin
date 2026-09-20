@@ -4,7 +4,8 @@ import { getTranslations } from "@/lib/i18n";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata = {
-  title: "Sign In"
+  title: "Sign In",
+  alternates: { canonical: "/login" }
 };
 
 export default async function LoginPage() {

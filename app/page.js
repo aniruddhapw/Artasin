@@ -12,6 +12,10 @@ import { collectionCards, mediums } from "@/data/artisan";
 const FEATURED_ARTIST_LIMIT = 4;
 const PREVIEW_IMAGES_PER_ARTIST = 3;
 
+export const metadata = {
+  alternates: { canonical: "/" }
+};
+
 /**
  * Artists are featured on the strength of the work they have actually uploaded,
  * counting past work as well as listings. Ranking by published artworks alone

@@ -9,7 +9,8 @@ import { artworkCategories as categories } from "@/data/artisan";
 
 export const metadata = {
   title: "Collection",
-  description: "Browse the full ARTASIN collection of original art across every medium."
+  description: "Browse the full ARTASIN collection of original art across every medium.",
+  alternates: { canonical: "/gallery" }
 };
 
 export default async function GalleryPage({ searchParams }) {

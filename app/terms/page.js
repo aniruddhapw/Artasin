@@ -5,7 +5,8 @@ import { Nav } from "@/components/Nav";
 export const metadata = {
   title: "Terms of Service",
   description:
-    "The terms that govern buying, selling, and commissioning original artwork on the ARTASIN marketplace."
+    "The terms that govern buying, selling, and commissioning original artwork on the ARTASIN marketplace.",
+  alternates: { canonical: "/terms" }
 };
 
 const LAST_UPDATED = "8 September 2026";

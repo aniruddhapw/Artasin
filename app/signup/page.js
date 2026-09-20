@@ -3,7 +3,8 @@ import { getTranslations } from "@/lib/i18n";
 import { SignupForm } from "@/components/auth/SignupForm";
 
 export const metadata = {
-  title: "Create Account"
+  title: "Create Account",
+  alternates: { canonical: "/signup" }
 };
 
 export default async function SignupPage() {

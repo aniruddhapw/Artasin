@@ -8,7 +8,8 @@ import { prisma } from "@/lib/db";
 export const metadata = {
   title: "Artists",
   description:
-    "Browse every verified artist on ARTASIN — painters, sculptors, photographers, and digital artists taking commissions."
+    "Browse every verified artist on ARTASIN — painters, sculptors, photographers, and digital artists taking commissions.",
+  alternates: { canonical: "/artists" }
 };
 
 export default async function ArtistsPage() {
