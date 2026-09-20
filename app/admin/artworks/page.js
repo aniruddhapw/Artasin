@@ -47,6 +47,9 @@ export default async function AdminArtworksPage() {
                 </div>
                 <div className="order-history-meta">
                   <span className="tag">{artwork.status}</span>
+                  <Link className="small-outline" href={`/admin/artworks/${artwork.id}/edit`}>
+                    Edit
+                  </Link>
                   <AdminArtworkRow artworkId={artwork.id} />
                 </div>
               </div>

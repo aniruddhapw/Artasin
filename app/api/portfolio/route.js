@@ -7,7 +7,7 @@ import { extractYouTubeId } from "@/lib/youtube";
 const MAX_PIECES = 24;
 
 const basePieceSchema = z.object({
-  title: z.string().min(1, { message: "is required" }).max(160),
+  title: z.string().trim().min(1, { message: "is required" }).max(160),
   description: z.string().max(2000).optional(),
   medium: z.string().max(160).optional(),
   year: z

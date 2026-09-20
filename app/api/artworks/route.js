@@ -5,7 +5,9 @@ import { prisma } from "@/lib/db";
 import { ensureSlug } from "@/lib/slug";
 
 const createArtworkSchema = z.object({
-  title: z.string().min(1),
+  // .trim() runs before .min(1), so a title of just spaces is rejected
+  // instead of silently creating an "untitled" listing.
+  title: z.string().trim().min(1),
   // Derived from the title on the server. Still accepted so existing API
   // clients keep working, but the studio form no longer sends one.
   slug: z
@@ -13,10 +15,10 @@ const createArtworkSchema = z.object({
     .min(3, "must be at least 3 characters")
     .regex(/^[a-z0-9-]+$/, "can only use lowercase letters, numbers, and hyphens")
     .optional(),
-  description: z.string().min(1),
-  category: z.string().min(1),
-  medium: z.string().min(1),
-  dimensions: z.string().min(1),
+  description: z.string().trim().min(1),
+  category: z.string().trim().min(1),
+  medium: z.string().trim().min(1),
+  dimensions: z.string().trim().min(1),
   year: z.number().int().optional(),
   price: z.number().positive("must be greater than zero"),
   currency: z.string().length(3).default("INR"),

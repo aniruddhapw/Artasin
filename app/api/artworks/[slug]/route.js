@@ -4,16 +4,16 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 const updateArtworkSchema = z.object({
-  title: z.string().min(1).optional(),
+  title: z.string().trim().min(1).optional(),
   slug: z
     .string()
     .min(3)
     .regex(/^[a-z0-9-]+$/)
     .optional(),
-  description: z.string().min(1).optional(),
-  category: z.string().min(1).optional(),
-  medium: z.string().min(1).optional(),
-  dimensions: z.string().min(1).optional(),
+  description: z.string().trim().min(1).optional(),
+  category: z.string().trim().min(1).optional(),
+  medium: z.string().trim().min(1).optional(),
+  dimensions: z.string().trim().min(1).optional(),
   year: z.number().int().optional(),
   price: z.number().positive().optional(),
   currency: z.string().length(3).optional(),
@@ -103,11 +103,9 @@ export async function PATCH(request, context) {
 
     const input = updateArtworkSchema.parse(await request.json());
 
-    if (isAdmin) {
-      if (input.status !== "ARCHIVED" || Object.keys(input).length > 1) {
-        return fail("Admins may only archive listings for moderation", 403);
-      }
-    } else if (input.status === "PUBLISHED" && user.artistProfile.verificationStatus !== "APPROVED") {
+    // The verification gate protects against an unverified artist self-publishing;
+    // an admin fixing up a listing is a trusted override and skips it.
+    if (!isAdmin && input.status === "PUBLISHED" && user.artistProfile.verificationStatus !== "APPROVED") {
       return fail("Your studio must be verified by an admin before you can publish listings", 403);
     }
 

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { extractYouTubeId } from "@/lib/youtube";
 
 const updatePieceSchema = z.object({
-  title: z.string().min(1, { message: "is required" }).max(160).optional(),
+  title: z.string().trim().min(1, { message: "is required" }).max(160).optional(),
   description: z.string().max(2000).nullable().optional(),
   medium: z.string().max(160).nullable().optional(),
   year: z
