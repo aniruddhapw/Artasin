@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { getTranslations } from "@/lib/i18n";
 import { SignupForm } from "@/components/auth/SignupForm";
@@ -15,7 +16,9 @@ export default async function SignupPage() {
       eyebrow={t("auth.signUp.eyebrow")}
       title={t("auth.signUp.headline")}
     >
-      <SignupForm />
+      <Suspense fallback={null}>
+        <SignupForm />
+      </Suspense>
     </AuthShell>
   );
 }
