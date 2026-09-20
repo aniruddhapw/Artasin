@@ -380,6 +380,7 @@ h1,
 .more-section h2,
 .card-heading h2,
 .process-column h2,
+.path-heading h2,
 legend {
   font-family: "Playfair Display", Georgia, serif;
   font-size: 32px;
@@ -387,6 +388,10 @@ legend {
   line-height: 1.3;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.path-heading h2 {
+  font-size: 40px;
 }
 
 .text-link {
@@ -2532,6 +2537,10 @@ textarea::placeholder {
   .medium-list span:first-child {
     font-size: 40px;
     line-height: 1.2;
+  }
+
+  .path-heading h2 {
+    font-size: 32px;
   }
 
   .nav-actions {
