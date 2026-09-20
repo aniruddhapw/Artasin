@@ -12,6 +12,17 @@ import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 import { galleryImages, ogUrl, thumbUrl } from "@/lib/images";
 
+// A hard slice(0, 160) can land mid-word, which reads as broken in a search
+// snippet — back up to the last full word instead.
+function truncate(text, maxLength = 160) {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  const clipped = text.slice(0, maxLength);
+  const lastSpace = clipped.lastIndexOf(" ");
+  return `${clipped.slice(0, lastSpace > 0 ? lastSpace : maxLength)}…`;
+}
+
 async function getArtwork(slug) {
   return prisma.artwork.findUnique({
     where: { slug },
@@ -38,7 +49,7 @@ export async function generateMetadata({ params }) {
   if (!artwork || artwork.status === "DRAFT" || artwork.status === "ARCHIVED") {
     return { title: "Artwork Not Found" };
   }
-  const description = artwork.description.slice(0, 160);
+  const description = truncate(artwork.description);
   const previewSource = artwork.media[0]?.url;
 
   return {
@@ -176,6 +187,12 @@ export default async function ArtworkDetailPage({ params }) {
                 title={artwork.title}
               />
             </div>
+            {artwork.description ? (
+              <div className="artist-note">
+                <h2>Description</h2>
+                <p>{artwork.description}</p>
+              </div>
+            ) : null}
             {artwork.artist.bio ? (
               <div className="artist-note">
                 <h2>About the Artist</h2>
