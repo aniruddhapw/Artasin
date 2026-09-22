@@ -6,6 +6,22 @@ import { PrismaPg } from "@prisma/adapter-pg";
 const databaseUrl =
   process.env.DATABASE_URL ||
   "postgresql://postgres:postgres@localhost:5432/artisan_exchange?schema=public";
+
+// This script creates a well-known demo admin account with a password
+// documented in plain text in README.md. Seeding it into anything but a local
+// database would publish a working admin login for that database. upsert()
+// with update: {} below means this guard only has to catch the *first* run —
+// after that the account already exists and re-running is a no-op anyway.
+const looksLocal = /@(localhost|127\.0\.0\.1)[:/]/.test(databaseUrl);
+if (!looksLocal && process.env.ALLOW_PROD_SEED !== "true") {
+  console.error(
+    `Refusing to seed a non-local DATABASE_URL (${databaseUrl.replace(/:[^:@]*@/, ":***@")}).\n` +
+      "This creates a demo admin account whose password is public in README.md. " +
+      "If you really mean to seed this database, set ALLOW_PROD_SEED=true."
+  );
+  process.exit(1);
+}
+
 const prisma = new PrismaClient({ adapter: new PrismaPg(databaseUrl) });
 
 async function main() {
