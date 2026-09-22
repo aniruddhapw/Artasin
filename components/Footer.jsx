@@ -33,7 +33,9 @@ export async function Footer({ variant = "full" }) {
           {variant === "full" ? (
             <div className="footer-icons">
               <Icon name="globe" />
-              <Icon name="mail" />
+              <a aria-label="Email support" href="mailto:support@artasin.in">
+                <Icon name="mail" />
+              </a>
             </div>
           ) : null}
         </div>
