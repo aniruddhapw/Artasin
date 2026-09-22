@@ -6,11 +6,12 @@ import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { prisma } from "@/lib/db";
-import { detailUrl, thumbUrl } from "@/lib/images";
-import { collectionCards, mediums } from "@/data/artisan";
+import { ARTWORK_PLACEHOLDER, detailUrl, thumbUrl } from "@/lib/images";
+import { mediums } from "@/data/artisan";
 
 const FEATURED_ARTIST_LIMIT = 4;
 const PREVIEW_IMAGES_PER_ARTIST = 3;
+const CURATED_COLLECTION_LIMIT = 2;
 
 export const metadata = {
   alternates: { canonical: "/" }
@@ -83,8 +84,44 @@ async function getHeroArtwork() {
   });
 }
 
+/**
+ * The homepage's two "Curated Collections" cards used to be a hardcoded pair
+ * with made-up titles and counts. This surfaces the two categories with the
+ * most published work instead, each linking to its real /gallery filter.
+ */
+async function getCuratedCollections() {
+  const grouped = await prisma.artwork.groupBy({
+    by: ["category"],
+    where: { status: "PUBLISHED" },
+    _count: { category: true },
+    orderBy: { _count: { category: "desc" } },
+    take: CURATED_COLLECTION_LIMIT
+  });
+
+  return Promise.all(
+    grouped.map(async (group) => {
+      const artwork = await prisma.artwork.findFirst({
+        where: { status: "PUBLISHED", category: group.category },
+        include: { media: { take: 1, orderBy: { sortOrder: "asc" } } },
+        orderBy: { createdAt: "desc" }
+      });
+      const count = group._count.category;
+      return {
+        title: group.category,
+        count: `${count} ${count === 1 ? "Artwork" : "Artworks"}`,
+        image: thumbUrl(artwork?.media[0]?.url) || ARTWORK_PLACEHOLDER,
+        href: `/gallery?category=${encodeURIComponent(group.category)}`
+      };
+    })
+  );
+}
+
 export default async function HomePage() {
-  const [artists, heroArtwork] = await Promise.all([getTrendingArtists(), getHeroArtwork()]);
+  const [artists, heroArtwork, collectionCards] = await Promise.all([
+    getTrendingArtists(),
+    getHeroArtwork(),
+    getCuratedCollections()
+  ]);
 
   return (
     <>
@@ -174,31 +211,33 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="section-pad bordered-section">
-          <div className="section-heading inline-heading" data-reveal>
-            <h2>Curated Collections</h2>
-            <Link className="text-link" href="/gallery">
-              View All
-            </Link>
-          </div>
-          <div className="collection-grid">
-            {collectionCards.map((card, index) => (
-              <Link
-                className={`collection-card group-image ${index === 1 ? "offset-card" : ""}`}
-                data-reveal
-                href={card.href}
-                key={card.title}
-                style={{ "--reveal-delay": `${index * 150}ms` }}
-              >
-                <div className="collection-image">
-                  <LazyImage alt={`${card.title} collection`} src={card.image} />
-                </div>
-                <h3>{card.title}</h3>
-                <p>{card.count}</p>
+        {collectionCards.length ? (
+          <section className="section-pad bordered-section">
+            <div className="section-heading inline-heading" data-reveal>
+              <h2>Curated Collections</h2>
+              <Link className="text-link" href="/gallery">
+                View All
               </Link>
-            ))}
-          </div>
-        </section>
+            </div>
+            <div className="collection-grid">
+              {collectionCards.map((card, index) => (
+                <Link
+                  className={`collection-card group-image ${index === 1 ? "offset-card" : ""}`}
+                  data-reveal
+                  href={card.href}
+                  key={card.title}
+                  style={{ "--reveal-delay": `${index * 150}ms` }}
+                >
+                  <div className="collection-image">
+                    <LazyImage alt={`${card.title} collection`} src={card.image} />
+                  </div>
+                  <h3>{card.title}</h3>
+                  <p>{card.count}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {artists.length ? (
           <section className="artists-band section-pad" id="artists">
