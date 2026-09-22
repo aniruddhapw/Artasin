@@ -29,6 +29,7 @@ html {
 
 body {
   margin: 0;
+  overflow-x: hidden;
   color: var(--text);
   background: var(--surface);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -2455,6 +2456,25 @@ textarea::placeholder {
 
   .studio-header-actions .button {
     flex: 1 1 auto;
+  }
+
+  .order-history-row {
+    flex-wrap: wrap;
+  }
+
+  .order-history-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-items: initial;
+    justify-content: flex-start;
+    text-align: left;
+    width: 100%;
+    margin-left: calc(72px + 24px);
+  }
+
+  .artwork-status-actions {
+    flex-wrap: wrap;
   }
 
   .section-pad,
