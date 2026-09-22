@@ -6,21 +6,6 @@ export const navItems = [
   { href: "/blog", label: "Journal", key: "journal" }
 ];
 
-export const collectionCards = [
-  {
-    title: "Modern Minimalist",
-    count: "42 Artworks",
-    image: "/artisan/modern-minimalist.jpg",
-    href: "/gallery?category=Painting"
-  },
-  {
-    title: "Textured Abstracts",
-    count: "28 Artworks",
-    image: "/artisan/textured-abstracts.jpg",
-    href: "/gallery?category=Sculpture"
-  }
-];
-
 export const mediums = [
   { label: "Paintings", category: "Painting" },
   { label: "Sculptures", category: "Sculpture" },
