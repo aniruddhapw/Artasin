@@ -50,7 +50,7 @@ export default async function AdminArtworksPage() {
                   <Link className="small-outline" href={`/admin/artworks/${artwork.id}/edit`}>
                     Edit
                   </Link>
-                  <AdminArtworkRow artworkId={artwork.id} />
+                  <AdminArtworkRow artworkId={artwork.id} status={artwork.status} />
                 </div>
               </div>
             ))}

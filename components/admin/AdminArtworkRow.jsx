@@ -3,18 +3,18 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function AdminArtworkRow({ artworkId }) {
+export function AdminArtworkRow({ artworkId, status }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
-  async function archive() {
+  async function updateStatus(nextStatus) {
     setIsSubmitting(true);
     try {
       await fetch(`/api/artworks/${artworkId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "ARCHIVED" })
+        body: JSON.stringify({ status: nextStatus })
       });
       router.refresh();
     } finally {
@@ -26,7 +26,7 @@ export function AdminArtworkRow({ artworkId }) {
   if (confirming) {
     return (
       <div className="artwork-status-actions">
-        <button className="small-outline" disabled={isSubmitting} onClick={archive} type="button">
+        <button className="small-outline" disabled={isSubmitting} onClick={() => updateStatus("ARCHIVED")} type="button">
           Confirm Archive
         </button>
         <button className="small-outline" onClick={() => setConfirming(false)} type="button">
@@ -37,8 +37,20 @@ export function AdminArtworkRow({ artworkId }) {
   }
 
   return (
-    <button className="small-outline" onClick={() => setConfirming(true)} type="button">
-      Archive
-    </button>
+    <div className="artwork-status-actions">
+      {status === "PUBLISHED" ? (
+        <button
+          className="small-outline"
+          disabled={isSubmitting}
+          onClick={() => updateStatus("DRAFT")}
+          type="button"
+        >
+          Unpublish
+        </button>
+      ) : null}
+      <button className="small-outline" onClick={() => setConfirming(true)} type="button">
+        Archive
+      </button>
+    </div>
   );
 }
