@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { BecomeArtistForm } from "@/components/account/BecomeArtistForm";
 import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
+import { PhoneForm } from "@/components/account/PhoneForm";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { getAuthUser } from "@/lib/auth";
@@ -50,6 +51,10 @@ export default async function AccountPage() {
                 <dd>{user.email}</dd>
               </div>
               <div>
+                <dt>{t("account.phone")}</dt>
+                <dd>{user.phone || t("account.phoneNotSet")}</dd>
+              </div>
+              <div>
                 <dt>{t("account.accountType")}</dt>
                 <dd>{roleLabelKeys[user.role] ? t(roleLabelKeys[user.role]) : user.role}</dd>
               </div>
@@ -61,6 +66,11 @@ export default async function AccountPage() {
                 </dd>
               </div>
             </dl>
+          </article>
+
+          <article className="dashboard-card">
+            <h2>{t("account.updatePhone")}</h2>
+            <PhoneForm defaultPhone={user.phone} />
           </article>
 
           <article className="dashboard-card">

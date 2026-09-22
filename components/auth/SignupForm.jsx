@@ -33,6 +33,7 @@ export function SignupForm() {
           firstName,
           lastName,
           email: formData.get("email"),
+          phone: formData.get("phone"),
           password: formData.get("password"),
           role,
           artist:
@@ -115,6 +116,10 @@ export function SignupForm() {
         <label>
           <span>{t("auth.email")}</span>
           <input autoComplete="email" name="email" placeholder="name@example.com" required type="email" />
+        </label>
+        <label>
+          <span>{t("auth.phone")}</span>
+          <input autoComplete="tel" name="phone" placeholder="+91 98765 43210" required type="tel" />
         </label>
         <label>
           <span>{t("auth.password")}</span>
