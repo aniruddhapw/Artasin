@@ -74,6 +74,12 @@ export function ArtworkForm({ artwork, verificationStatus }) {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+
+    if (!images.length) {
+      setError(t("error.noImages"));
+      return;
+    }
+
     setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);

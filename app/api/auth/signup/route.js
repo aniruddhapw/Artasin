@@ -9,6 +9,11 @@ const signupSchema = z.object({
   password: z.string().min(8, "must be at least 8 characters"),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "must be a valid phone number")
+    .regex(/^[0-9+\-\s()]{7,20}$/, "must be a valid phone number"),
   role: z.enum(["BUYER", "ARTIST"]).default("BUYER"),
   artist: z
     .object({
@@ -46,6 +51,7 @@ export async function POST(request) {
         passwordHash,
         firstName: input.firstName,
         lastName: input.lastName,
+        phone: input.phone,
         role: input.role,
         artistProfile:
           input.role === "ARTIST"
