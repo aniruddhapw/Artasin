@@ -27,6 +27,13 @@ The app runs at `http://localhost:3000` by default (`npm run dev -- -p 3001` to 
 
 ### Demo accounts
 
+> **⚠️ Local development only.** These accounts — including an admin login —
+> are created with a fixed, publicly-documented password. `npm run db:seed`
+> now refuses to run against a non-local `DATABASE_URL` for exactly this
+> reason (see `prisma/seed.js`). If this was ever seeded into production
+> before that guard existed, rotate `admin@example.com`'s password
+> immediately via `/account` → Change Password.
+
 Seeded by `npm run db:seed`, all with password `artisan-demo-password`:
 
 | Role   | Email                       | Notes                                   |
@@ -135,7 +142,7 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
    ```bash
    DATABASE_URL="<production-url>" npm run db:migrate:deploy
    ```
-   Only run `npm run db:seed` against production if you actually want the demo accounts/data there — it's meant for local development.
+   Don't run `npm run db:seed` against production — it creates a demo admin account with a password published in this README (see the warning above). It refuses to run unless `DATABASE_URL` looks local, or `ALLOW_PROD_SEED=true` is explicitly set.
 4. **Create a Cloudinary account** (free tier is fine) and grab the cloud name, API key, and API secret from its dashboard.
 5. **Import the repo into Vercel** (vercel.com → New Project → your GitHub repo). Vercel auto-detects Next.js; no custom build command is needed.
 6. **Set environment variables** in the Vercel project settings — everything in `.env.example`, with production values:
