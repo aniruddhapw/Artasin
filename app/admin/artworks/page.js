@@ -47,10 +47,11 @@ export default async function AdminArtworksPage() {
                 </div>
                 <div className="order-history-meta">
                   <span className="tag">{artwork.status}</span>
+                  {artwork.isHero ? <span className="tag">Homepage Hero</span> : null}
                   <Link className="small-outline" href={`/admin/artworks/${artwork.id}/edit`}>
                     Edit
                   </Link>
-                  <AdminArtworkRow artworkId={artwork.id} status={artwork.status} />
+                  <AdminArtworkRow artworkId={artwork.id} isHero={artwork.isHero} status={artwork.status} />
                 </div>
               </div>
             ))}

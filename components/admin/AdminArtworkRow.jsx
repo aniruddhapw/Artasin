@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function AdminArtworkRow({ artworkId, status }) {
+export function AdminArtworkRow({ artworkId, status, isHero }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -23,6 +23,20 @@ export function AdminArtworkRow({ artworkId, status }) {
     }
   }
 
+  async function setHero(pinned) {
+    setIsSubmitting(true);
+    try {
+      await fetch("/api/admin/hero", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artworkId: pinned ? artworkId : null })
+      });
+      router.refresh();
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   if (confirming) {
     return (
       <div className="artwork-status-actions">
@@ -38,6 +52,16 @@ export function AdminArtworkRow({ artworkId, status }) {
 
   return (
     <div className="artwork-status-actions">
+      {status === "PUBLISHED" ? (
+        <button
+          className="small-outline"
+          disabled={isSubmitting}
+          onClick={() => setHero(!isHero)}
+          type="button"
+        >
+          {isHero ? "Unset Hero" : "Set as Hero"}
+        </button>
+      ) : null}
       {status === "PUBLISHED" ? (
         <button
           className="small-outline"

@@ -193,6 +193,9 @@ model Artwork {
   priceCents     Int
   currency       String        @default("INR")
   status         ArtworkStatus @default(DRAFT)
+  // Admin-pinned homepage hero. At most one row has this set — the API clears
+  // the previous pin in the same transaction rather than relying on a constraint.
+  isHero         Boolean       @default(false)
   shipsFrom      String?
   authenticity   String?
   edition        String?
