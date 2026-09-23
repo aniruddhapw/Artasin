@@ -76,12 +76,30 @@ async function getTrendingArtists() {
     .slice(0, FEATURED_ARTIST_LIMIT);
 }
 
+/**
+ * An admin can pin a specific listing as the homepage hero from /admin/artworks.
+ * Without a pin — or if the pinned piece is later unpublished — the newest
+ * published listing stands in, so the homepage always has a hero.
+ */
 async function getHeroArtwork() {
-  return prisma.artwork.findFirst({
-    where: { status: "PUBLISHED" },
-    include: { artist: { select: { displayName: true } }, media: { take: 1, orderBy: { sortOrder: "asc" } } },
-    orderBy: { createdAt: "desc" }
+  const include = {
+    artist: { select: { displayName: true } },
+    media: { take: 1, orderBy: { sortOrder: "asc" } }
+  };
+
+  const pinned = await prisma.artwork.findFirst({
+    where: { status: "PUBLISHED", isHero: true },
+    include
   });
+
+  return (
+    pinned ||
+    prisma.artwork.findFirst({
+      where: { status: "PUBLISHED" },
+      include,
+      orderBy: { createdAt: "desc" }
+    })
+  );
 }
 
 /**
