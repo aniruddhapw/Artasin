@@ -878,7 +878,10 @@ dd {
 .blog-post-page {
   max-width: var(--container);
   margin: 0 auto;
-  padding: 80px var(--desktop-margin) var(--section);
+  /* This shorthand overrides .page's padding-top, so its top value has to both
+     clear the 80px fixed nav and leave the page heading room to breathe —
+     at 80px the heading sat flush against the nav's bottom border. */
+  padding: 128px var(--desktop-margin) var(--section);
 }
 
 .request-header {
@@ -2477,6 +2480,15 @@ textarea::placeholder {
     flex-wrap: wrap;
   }
 
+  /* The mobile nav is two rows deep (bar plus the scrolling links), ending at
+     128px, so .page's 132px left these headings 4px clear of it. */
+  .request-page,
+  .studio-page,
+  .legal-page,
+  .blog-post-page {
+    padding-top: 168px;
+  }
+
   .section-pad,
   .artwork-layout,
   .more-section,
@@ -3681,6 +3693,25 @@ textarea::placeholder {
 /* ---------------------------------------------------------------------------
    Admin collectors table
    --------------------------------------------------------------------------- */
+
+/* .dashboard-card carries no padding of its own — each variant supplies it. */
+.admin-notice {
+  padding: 24px;
+  margin-bottom: var(--gutter);
+}
+
+.admin-notice h2 {
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.admin-notice p {
+  margin-bottom: 20px;
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
 
 .admin-buyer-table {
   display: grid;

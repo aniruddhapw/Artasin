@@ -18,7 +18,12 @@ export function PhoneReminderButton({ pending }) {
       if (!response.ok) {
         throw new Error(formatApiError(payload, "Could not send the reminder"));
       }
-      setResult(`Reminder sent to ${payload.sent} ${payload.sent === 1 ? "person" : "people"}.`);
+      const skippedNote = payload.skipped
+        ? ` ${payload.skipped} demo ${payload.skipped === 1 ? "account was" : "accounts were"} skipped — their addresses can't receive mail.`
+        : "";
+      setResult(
+        `Reminder sent to ${payload.sent} ${payload.sent === 1 ? "person" : "people"}.${skippedNote}`
+      );
     } catch (sendError) {
       setError(sendError.message);
     } finally {
