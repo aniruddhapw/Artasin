@@ -34,6 +34,7 @@ export function SignupForm() {
           lastName,
           email: formData.get("email"),
           phone: formData.get("phone"),
+          whatsappOptIn: formData.get("whatsappOptIn") === "on",
           password: formData.get("password"),
           role,
           artist:
@@ -120,6 +121,10 @@ export function SignupForm() {
         <label>
           <span>{t("auth.phone")}</span>
           <input autoComplete="tel" name="phone" placeholder="+91 98765 43210" required type="tel" />
+        </label>
+        <label className="check-row">
+          <input name="whatsappOptIn" type="checkbox" />
+          <span>{t("auth.whatsappOptIn")}</span>
         </label>
         <label>
           <span>{t("auth.password")}</span>

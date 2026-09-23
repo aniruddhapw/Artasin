@@ -83,7 +83,12 @@ model User {
   firstName       String
   lastName        String
   role            UserRole            @default(BUYER)
+  // Stored in E.164 (+919876543210) — see lib/phone.js. Messaging providers
+  // reject anything else, and a number cannot be reliably fixed up later.
   phone           String?
+  // WhatsApp requires explicit opt-in before a business may message someone,
+  // so this has to be recorded per user rather than assumed from consent.
+  whatsappOptIn   Boolean             @default(false)
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   artistProfile   ArtistProfile?

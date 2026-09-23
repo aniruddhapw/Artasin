@@ -70,7 +70,7 @@ export default async function AccountPage() {
 
           <article className="dashboard-card">
             <h2>{t("account.updatePhone")}</h2>
-            <PhoneForm defaultPhone={user.phone} />
+            <PhoneForm defaultPhone={user.phone} defaultWhatsappOptIn={user.whatsappOptIn} />
           </article>
 
           <article className="dashboard-card">

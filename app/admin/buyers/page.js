@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { PhoneReminderButton } from "@/components/admin/PhoneReminderButton";
 import { serializeMoney } from "@/lib/api";
 import { prisma } from "@/lib/db";
 
@@ -66,6 +67,7 @@ export default async function AdminBuyersPage() {
   });
 
   const activeBuyers = rows.filter((row) => row.orderCount || row.commissionCount).length;
+  const missingPhoneCount = rows.filter((row) => !row.phone || !row.phone.trim()).length;
 
   return (
     <>
@@ -88,6 +90,18 @@ export default async function AdminBuyersPage() {
             </Link>
           </div>
         </header>
+
+        {missingPhoneCount ? (
+          <article className="dashboard-card">
+            <h2>Missing Phone Numbers</h2>
+            <p>
+              {missingPhoneCount} {missingPhoneCount === 1 ? "person has" : "people have"} no phone number on
+              file, so they can&rsquo;t receive order or custom request notifications. Emailing them links to
+              their profile, where they can add one.
+            </p>
+            <PhoneReminderButton pending={missingPhoneCount} />
+          </article>
+        ) : null}
 
         {rows.length ? (
           <div className="admin-buyer-table">
