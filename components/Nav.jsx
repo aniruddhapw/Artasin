@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 import { Icon } from "@/components/Icon";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NavSearch } from "@/components/NavSearch";
@@ -19,7 +20,7 @@ export async function Nav({ active }) {
     <nav className="top-nav">
       <div className="nav-inner">
         <Link className="brand" href="/">
-          ARTASIN
+          <BrandMark />
         </Link>
         <div className="nav-links">
           {navItems.map((item) => (
