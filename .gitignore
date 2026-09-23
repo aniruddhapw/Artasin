@@ -32,3 +32,7 @@ yarn-error.log*
 *.tsbuildinfo
 .neon
 .env*
+
+# duplicate copy of .claude/skills written by `neon skills`; the tracked copy
+# under .claude/skills is the one we keep
+/.agents/
