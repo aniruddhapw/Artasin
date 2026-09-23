@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { PhoneReminderButton } from "@/components/admin/PhoneReminderButton";
 import { serializeMoney } from "@/lib/api";
+import { isUndeliverableEmail } from "@/lib/email";
 import { prisma } from "@/lib/db";
 
 export const metadata = {
@@ -67,7 +68,11 @@ export default async function AdminBuyersPage() {
   });
 
   const activeBuyers = rows.filter((row) => row.orderCount || row.commissionCount).length;
-  const missingPhoneCount = rows.filter((row) => !row.phone || !row.phone.trim()).length;
+  // Demo accounts on reserved domains can never be emailed, so they are not
+  // counted here either — the number has to match what the reminder can send.
+  const missingPhoneCount = rows.filter(
+    (row) => (!row.phone || !row.phone.trim()) && !isUndeliverableEmail(row.email)
+  ).length;
 
   return (
     <>
@@ -92,12 +97,10 @@ export default async function AdminBuyersPage() {
         </header>
 
         {missingPhoneCount ? (
-          <article className="dashboard-card">
+          <article className="dashboard-card admin-notice">
             <h2>Missing Phone Numbers</h2>
             <p>
-              {missingPhoneCount} {missingPhoneCount === 1 ? "person has" : "people have"} no phone number on
-              file, so they can&rsquo;t receive order or custom request notifications. Emailing them links to
-              their profile, where they can add one.
+              {`${missingPhoneCount === 1 ? "1 person has" : `${missingPhoneCount} people have`} no phone number on file, so they can’t receive order or custom request notifications. Emailing them links to their profile, where they can add one.`}
             </p>
             <PhoneReminderButton pending={missingPhoneCount} />
           </article>
