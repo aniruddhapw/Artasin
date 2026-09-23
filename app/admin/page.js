@@ -11,7 +11,7 @@ export const metadata = {
 const settledStatuses = ["PAID", "IN_PROGRESS", "SHIPPED", "DELIVERED", "COMPLETED"];
 
 export default async function AdminDashboardPage() {
-  const [settledOrders, disputedCount, artistCount, buyerCount, recentOrders] = await Promise.all([
+  const [settledOrders, disputedCount, artistCount, buyerCount, openCommissionCount, recentOrders] = await Promise.all([
     prisma.order.findMany({
       where: { status: { in: settledStatuses } },
       select: { subtotalCents: true, shippingCents: true, taxCents: true, platformCommissionCents: true }
@@ -19,6 +19,9 @@ export default async function AdminDashboardPage() {
     prisma.order.count({ where: { status: "DISPUTED" } }),
     prisma.artistProfile.count(),
     prisma.user.count({ where: { role: "BUYER" } }),
+    prisma.commissionRequest.count({
+      where: { status: { notIn: ["COMPLETED", "REJECTED", "CANCELLED"] } }
+    }),
     prisma.order.findMany({
       include: {
         artist: { select: { displayName: true } },
@@ -52,6 +55,9 @@ export default async function AdminDashboardPage() {
             <Link className="button button-secondary" href="/admin/buyers">
               Collectors
             </Link>
+            <Link className="button button-secondary" href="/admin/commissions">
+              Custom Requests
+            </Link>
             <Link className="button button-secondary" href="/admin/artworks">
               Moderate Listings
             </Link>
@@ -66,6 +72,12 @@ export default async function AdminDashboardPage() {
           <Kpi caption="Platform earnings" title="Commission Revenue" value={serializeMoney(commissionRevenueCents).formatted} />
           <Kpi caption="Verified studio accounts" href="/admin/artists" title="Artists" value={String(artistCount)} />
           <Kpi caption="Registered collectors" href="/admin/buyers" title="Buyers" value={String(buyerCount)} />
+          <Kpi
+            caption="Open custom requests"
+            href="/admin/commissions"
+            title="Commissions"
+            value={String(openCommissionCount)}
+          />
           <Kpi
             caption={disputedCount ? "Needs attention" : "All clear"}
             href="/admin/disputes"
