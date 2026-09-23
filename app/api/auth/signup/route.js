@@ -2,6 +2,7 @@ import { z } from "zod";
 import { created, handleApiError, rateLimited } from "@/lib/api";
 import { createSessionToken, hashPassword, publicUser, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { phoneSchema } from "@/lib/phone";
 import { checkRateLimit, rateLimitKeyForIp } from "@/lib/rateLimit";
 
 const signupSchema = z.object({
@@ -9,11 +10,8 @@ const signupSchema = z.object({
   password: z.string().min(8, "must be at least 8 characters"),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  phone: z
-    .string()
-    .trim()
-    .min(7, "must be a valid phone number")
-    .regex(/^[0-9+\-\s()]{7,20}$/, "must be a valid phone number"),
+  phone: phoneSchema,
+  whatsappOptIn: z.boolean().default(false),
   role: z.enum(["BUYER", "ARTIST"]).default("BUYER"),
   artist: z
     .object({
@@ -52,6 +50,7 @@ export async function POST(request) {
         firstName: input.firstName,
         lastName: input.lastName,
         phone: input.phone,
+        whatsappOptIn: input.whatsappOptIn,
         role: input.role,
         artistProfile:
           input.role === "ARTIST"

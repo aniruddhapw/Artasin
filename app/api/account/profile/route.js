@@ -2,13 +2,11 @@ import { z } from "zod";
 import { fail, handleApiError, ok } from "@/lib/api";
 import { getAuthUser, publicUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { phoneSchema } from "@/lib/phone";
 
 const updateSchema = z.object({
-  phone: z
-    .string()
-    .trim()
-    .min(7, "must be a valid phone number")
-    .regex(/^[0-9+\-\s()]{7,20}$/, "must be a valid phone number")
+  phone: phoneSchema,
+  whatsappOptIn: z.boolean().default(false)
 });
 
 export async function PATCH(request) {
@@ -22,7 +20,7 @@ export async function PATCH(request) {
 
     const updated = await prisma.user.update({
       where: { id: user.id },
-      data: { phone: input.phone },
+      data: { phone: input.phone, whatsappOptIn: input.whatsappOptIn },
       include: { artistProfile: true }
     });
 
