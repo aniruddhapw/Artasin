@@ -106,6 +106,49 @@ fieldset {
   letter-spacing: -0.02em;
 }
 
+/* Wordmark motion. Transforms only — .nav-inner is space-between, so changing
+   the wordmark's width would push the nav links around on hover. */
+.brand-mark {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.brand-letter {
+  display: inline-block;
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Each letter trails the one before it, so the word lifts as a wave. */
+  transition-delay: calc(var(--letter-index) * 40ms);
+}
+
+.brand:hover .brand-letter,
+.brand:focus-visible .brand-letter,
+.footer-brand a:hover .brand-letter,
+.footer-brand a:focus-visible .brand-letter {
+  transform: translateY(-4px);
+}
+
+/* A hairline that draws in under the wordmark, rather than a blunt underline. */
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 560ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brand:hover .brand-mark::after,
+.brand:focus-visible .brand-mark::after,
+.footer-brand a:hover .brand-mark::after,
+.footer-brand a:focus-visible .brand-mark::after {
+  transform: scaleX(1);
+}
+
 .nav-links,
 .nav-actions {
   position: relative;
@@ -3553,6 +3596,18 @@ textarea::placeholder {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  .brand-letter,
+  .brand-mark::after {
+    transition: none;
+  }
+
+  .brand:hover .brand-letter,
+  .brand:focus-visible .brand-letter,
+  .footer-brand a:hover .brand-letter,
+  .footer-brand a:focus-visible .brand-letter {
+    transform: none;
   }
 }
 
