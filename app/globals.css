@@ -3223,6 +3223,24 @@ textarea::placeholder {
   margin-top: 16px;
 }
 
+/* Photos queued for a batch add. Wider than the artwork grid's cards because
+   each one carries the title its piece will be saved with — an artwork's
+   images share a single title, a portfolio's do not. */
+.portfolio-photo-grid .artwork-image-card {
+  width: 180px;
+}
+
+.portfolio-photo-title {
+  display: block;
+  padding: 8px 8px 0;
+}
+
+.portfolio-photo-title input {
+  padding: 4px 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .portfolio-row-note {
   color: var(--muted);
   font-size: 14px;
