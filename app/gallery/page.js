@@ -77,7 +77,9 @@ export default async function GalleryPage({ searchParams }) {
                 </div>
                 <h3>{artwork.title}</h3>
                 <p>{artwork.artist.displayName}</p>
-                <p>{serializeMoney(artwork.priceCents, artwork.currency).formatted}</p>
+                <p>
+                  {artwork.category} &middot; {serializeMoney(artwork.priceCents, artwork.currency).formatted}
+                </p>
               </Link>
             ))}
           </div>
