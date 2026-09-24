@@ -141,7 +141,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
           <span>{t("artwork.form.description")}</span>
           <textarea defaultValue={artwork?.description} name="description" required rows={4} />
         </label>
-        <div className="auth-two-col">
+        <div className="auth-two-col" data-tour="artwork-details">
           <label>
             <span>{t("artwork.form.category")}</span>
             <select defaultValue={artwork?.category || ""} name="category" required>
@@ -175,7 +175,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
             <span>{t("artwork.form.price")}</span>
             <input defaultValue={artwork ? artwork.priceCents / 100 : ""} min="1" name="price" required step="0.01" type="number" />
           </label>
-          <label>
+          <label data-tour="artwork-status">
             <span>{t("artwork.form.status")}</span>
             <select defaultValue={artwork?.status || "DRAFT"} name="status">
               <option value="DRAFT">{t("artwork.form.draft")}</option>
@@ -201,7 +201,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
         </label>
       </fieldset>
 
-      <fieldset>
+      <fieldset data-tour="artwork-images">
         <legend>{t("artwork.form.imagesLegend")}</legend>
         <label className="upload-box upload-box-stacked">
           <span>
@@ -260,7 +260,12 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       </fieldset>
 
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
-      <button className="button button-primary request-submit" disabled={isSubmitting || isUploading} type="submit">
+      <button
+        className="button button-primary request-submit"
+        data-tour="artwork-submit"
+        disabled={isSubmitting || isUploading}
+        type="submit"
+      >
         {isSubmitting ? (
           <Spinner label={t("common.saving")} />
         ) : isEditing ? (

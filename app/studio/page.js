@@ -4,6 +4,7 @@ import { Icon } from "@/components/Icon";
 import { Nav } from "@/components/Nav";
 import { OrderShipAction } from "@/components/studio/OrderShipAction";
 import { ShareLinkRow } from "@/components/ShareButton";
+import { TourLauncher } from "@/components/studio/TourLauncher";
 import { VerificationBanner } from "@/components/studio/VerificationBanner";
 import { YearSelector } from "@/components/studio/YearSelector";
 import { getAuthUser } from "@/lib/auth";
@@ -95,7 +96,8 @@ export default async function StudioPage({ searchParams }) {
             <h1>{t("studio.title")}</h1>
             <p>{t("studio.subtitle")}</p>
           </div>
-          <div className="studio-header-actions">
+          <div className="studio-header-actions" data-tour="studio-actions">
+            <TourLauncher />
             <Link className="button button-secondary" href="/studio/portfolio">
               {t("studio.managePortfolio")}
             </Link>
@@ -111,7 +113,7 @@ export default async function StudioPage({ searchParams }) {
           </div>
         </header>
 
-        <section className="share-profile-card">
+        <section className="share-profile-card" data-tour="studio-share">
           <div className="share-profile-intro">
             <h2>{t("studio.shareProfile.title")}</h2>
             <p>
