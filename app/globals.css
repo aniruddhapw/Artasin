@@ -4565,3 +4565,192 @@ textarea::placeholder {
 .rte-loading {
   min-height: 372px;
 }
+
+/* ---------------------------------------------------------------- modals */
+
+.app-modal {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mobile-margin);
+}
+
+.app-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 12, 12, 0.55);
+}
+
+.app-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  padding: 48px;
+  border: 1px solid var(--line);
+  background: var(--surface-lowest);
+  animation: modal-rise 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.signup-success-card {
+  text-align: center;
+}
+
+.signup-success-mark {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--text);
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.signup-success-card h2 {
+  margin-bottom: 12px;
+  font-size: 28px;
+}
+
+.signup-success-card p {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.signup-success-actions {
+  display: grid;
+  gap: 16px;
+  margin-top: 32px;
+  justify-items: center;
+}
+
+.signup-success-actions .button {
+  width: 100%;
+}
+
+.signup-success-skip {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------- the studio tour */
+
+/* The layer itself catches clicks so the walkthrough keeps its own footing —
+   it drives the navigation between steps, and a stray click on the page
+   underneath would take the anchor out from under the spotlight. */
+.tour-layer {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+}
+
+/* The dimming is the spotlight's own shadow, spread far enough to cover any
+   viewport, which leaves the anchor lit without a second masking element. */
+.tour-spotlight {
+  position: absolute;
+  border: 1px solid var(--surface-lowest);
+  box-shadow: 0 0 0 9999px rgba(12, 12, 12, 0.6);
+  pointer-events: none;
+  transition: top 260ms ease, left 260ms ease, width 260ms ease, height 260ms ease;
+}
+
+/* Between steps there is nothing to light up yet: dim the whole screen rather
+   than flashing the page at full brightness while the next anchor is found. */
+.tour-spotlight-empty {
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+}
+
+.tour-card {
+  position: absolute;
+  padding: 24px;
+  border: 1px solid var(--line);
+  background: var(--surface-lowest);
+  outline: none;
+  animation: modal-rise 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tour-progress {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tour-card h2 {
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.tour-body {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.tour-steps {
+  display: flex;
+  gap: 8px;
+}
+
+.tour-skip {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* Back and Next sit side by side, so they have to share a box. .small-outline
+   carries a top margin for the stacked rows it was written for, which would
+   otherwise drop it below the primary button. */
+.tour-next,
+.tour-steps .small-outline {
+  margin-top: 0;
+  padding: 10px 20px;
+}
+
+@media (max-width: 640px) {
+  .app-modal-card {
+    padding: 32px 24px;
+  }
+
+  .tour-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-modal-card,
+  .tour-card {
+    animation: none;
+  }
+
+  .tour-spotlight {
+    transition: none;
+  }
+}

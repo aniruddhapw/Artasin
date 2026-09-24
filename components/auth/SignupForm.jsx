@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import { SignupSuccessModal } from "@/components/auth/SignupSuccessModal";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { ensureSlug } from "@/lib/slug";
@@ -15,6 +16,9 @@ export function SignupForm() {
   const [role, setRole] = useState(searchParams.get("role") === "artist" ? "ARTIST" : "BUYER");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Set once the account exists. The redirect waits on it so the confirmation
+  // is not flashed past on the way to the studio.
+  const [createdName, setCreatedName] = useState(null);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -54,16 +58,30 @@ export function SignupForm() {
         throw new Error(formatApiError(payload, t("error.createAccount"), t));
       }
 
-      router.push(role === "ARTIST" ? "/studio" : "/");
-      router.refresh();
+      setCreatedName(firstName);
     } catch (submitError) {
       setError(submitError.message);
       setIsSubmitting(false);
     }
   }
 
+  const isArtist = role === "ARTIST";
+
+  function leave(destination) {
+    router.push(destination);
+    router.refresh();
+  }
+
   return (
     <>
+      {createdName ? (
+        <SignupSuccessModal
+          firstName={createdName}
+          isArtist={isArtist}
+          onDismiss={() => leave(isArtist ? "/studio" : "/account")}
+          onPrimary={() => leave(isArtist ? "/studio?tour=1" : "/gallery")}
+        />
+      ) : null}
       <div className="auth-form-header">
         <h2>{t("auth.signUp.title")}</h2>
         <p>

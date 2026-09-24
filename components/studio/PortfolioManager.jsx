@@ -305,7 +305,12 @@ export function PortfolioManager({ pieces: initialPieces }) {
         <fieldset>
           <legend>{isEditing ? t("portfolio.editPastWork") : t("portfolio.addPastWork")}</legend>
 
-          <div className="media-type-toggle" role="radiogroup" aria-label={t("portfolio.mediaType")}>
+          <div
+            aria-label={t("portfolio.mediaType")}
+            className="media-type-toggle"
+            data-tour="portfolio-media"
+            role="radiogroup"
+          >
             <button
               aria-checked={draft.mediaType === "IMAGE"}
               className={draft.mediaType === "IMAGE" ? "media-type-option is-active" : "media-type-option"}
@@ -328,7 +333,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
 
           {draft.mediaType === "IMAGE" ? (
             <>
-              <label className="upload-box upload-box-stacked">
+              <label className="upload-box upload-box-stacked" data-tour="portfolio-upload">
                 <span>{uploadLabel()}</span>
                 <small>{isEditing ? t("portfolio.photoHint") : t("portfolio.photosHint")}</small>
                 <input
@@ -494,7 +499,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
         ) : null}
       </form>
 
-      <section className="portfolio-list-section">
+      <section className="portfolio-list-section" data-tour="portfolio-list">
         <div className="section-heading inline-heading">
           <h2>{t("portfolio.yourPortfolio")}</h2>
           <span className="artist-directory-count">
