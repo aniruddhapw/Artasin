@@ -229,7 +229,11 @@ export function ArtworkForm({ artwork, verificationStatus }) {
             {images.map((url, position) => (
               <div className="artwork-image-card" key={url}>
                 <img alt={`Artwork preview ${position + 1}`} src={url} />
-                <span className="primary-flag">{position === 0 ? t("artwork.form.primary") : `${position + 1}`}</span>
+                <span className="primary-flag">
+                  {position === 0
+                    ? t("artwork.form.primary")
+                    : t("artwork.form.viewNumber", { number: position + 1 })}
+                </span>
                 <div className="artwork-image-actions">
                   <button
                     aria-label="Move image earlier"
