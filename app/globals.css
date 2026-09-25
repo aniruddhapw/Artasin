@@ -4828,14 +4828,30 @@ textarea::placeholder {
 }
 
 .artist-filter-row > label:not(.artist-search) {
-  flex: 0 1 180px;
+  flex: 0 1 168px;
 }
 
+/* The native control draws its arrow hard against the right edge, inside
+   whatever padding is set, so a long option name runs underneath it. Drawing
+   the chevron here instead means the padding can reserve space for it. */
 .artist-filter-row select {
   width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
   border: 1px solid var(--line);
-  padding: 14px 16px;
+  padding: 14px 44px 14px 16px;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23444748' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 16px center;
+  background-repeat: no-repeat;
+  background-size: 12px 8px;
   font-size: 15px;
+  text-overflow: ellipsis;
+}
+
+.artist-filter-row select:focus-visible {
+  outline: 1px solid var(--primary);
+  outline-offset: -1px;
 }
 
 .artist-grid {
@@ -4868,11 +4884,20 @@ textarea::placeholder {
 
 /* Over half of verified artists have nothing listed and no portfolio. A grid
    of identical placeholder images would read as broken, so those cards show a
-   monogram at the size of the artwork it stands in for. */
+   monogram instead of the artwork.
+   
+   The shared .artist-avatar sizes its letters for a 192px profile portrait, so
+   the font has to come down with the circle — left alone, two capitals at 56px
+   fill an 88px badge edge to edge. */
 .artist-card-work .artist-avatar {
-  width: 96px;
-  height: 96px;
+  width: 88px;
+  height: 88px;
   margin-bottom: 0;
+}
+
+.artist-card-work .artist-avatar-monogram span {
+  font-size: 26px;
+  letter-spacing: 0.06em;
 }
 
 .artist-card-body {
@@ -4946,8 +4971,17 @@ textarea::placeholder {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  /* Below the three-column grid the five controls cannot share a line, and
+     letting them wrap where they fall leaves the search sharing a row with one
+     dropdown and the sort stranded on its own. Search takes a row, the four
+     dropdowns pair off under it. */
+  .artist-search {
+    flex: 1 1 100%;
+  }
+
   .artist-filter-row > label:not(.artist-search) {
     flex: 1 1 calc(50% - 6px);
+    min-width: 0;
   }
 }
 
