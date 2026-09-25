@@ -50,7 +50,7 @@ export default async function StudioArtworksPage() {
         {artworks.length ? (
           <div className="order-history-list">
             {artworks.map((artwork) => (
-              <div className="order-history-row" key={artwork.id}>
+              <div className="order-history-row artwork-listing-row" key={artwork.id}>
                 <Link className="order-history-image" href={`/studio/artworks/${artwork.id}/edit`}>
                   <LazyImage
                     alt={artwork.title}
@@ -67,6 +67,18 @@ export default async function StudioArtworksPage() {
                 </div>
                 <div className="order-history-meta">
                   <span className="tag">{t(`status.${artwork.status}`)}</span>
+                  {/* The thumbnail and title have always linked here, but with no
+                      underline and no hover state nothing said so — the row offered
+                      Share, Unpublish and Archive, and hid its most-used action.
+                      Labelled with the title because a page of rows otherwise gives
+                      a screen reader a list of identical "Edit" links. */}
+                  <Link
+                    aria-label={`${t("common.edit")} ${artwork.title}`}
+                    className="small-outline"
+                    href={`/studio/artworks/${artwork.id}/edit`}
+                  >
+                    {t("common.edit")}
+                  </Link>
                   {artwork.status === "PUBLISHED" || artwork.status === "SOLD" ? (
                     <ShareButton
                       className="small-outline"

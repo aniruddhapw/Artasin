@@ -2530,6 +2530,62 @@ textarea::placeholder {
     flex-wrap: wrap;
   }
 
+  /* Five controls in a 375px card. The shared rule indents the meta column by
+     the width of the thumbnail so it lines up under the title, which here
+     spends 96px of the screen on alignment and leaves every button on a line
+     of its own at a different width. These rows take the full card width and
+     lay the controls out two-up instead, so they read as one group of equal
+     targets rather than a ragged pile. */
+  .artwork-listing-row .order-history-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* Publish/unpublish and archive sit in their own flex box, which counts as a
+     single item to the grid above and would crowd two buttons into one cell.
+     Dissolving the box lets every control share the same grid. */
+  .artwork-listing-row .artwork-status-actions {
+    display: contents;
+  }
+
+  /* The status is a label, not a control — it gets its own line above them. */
+  .artwork-listing-row .order-history-meta > .tag {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  /* .small-outline is sized for a desktop row and lands at 31px, well under
+     the 44px a finger needs. Archive is destructive and sits next to Edit, so
+     a cramped target here is worth more than the vertical space it costs. */
+  .artwork-listing-row .order-history-meta .small-outline {
+    width: auto;
+    min-height: 44px;
+    margin-top: 0;
+    padding: 6px 12px;
+    text-align: center;
+  }
+
+  /* Share renders inside a positioning wrapper for its dropdown, so the cell
+     is the wrapper and the button has to be told to fill it. */
+  .artwork-listing-row .share-control {
+    width: 100%;
+  }
+
+  .artwork-listing-row .share-control > .small-outline {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .artwork-listing-row .order-history-meta .auth-error-inline {
+    grid-column: 1 / -1;
+  }
+
   /* The mobile nav is two rows deep (bar plus the scrolling links), ending at
      128px, so .page's 132px left these headings 4px clear of it. */
   .request-page,
