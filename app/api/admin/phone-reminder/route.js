@@ -17,6 +17,8 @@ async function loadRecipients() {
     where: missingPhoneFilter,
     select: { email: true, firstName: true, artistProfile: { select: { id: true } } }
   });
+  // sendPersonalizedEmails drops these too, so this is not what keeps the send
+  // working — it is what lets the button say how many were left out.
   const deliverable = users.filter((user) => !isUndeliverableEmail(user.email));
   return { deliverable, skipped: users.length - deliverable.length };
 }
