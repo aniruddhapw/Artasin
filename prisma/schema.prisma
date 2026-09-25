@@ -93,6 +93,10 @@ model User {
   // default. Resend decides who a Broadcast actually reaches; this is our own
   // record of the permission, and what gets pushed to Resend when it changes.
   newsletterOptIn Boolean             @default(false)
+  // A calendar date, not a moment — @db.Date so no timezone can shift a
+  // birthday by a day. Nullable because every existing account predates it,
+  // and nothing yet depends on having one.
+  dateOfBirth     DateTime?           @db.Date
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   artistProfile   ArtistProfile?

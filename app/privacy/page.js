@@ -48,8 +48,13 @@ export default function PrivacyPolicyPage() {
             <h3>Information you give us</h3>
             <ul>
               <li>
-                <strong>Account details</strong> — your first and last name, email address, and password. Passwords
-                are stored only as a bcrypt hash; we never store or see your actual password.
+                <strong>Account details</strong> — your first and last name, email address, phone number, and
+                password. Passwords are stored only as a bcrypt hash; we never store or see your actual password.
+              </li>
+              <li>
+                <strong>Date of birth</strong> — optional, and only if you enter it in your account settings. We
+                use it to confirm you meet the minimum age in our terms. It is never shown on your public profile
+                or shared with other users.
               </li>
               <li>
                 <strong>Google Sign-In</strong> — if you sign in with Google, we receive your Google account ID,
