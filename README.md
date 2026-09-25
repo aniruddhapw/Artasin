@@ -65,6 +65,7 @@ The table below is the full set of variables the app reads.
 | `MEETING_PROVIDER` | Label stored on scheduled meetings; swap for a real calendar/video integration later. |
 | `EMAIL_PROVIDER` | `console` (default in local dev — logs the email instead of sending it) or `resend`. Auto-selects `resend` if `RESEND_API_KEY` is set — see [Notifications](#notifications). |
 | `RESEND_API_KEY` | Required when `EMAIL_PROVIDER=resend`. From your Resend dashboard. |
+| `RESEND_SEGMENT_ID` / `RESEND_NEWSLETTER_TOPIC_ID` | Enable newsletter contact syncing when both are set alongside `RESEND_API_KEY` — see [Newsletter](#newsletter). Omit either and the app keeps no contact list and sends no marketing email. |
 | `EMAIL_FROM` | Sender shown on outgoing emails, e.g. `ARTASIN <notifications@yourdomain.com>`. Requires a verified sending domain in Resend. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Enables "Continue with Google" on `/login` and `/signup` when both are set — see [Auth](#auth). Omit either one and the button redirects to `/login?error=google_not_configured` instead of erroring. |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Enable browser push notifications for commission messages (`VAPID_PUBLIC_KEY` and `NEXT_PUBLIC_VAPID_PUBLIC_KEY` are the same value — one read server-side, one inlined client-side). Generate a pair with `npx web-push generate-vapid-keys`. Omit all three and the app just skips sending pushes. |
@@ -162,6 +163,34 @@ Admins also pin which artwork is the homepage hero (`POST /api/admin/hero`); cle
 
 Browser push runs alongside email for commission messages: `POST /api/push/subscribe` stores a `PushSubscription` and `lib/push.js` sends through `web-push`. Like email it's fire-and-forget — a push failure never fails the message send — and the whole thing no-ops when the VAPID keys are absent. Expired subscriptions are pruned when the push service rejects them.
 
+### Newsletter
+
+Transactional email addresses one person because something happened to them, and has to arrive whether or not
+they want to hear from us. Marketing email is the opposite on both counts, so it runs on separate rails: Resend
+*Broadcasts*, sent to a contact list rather than to rows in our database.
+
+`lib/resendContacts.js` mirrors users into that list. It stays switched off until `RESEND_API_KEY`,
+`RESEND_SEGMENT_ID` and `RESEND_NEWSLETTER_TOPIC_ID` are all set, so local dev and preview deployments touch
+nothing real — the same shape as the `console` email provider.
+
+To set it up:
+
+1. In Resend, create a **Segment** for your contacts and copy its id into `RESEND_SEGMENT_ID`.
+2. Create a **Topic** named for what you will send (e.g. "New work and studio news"), and copy its id into
+   `RESEND_NEWSLETTER_TOPIC_ID`. Choose **Opt-out** as the default subscription — that means nobody receives it
+   until they explicitly subscribe, which is the only defensible setting for a list of people who signed up for a
+   marketplace account rather than for a newsletter. **This cannot be changed after the Topic is created.**
+3. Run `npm run resend:sync` to preview the backfill, then `npm run resend:sync -- --apply` to write it.
+
+Two systems then hold a piece of the truth, deliberately. `User.newsletterOptIn` records that permission was
+given and is the box `/account` ticks; Resend holds delivery state, including unsubscribes made from its hosted
+preference page, which is the only place a recipient can act. They drift when somebody unsubscribes through
+Resend, because nothing tells us — the safe direction, since Resend stops sending and our copy is merely stale,
+but it means the flag must never be read as "this person will receive it", only as "this person agreed to".
+
+Signup swallows a failed contact sync rather than failing the signup, so the list can fall behind. `npm run
+resend:sync` is idempotent and is how it catches up.
+
 ### Security headers
 
 `next.config.js` sets a Content-Security-Policy plus `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` on every response. The CSP explicitly allows Razorpay's checkout script and iframe and Google Fonts; `'unsafe-inline'` remains in `script-src`/`style-src` for the app's one inline script and Next's injected styles. If you add a third-party script, widget, or font host, it needs an entry here or the browser will block it.
@@ -172,12 +201,13 @@ Browser push runs alongside email for commission messages: `POST /api/push/subsc
 npm run dev                 # start the dev server
 npm run build               # production build
 npm run start               # run the production build
-npm test                    # Node's built-in test runner (no test files exist yet)
+npm test                    # Node's built-in test runner
 npm run db:generate         # regenerate the Prisma client
 npm run db:migrate          # create/run a migration (local dev)
 npm run db:migrate:deploy   # apply existing migrations without prompting (production)
 npm run db:seed             # seed demo data
 npm run db:studio           # open Prisma Studio
+npm run resend:sync         # preview the Resend contact backfill (add -- --apply to write)
 ```
 
 ## Deploying to Production

@@ -13,6 +13,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio",
+    "resend:sync": "node scripts/sync-resend-contacts.js",
     "test": "node --test"
   },
   "dependencies": {
