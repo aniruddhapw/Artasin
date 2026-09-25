@@ -842,6 +842,13 @@ dd {
   text-align: right;
 }
 
+/* The type doubles as a way into the rest of that category. It has to read as
+   one of the spec values beside it rather than as a button, so it borrows the
+   byline's underline instead of .text-link's uppercase treatment. */
+.spec-list dd a {
+  border-bottom: 1px solid var(--primary);
+}
+
 .stack-actions {
   display: grid;
   gap: 16px;

@@ -182,7 +182,9 @@ export default async function ArtistProfilePage({ params }) {
                     />
                   </div>
                   <h3>{artwork.title}</h3>
-                  <p>{serializeMoney(artwork.priceCents, artwork.currency).formatted}</p>
+                  <p>
+                    {artwork.category} &middot; {serializeMoney(artwork.priceCents, artwork.currency).formatted}
+                  </p>
                 </Link>
               ))}
             </div>

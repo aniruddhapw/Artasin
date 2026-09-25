@@ -135,6 +135,14 @@ export default async function ArtworkDetailPage({ params }) {
             ) : null}
             <dl className="spec-list">
               <div>
+                <dt>Type</dt>
+                <dd>
+                  <Link href={`/gallery?category=${encodeURIComponent(artwork.category)}`}>
+                    {artwork.category}
+                  </Link>
+                </dd>
+              </div>
+              <div>
                 <dt>Medium</dt>
                 <dd>{artwork.medium}</dd>
               </div>
@@ -222,7 +230,7 @@ export default async function ArtworkDetailPage({ params }) {
                     />
                   </div>
                   <h3>{work.title}</h3>
-                  <p>{serializeMoney(work.priceCents, work.currency).formatted}</p>
+                  <p>{work.category} &middot; {serializeMoney(work.priceCents, work.currency).formatted}</p>
                 </Link>
               ))}
             </div>
