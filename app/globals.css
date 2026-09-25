@@ -4817,3 +4817,238 @@ textarea::placeholder {
     transition: none;
   }
 }
+
+/* ------------------------------------------------- artists directory page */
+
+.artists-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gutter);
+  margin-bottom: 48px;
+}
+
+.artists-lede {
+  margin-top: 16px;
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.artists-count {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* Set beside the title as a standing statement about the roster, so it reads
+   as a caption rather than another sentence in the introduction. */
+.artists-tagline {
+  max-width: 34ch;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  line-height: 2;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.artist-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+/* The search field takes whatever the dropdowns leave, so the row stays one
+   line on a desktop and collapses predictably rather than by accident. */
+.artist-search {
+  display: flex;
+  flex: 1 1 260px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.artist-search input {
+  border: 0;
+  padding: 14px 0;
+  font-size: 15px;
+}
+
+.artist-search input:focus {
+  outline: none;
+}
+
+.artist-filter-row > label:not(.artist-search) {
+  flex: 0 1 168px;
+}
+
+/* The native control draws its arrow hard against the right edge, inside
+   whatever padding is set, so a long option name runs underneath it. Drawing
+   the chevron here instead means the padding can reserve space for it. */
+.artist-filter-row select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--line);
+  padding: 14px 44px 14px 16px;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23444748' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 16px center;
+  background-repeat: no-repeat;
+  background-size: 12px 8px;
+  font-size: 15px;
+  text-overflow: ellipsis;
+}
+
+.artist-filter-row select:focus-visible {
+  outline: 1px solid var(--primary);
+  outline-offset: -1px;
+}
+
+.artist-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gutter);
+}
+
+.artist-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.artist-card-work {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--line);
+  background: var(--surface-low);
+  overflow: hidden;
+}
+
+.artist-card-work img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 700ms ease;
+}
+
+/* Over half of verified artists have nothing listed and no portfolio. A grid
+   of identical placeholder images would read as broken, so those cards show a
+   monogram instead of the artwork.
+   
+   The shared .artist-avatar sizes its letters for a 192px profile portrait, so
+   the font has to come down with the circle — left alone, two capitals at 56px
+   fill an 88px badge edge to edge. */
+.artist-card-work .artist-avatar {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 0;
+}
+
+.artist-card-work .artist-avatar-monogram span {
+  font-size: 26px;
+  letter-spacing: 0.06em;
+}
+
+.artist-card-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.artist-card-body h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.artist-verified {
+  display: inline-flex;
+  color: var(--primary);
+}
+
+.artist-card-meta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* A hairline between the two facts, which keeps them readable as separate
+   claims without the punctuation the rest of the card already uses. */
+.artist-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.artist-card-stats span + span {
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+}
+
+.artist-card-arrow {
+  flex: 0 0 auto;
+  padding-top: 4px;
+  font-size: 18px;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.artist-card:hover .artist-card-arrow {
+  transform: translateX(4px);
+}
+
+@media (max-width: 980px) {
+  .artists-header {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .artists-tagline {
+    text-align: left;
+  }
+
+  .artist-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Below the three-column grid the five controls cannot share a line, and
+     letting them wrap where they fall leaves the search sharing a row with one
+     dropdown and the sort stranded on its own. Search takes a row, the four
+     dropdowns pair off under it. */
+  .artist-search {
+    flex: 1 1 100%;
+  }
+
+  .artist-filter-row > label:not(.artist-search) {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .artist-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artist-card-arrow {
+    transition: none;
+  }
+}
