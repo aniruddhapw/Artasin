@@ -139,7 +139,14 @@ export default function PrivacyPolicyPage() {
               <li>
                 To send transactional email you would expect: order confirmations, shipping and delivery updates,
                 commission quotes and status changes, dispute outcomes, and artist verification decisions. These
-                are service messages, not marketing. We do not send marketing email.
+                are service messages. You cannot opt out of them while you hold an account, because they tell you
+                what is happening to your own orders.
+              </li>
+              <li>
+                To send a newsletter about new work and studio news, but only if you asked for it. It is off
+                unless you tick the box, every one carries an unsubscribe link, and you can change your mind at
+                any time from your account settings. Unsubscribing from it does not affect the service messages
+                above.
               </li>
               <li>To verify artists before their work goes on sale, as a trust and safety measure.</li>
               <li>To investigate disputes, prevent fraud and abuse, and comply with legal obligations.</li>
@@ -168,8 +175,9 @@ export default function PrivacyPolicyPage() {
                 <strong>Cloudinary</strong> — storage and delivery of uploaded artwork and reference images.
               </li>
               <li>
-                <strong>Resend</strong> (which delivers via Amazon SES) — sending the transactional emails
-                described above.
+                <strong>Resend</strong> (which delivers via Amazon SES) — sending the emails described
+                above. If you subscribe to the newsletter, your name and email address are also held by
+                Resend as a contact, so it can manage your subscription and honour your unsubscribe.
               </li>
               <li>
                 <strong>Google</strong> — only if you choose to sign in with Google.

@@ -89,6 +89,10 @@ model User {
   // WhatsApp requires explicit opt-in before a business may message someone,
   // so this has to be recorded per user rather than assumed from consent.
   whatsappOptIn   Boolean             @default(false)
+  // Consent to marketing email, which nobody has given yet — hence the
+  // default. Resend decides who a Broadcast actually reaches; this is our own
+  // record of the permission, and what gets pushed to Resend when it changes.
+  newsletterOptIn Boolean             @default(false)
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   artistProfile   ArtistProfile?

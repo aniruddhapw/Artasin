@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { BecomeArtistForm } from "@/components/account/BecomeArtistForm";
 import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
+import { NewsletterForm } from "@/components/account/NewsletterForm";
 import { PhoneForm } from "@/components/account/PhoneForm";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
@@ -71,6 +72,11 @@ export default async function AccountPage() {
           <article className="dashboard-card">
             <h2>{t("account.updatePhone")}</h2>
             <PhoneForm defaultPhone={user.phone} defaultWhatsappOptIn={user.whatsappOptIn} />
+          </article>
+
+          <article className="dashboard-card">
+            <h2>{t("account.emailPreferences")}</h2>
+            <NewsletterForm defaultNewsletterOptIn={user.newsletterOptIn} />
           </article>
 
           <article className="dashboard-card">

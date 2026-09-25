@@ -3,6 +3,7 @@ import { created, handleApiError, rateLimited } from "@/lib/api";
 import { createSessionToken, hashPassword, publicUser, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { phoneSchema } from "@/lib/phone";
+import { syncNewsletterContactQuietly } from "@/lib/resendContacts";
 import { checkRateLimit, rateLimitKeyForIp } from "@/lib/rateLimit";
 
 const signupSchema = z.object({
@@ -12,6 +13,7 @@ const signupSchema = z.object({
   lastName: z.string().min(1),
   phone: phoneSchema,
   whatsappOptIn: z.boolean().default(false),
+  newsletterOptIn: z.boolean().default(false),
   role: z.enum(["BUYER", "ARTIST"]).default("BUYER"),
   artist: z
     .object({
@@ -51,6 +53,7 @@ export async function POST(request) {
         lastName: input.lastName,
         phone: input.phone,
         whatsappOptIn: input.whatsappOptIn,
+        newsletterOptIn: input.newsletterOptIn,
         role: input.role,
         artistProfile:
           input.role === "ARTIST"
@@ -67,6 +70,11 @@ export async function POST(request) {
       },
       include: { artistProfile: true }
     });
+
+    // Everyone is added to the contact list; the topic subscription is what
+    // the checkbox decides. An opted-out contact costs nothing and means a
+    // later yes does not depend on us having remembered them.
+    await syncNewsletterContactQuietly(user);
 
     const token = await createSessionToken(user);
     await setSessionCookie(token);
