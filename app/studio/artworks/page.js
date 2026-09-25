@@ -50,7 +50,7 @@ export default async function StudioArtworksPage() {
         {artworks.length ? (
           <div className="order-history-list">
             {artworks.map((artwork) => (
-              <div className="order-history-row" key={artwork.id}>
+              <div className="order-history-row artwork-listing-row" key={artwork.id}>
                 <Link className="order-history-image" href={`/studio/artworks/${artwork.id}/edit`}>
                   <LazyImage
                     alt={artwork.title}
