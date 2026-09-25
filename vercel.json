@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "node scripts/migrate-on-deploy.js && next build",
   "crons": [
     {
       "path": "/api/cron/message-followups",
