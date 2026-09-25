@@ -39,6 +39,7 @@ export function SignupForm() {
           email: formData.get("email"),
           phone: formData.get("phone"),
           whatsappOptIn: formData.get("whatsappOptIn") === "on",
+          newsletterOptIn: formData.get("newsletterOptIn") === "on",
           password: formData.get("password"),
           role,
           artist:
@@ -154,6 +155,10 @@ export function SignupForm() {
             required
             type="password"
           />
+        </label>
+        <label className="check-row">
+          <input name="newsletterOptIn" type="checkbox" />
+          <span>{t("auth.newsletterOptIn")}</span>
         </label>
         <label className="check-row">
           <input name="terms" required type="checkbox" />
