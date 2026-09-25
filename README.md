@@ -191,6 +191,31 @@ but it means the flag must never be read as "this person will receive it", only 
 Signup swallows a failed contact sync rather than failing the signup, so the list can fall behind. `npm run
 resend:sync` is idempotent and is how it catches up.
 
+### Migrations on deploy
+
+`vercel.json` sets the build command to `node scripts/migrate-on-deploy.js && next build`, so a production build
+applies pending migrations before it compiles anything.
+
+This exists because it went wrong. Vercel does not run migrations on its own, every one had been applied by hand
+afterwards, and the newsletter column was not: the deploy went out, every query touching a `User` row failed on a
+column that did not exist yet, and logging in returned a 500 until somebody noticed. Running migrations inside
+the build means a migration that cannot be applied fails the build instead, and the previous deployment keeps
+serving.
+
+Three things the script does that are easy to get wrong by hand:
+
+- **It only runs for `VERCEL_ENV=production`.** Preview builds have no database of their own to migrate, and a
+  local `next build` must never touch a remote one.
+- **It migrates over the direct connection, not the pooled one.** Neon serves the same database on two
+  hostnames, and the app wants the pooled one. Prisma Migrate over PgBouncer fails in ways that never mention
+  pooling — `prepared statement "s0" already exists` is the usual one. The script strips the `-pooler` suffix
+  from the host, so there is no second connection string to configure and keep in step. Set
+  `DIRECT_DATABASE_URL` to override that if you ever need to.
+- **It fails the build when `DATABASE_URL` is missing** rather than deploying unmigrated.
+
+It is one-way: rolling a deployment back does not roll the schema back with it. Keep writing migrations so the
+previous release survives them — add columns, and don't drop one in the same release that stops writing it.
+
 ### Security headers
 
 `next.config.js` sets a Content-Security-Policy plus `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` on every response. The CSP explicitly allows Razorpay's checkout script and iframe and Google Fonts; `'unsafe-inline'` remains in `script-src`/`style-src` for the app's one inline script and Next's injected styles. If you add a third-party script, widget, or font host, it needs an entry here or the browser will block it.
@@ -224,9 +249,12 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
    ```bash
    DATABASE_URL="<production-url>" npm run db:migrate:deploy
    ```
+   You only need this for the very first deploy, to create the schema before any code runs against it. After
+   that, production migrations apply themselves — see [Migrations on deploy](#migrations-on-deploy).
+
    Don't run `npm run db:seed` against production — it creates a demo admin account with a password published in this README (see the warning above). It refuses to run unless `DATABASE_URL` looks local, or `ALLOW_PROD_SEED=true` is explicitly set.
 4. **Create a Cloudinary account** (free tier is fine) and grab the cloud name, API key, and API secret from its dashboard.
-5. **Import the repo into Vercel** (vercel.com → New Project → your GitHub repo). Vercel auto-detects Next.js; no custom build command is needed.
+5. **Import the repo into Vercel** (vercel.com → New Project → your GitHub repo). Vercel auto-detects Next.js. The build command is set in `vercel.json` so that migrations run first — see [Migrations on deploy](#migrations-on-deploy).
 6. **Set environment variables** in the Vercel project settings — everything from the [Environment Variables](#environment-variables) table, with production values:
    - `DATABASE_URL` — the production connection string from step 2
    - `JWT_SECRET` — a new, long, random value (**do not reuse the local dev secret**)
