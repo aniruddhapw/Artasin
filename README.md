@@ -159,7 +159,7 @@ Admins also pin which artwork is the homepage hero (`POST /api/admin/hero`); cle
 - `console` (default): logs the email to the server console instead of sending it. Used automatically in local dev when no `RESEND_API_KEY` is set.
 - `resend`: sends via the [Resend](https://resend.com) API. Requires `RESEND_API_KEY` and a domain verified in Resend (set `EMAIL_FROM` to an address on that domain).
 
-`sendEmail()` swallows and logs failures rather than throwing, so a broken email provider never blocks the underlying order/commission action. Current triggers: order paid (buyer + artist), order shipped/delivered (buyer), order refunded (buyer), dispute filed (all admins), new commission request (artist), commission quoted/rejected (buyer), unanswered commission message (the other party, via cron), new blog post (everyone but the author), password reset, admin-triggered missing-phone reminder, and artist verification approved/rejected. (`artistUploadReminderEmail` in `lib/emails.js` is written but not wired to anything yet.) Add another trigger by importing `sendEmail` and a template function from `lib/emails.js` at the point the underlying state changes.
+`sendEmail()` swallows and logs failures rather than throwing, so a broken email provider never blocks the underlying order/commission action. Current triggers: order paid (buyer + artist), order shipped/delivered (buyer), order refunded (buyer), dispute filed (all admins), new commission request (artist), commission quoted/rejected (buyer), unanswered commission message (the other party, via cron), password reset, admin-triggered missing-phone reminder, and artist verification approved/rejected. A published blog post is *not* in that list — it goes out as a Broadcast instead, see [Newsletter](#newsletter). (`artistUploadReminderEmail` in `lib/emails.js` is written but not wired to anything yet.) Add another trigger by importing `sendEmail` and a template function from `lib/emails.js` at the point the underlying state changes.
 
 Browser push runs alongside email for commission messages: `POST /api/push/subscribe` stores a `PushSubscription` and `lib/push.js` sends through `web-push`. Like email it's fire-and-forget — a push failure never fails the message send — and the whole thing no-ops when the VAPID keys are absent. Expired subscriptions are pruned when the push service rejects them.
 
@@ -190,6 +190,18 @@ but it means the flag must never be read as "this person will receive it", only 
 
 Signup swallows a failed contact sync rather than failing the signup, so the list can fall behind. `npm run
 resend:sync` is idempotent and is how it catches up.
+
+`lib/broadcasts.js` sends to that list. Publishing a blog post is the only thing that does so far: it hands one
+message to Resend and lets the subscriber list decide who receives it. `topicId` is optional to the Resend API
+and mandatory here — omit it and Resend mails every subscribed contact in the segment without consulting topic
+preferences at all, which is the behaviour this whole arrangement exists to stop.
+
+Two consequences worth knowing:
+
+- **With the three settings absent, publishing a post announces nothing.** There is no fallback to mailing the
+  users table, because that is precisely the thing being removed.
+- **The author now receives their own announcement.** A Broadcast goes to a list, and a list cannot have one
+  contact carved out of it. The old code excluded them by filtering the query.
 
 ### Security headers
 

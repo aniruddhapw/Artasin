@@ -2,7 +2,8 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { isUndeliverableEmail } from "../lib/email.js";
-import { contactsEnabled, subscriptionFor, syncNewsletterContact } from "../lib/resendContacts.js";
+import { newsletterEnabled } from "../lib/newsletter.js";
+import { syncNewsletterContact } from "../lib/resendContacts.js";
 
 /**
  * Brings Resend's contact list up to date with the users table.
@@ -25,7 +26,7 @@ if (!databaseUrl) {
 
 const apply = process.argv.includes("--apply");
 
-if (!contactsEnabled()) {
+if (!newsletterEnabled()) {
   console.error(
     "Resend contact syncing is not configured. Set RESEND_API_KEY, RESEND_SEGMENT_ID and\n" +
       "RESEND_NEWSLETTER_TOPIC_ID — see the Newsletter section of README.md."
