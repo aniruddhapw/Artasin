@@ -250,10 +250,12 @@ legend,
   white-space: nowrap;
 }
 
-/* Below this the nav links and icons already fill the row; the phone menu
-   greets the visitor instead. */
+/* Below this the nav links and icons already fill the row. The phone menu
+   greets the visitor instead, and signed out, the profile icon beside the
+   Sign in text goes to the same page. */
 @media (max-width: 1180px) {
-  .nav-greeting {
+  .nav-greeting,
+  .sign-in {
     display: none;
   }
 }
@@ -5612,6 +5614,17 @@ textarea::placeholder {
   color: rgba(255, 255, 255, 0.85);
 }
 
+/* Navbar text, 2px up from the shared 12px label size (greeting 14 to 16). */
+.top-nav .nav-links a,
+.top-nav .sign-in,
+.top-nav .language-toggle .language-option {
+  font-size: 14px;
+}
+
+.top-nav .nav-greeting {
+  font-size: 16px;
+}
+
 .top-nav .cart-badge {
   background: var(--brand-gold);
   color: var(--brand-navy);
@@ -5653,10 +5666,18 @@ textarea::placeholder {
 }
 
 /* Just above the phone layout the links still share the row with the logo,
-   and the full-size logo pushed it up to 35px too wide. */
+   and at full size the logo and 14px links pushed it up to 67px too wide. */
 @media (min-width: 981px) and (max-width: 1100px) {
   .brand-logo {
     height: 46px;
+  }
+
+  .top-nav .nav-inner {
+    gap: 16px;
+  }
+
+  .top-nav .nav-links {
+    gap: 18px;
   }
 }
 
