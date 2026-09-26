@@ -3205,6 +3205,8 @@ textarea::placeholder {
 }
 
 .portfolio-card-image {
+  /* Anchors the video play badge to its card rather than the page. */
+  position: relative;
   display: block;
   width: 100%;
   padding: 0;

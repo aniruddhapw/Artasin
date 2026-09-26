@@ -6,6 +6,8 @@
 // styles — a nonce-based CSP would be stricter but is a bigger, riskier
 // change than what was asked for here. fonts.googleapis.com/fonts.gstatic.com
 // are allowlisted for the Google Fonts @import in app/globals.css.
+// www.youtube-nocookie.com is the host of the portfolio video player
+// (lib/youtube.js youtubeEmbedUrl); without it every video opens to a black box.
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
@@ -13,7 +15,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com",
-  "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
+  "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://www.youtube-nocookie.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'"
