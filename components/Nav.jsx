@@ -40,6 +40,9 @@ export async function Nav({ active }) {
               {t("nav.signIn")}
             </Link>
           ) : null}
+          {user ? (
+            <span className="nav-greeting">{t("nav.greeting", { name: user.firstName })}</span>
+          ) : null}
           <NavSearch />
           <Link
             aria-label={cartCount ? t("cart.itemCount", { count: cartCount }) : t("cart.title")}

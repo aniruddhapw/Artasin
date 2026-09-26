@@ -85,7 +85,7 @@ export function MobileMenu({ user }) {
                   {user ? (
                     <div className="mobile-drawer-account">
                       <p className="user-menu-name">
-                        {user.firstName} {user.lastName}
+                        {t("nav.greeting", { name: user.firstName })}
                       </p>
                       <p className="user-menu-email">{user.email}</p>
                     </div>
