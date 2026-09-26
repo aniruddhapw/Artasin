@@ -1,325 +1,298 @@
 import Link from "next/link";
-import { ArtistAvatar } from "@/components/ArtistAvatar";
 import { Footer } from "@/components/Footer";
-import { Icon } from "@/components/Icon";
+import { JustListed } from "@/components/home/JustListed";
+import { WorkStrip } from "@/components/home/WorkStrip";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
-import { ScrollReveal } from "@/components/ScrollReveal";
+import { serializeMoney } from "@/lib/api";
+import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ARTWORK_PLACEHOLDER, detailUrl, thumbUrl } from "@/lib/images";
-import { mediums } from "@/data/artisan";
+import { getTranslations } from "@/lib/i18n";
+import { detailUrl, stripUrl, thumbUrl } from "@/lib/images";
 
-const FEATURED_ARTIST_LIMIT = 4;
-const PREVIEW_IMAGES_PER_ARTIST = 3;
-const CURATED_COLLECTION_LIMIT = 2;
+const RECENT_POOL = 40;
+const STRIP_LIMIT = 16;
+// Fewer than this can't fill a wide screen, and a strip that scrolls a couple
+// of tiles across empty space looks broken rather than calm.
+const STRIP_MIN = 6;
+const JUST_LISTED_LIMIT = 8;
+// Four across on desktop: up to seven mediums plus the commission tile.
+const MEDIUM_LIMIT = 7;
+const SPOTLIGHT_EXCERPT = 220;
 
 export const metadata = {
   alternates: { canonical: "/" }
 };
 
+const withImage = {
+  status: "PUBLISHED",
+  media: { some: {} }
+};
+
+const cardInclude = {
+  artist: { select: { displayName: true, slug: true } },
+  media: { take: 1, orderBy: { sortOrder: "asc" } }
+};
+
 /**
- * Artists are featured on the strength of the work they have actually uploaded,
- * counting past work as well as listings. Ranking by published artworks alone
- * hid every artist who has a portfolio but nothing for sale yet — which is most
- * artists when they first join, and exactly the people worth surfacing.
+ * Deals works out one artist at a time, so the strip never runs three pieces
+ * by the same person in a row just because they uploaded a batch together.
  */
-async function getTrendingArtists() {
-  const artistProfiles = await prisma.artistProfile.findMany({
-    where: {
-      verificationStatus: "APPROVED",
-      OR: [{ artworks: { some: { status: "PUBLISHED" } } }, { portfolioPieces: { some: {} } }]
-    },
-    include: {
-      // Sold pieces still show what an artist can do, so they count as preview
-      // material even though they are no longer for sale.
-      artworks: {
-        where: { status: { in: ["PUBLISHED", "SOLD"] } },
-        include: { media: { take: 1, orderBy: { sortOrder: "asc" } } },
-        orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-        take: PREVIEW_IMAGES_PER_ARTIST
-      },
-      portfolioPieces: {
-        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-        take: PREVIEW_IMAGES_PER_ARTIST
-      },
-      _count: {
-        select: { artworks: { where: { status: "PUBLISHED" } }, portfolioPieces: true }
-      }
+function interleaveByArtist(artworks) {
+  const queues = new Map();
+  for (const artwork of artworks) {
+    if (!queues.has(artwork.artistId)) queues.set(artwork.artistId, []);
+    queues.get(artwork.artistId).push(artwork);
+  }
+  const dealt = [];
+  while (queues.size) {
+    for (const [artistId, queue] of queues) {
+      dealt.push(queue.shift());
+      if (!queue.length) queues.delete(artistId);
     }
-  });
+  }
+  return dealt;
+}
 
-  return artistProfiles
-    .map((artist) => {
-      const listingPreviews = artist.artworks
-        .filter((artwork) => artwork.media[0]?.url)
-        .map((artwork) => ({ url: artwork.media[0].url, href: `/artwork/${artwork.slug}`, title: artwork.title }));
-      const portfolioPreviews = artist.portfolioPieces.map((piece) => ({
-        url: piece.imageUrl,
-        href: `/artist/${artist.slug}`,
-        title: piece.title
-      }));
-
-      return {
-        id: artist.id,
-        slug: artist.slug,
-        displayName: artist.displayName,
-        discipline: artist.discipline,
-        forSaleCount: artist._count.artworks,
-        totalWorks: artist._count.artworks + artist._count.portfolioPieces,
-        // Listings lead, because those are the pieces a visitor can actually buy.
-        previews: [...listingPreviews, ...portfolioPreviews].slice(0, PREVIEW_IMAGES_PER_ARTIST)
-      };
-    })
-    // An artist with no usable image would render as a row of placeholders.
-    .filter((artist) => artist.previews.length)
-    .sort((a, b) => b.totalWorks - a.totalWorks || a.displayName.localeCompare(b.displayName))
-    .slice(0, FEATURED_ARTIST_LIMIT);
+function excerpt(text, limit) {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length <= limit) return flat;
+  return `${flat.slice(0, flat.lastIndexOf(" ", limit))}…`;
 }
 
 /**
- * An admin can pin a specific listing as the homepage hero from /admin/artworks.
- * Without a pin — or if the pinned piece is later unpublished — the newest
- * published listing stands in, so the homepage always has a hero.
+ * An admin can pin a specific listing from /admin/artworks. Without a pin, or
+ * if the pinned piece is later unpublished, the newest listing stands in.
  */
-async function getHeroArtwork() {
-  const include = {
-    artist: { select: { displayName: true } },
-    media: { take: 1, orderBy: { sortOrder: "asc" } }
-  };
-
+async function getSpotlight() {
   const pinned = await prisma.artwork.findFirst({
-    where: { status: "PUBLISHED", isHero: true },
-    include
+    where: { ...withImage, isHero: true },
+    include: cardInclude
   });
-
   return (
     pinned ||
-    prisma.artwork.findFirst({
-      where: { status: "PUBLISHED" },
-      include,
-      orderBy: { createdAt: "desc" }
-    })
+    prisma.artwork.findFirst({ where: withImage, include: cardInclude, orderBy: { createdAt: "desc" } })
   );
 }
 
 /**
- * The homepage's two "Curated Collections" cards used to be a hardcoded pair
- * with made-up titles and counts. This surfaces the two categories with the
- * most published work instead, each linking to its real /gallery filter.
+ * Every medium with published work, most populated first, each with a cover.
+ * The cover avoids the spotlight piece, which is already shown just above.
  */
-async function getCuratedCollections() {
+async function getMediums(spotlightId) {
   const grouped = await prisma.artwork.groupBy({
     by: ["category"],
-    where: { status: "PUBLISHED" },
+    where: withImage,
     _count: { category: true },
     orderBy: { _count: { category: "desc" } },
-    take: CURATED_COLLECTION_LIMIT
+    take: MEDIUM_LIMIT
   });
-
   return Promise.all(
     grouped.map(async (group) => {
-      const artwork = await prisma.artwork.findFirst({
-        where: { status: "PUBLISHED", category: group.category },
+      const query = {
         include: { media: { take: 1, orderBy: { sortOrder: "asc" } } },
         orderBy: { createdAt: "desc" }
-      });
-      const count = group._count.category;
-      return {
-        title: group.category,
-        count: `${count} ${count === 1 ? "Artwork" : "Artworks"}`,
-        image: thumbUrl(artwork?.media[0]?.url) || ARTWORK_PLACEHOLDER,
-        href: `/gallery?category=${encodeURIComponent(group.category)}`
       };
+      const cover =
+        (await prisma.artwork.findFirst({
+          ...query,
+          where: { ...withImage, category: group.category, id: { not: spotlightId } }
+        })) ||
+        (await prisma.artwork.findFirst({ ...query, where: { ...withImage, category: group.category } }));
+      return { category: group.category, count: group._count.category, image: thumbUrl(cover?.media[0]?.url) };
     })
   );
 }
 
 export default async function HomePage() {
-  const [artists, heroArtwork, collectionCards] = await Promise.all([
-    getTrendingArtists(),
-    getHeroArtwork(),
-    getCuratedCollections()
+  const [{ t }, user, artistCount, workCount, recent, spotlight] = await Promise.all([
+    getTranslations(),
+    getAuthUser(),
+    prisma.artistProfile.count({ where: { verificationStatus: "APPROVED" } }),
+    prisma.artwork.count({ where: { status: "PUBLISHED" } }),
+    prisma.artwork.findMany({ where: withImage, include: cardInclude, orderBy: { createdAt: "desc" }, take: RECENT_POOL }),
+    getSpotlight()
   ]);
+  const mediums = await getMediums(spotlight?.id);
+
+  // A category an artist typed that has no translation shows as written.
+  const categoryLabel = (category) => {
+    const key = `category.${category}`;
+    const label = t(key);
+    return label === key ? category : label;
+  };
+
+  const toCard = (artwork) => ({
+    id: artwork.id,
+    slug: artwork.slug,
+    title: artwork.title,
+    artist: artwork.artist.displayName,
+    category: categoryLabel(artwork.category),
+    price: serializeMoney(artwork.priceCents, artwork.currency).formatted,
+    alt: t("home.workAlt", { title: artwork.title, artist: artwork.artist.displayName }),
+    image: thumbUrl(artwork.media[0].url),
+    stripImage: stripUrl(artwork.media[0].url)
+  });
+
+  const strip = interleaveByArtist(recent).slice(0, STRIP_LIMIT).map(toCard);
+  const justListed = recent.slice(0, JUST_LISTED_LIMIT).map(toCard);
+  const plural = (key, count) => t(count === 1 ? `${key}One` : key, { count });
 
   return (
     <>
       <Nav />
-      <ScrollReveal />
-      <main className="page">
-        <section className="gallery-hero section-pad">
-          <div className="hero-copy">
-            <h1>The Art of Visual Silence</h1>
-            <p>
-              Discover curated minimalist works that transform spaces through
-              restraint, geometry, and masterful composition.
+      <main className="page home-page">
+        <section className="home-hero home-wrap">
+          <h1>
+            {t("home.hero.titleStart")} <em>{t("home.hero.titleEmphasis")}</em> {t("home.hero.titleEnd")}
+          </h1>
+          <div className="home-hero-side">
+            <p>{t("home.hero.body")}</p>
+            <div className="home-actions">
+              <Link className="button button-primary" href="/gallery">
+                {t("home.hero.browse")}
+              </Link>
+              <Link className="button button-secondary" href="/requests">
+                {t("home.hero.commission")}
+              </Link>
+            </div>
+            <p className="home-hero-facts">
+              <span>{plural("home.hero.artists", artistCount)}</span>
+              <span>{plural("home.hero.works", workCount)}</span>
+              <span>{t("home.hero.checkout")}</span>
             </p>
-            <Link className="button button-primary" href={heroArtwork ? `/artwork/${heroArtwork.slug}` : "/gallery"}>
-              Explore Collection
-            </Link>
-          </div>
-          <Link className="hero-art group-image" href={heroArtwork ? `/artwork/${heroArtwork.slug}` : "/gallery"}>
-            <LazyImage
-              alt={heroArtwork ? `${heroArtwork.title} artwork` : "Silent Echoes installation artwork"}
-              priority
-              src={detailUrl(heroArtwork?.media[0]?.url) || "/artisan/hero-installation.jpg"}
-            />
-            <div className="image-caption image-caption-overlay">
-              <strong>{heroArtwork ? heroArtwork.title : "Silent Echoes, 2024"}</strong>
-              <span>{heroArtwork ? heroArtwork.artist.displayName : "Elena Rostova"}</span>
-            </div>
-          </Link>
-        </section>
-
-        <section className="path-section section-pad bordered-section">
-          <div className="path-heading">
-            <h2>How will you use Artasin?</h2>
-            <p>Whether you&apos;re collecting or creating, browsing, commissioning, and messaging all happen in one place.</p>
-          </div>
-          <div className="path-grid">
-            <div className="path-card">
-              <div className="path-card-top">
-                <span className="tag">Collector &amp; Patron</span>
-                <Icon className="path-card-arrow" name="arrowRight" />
-              </div>
-              <h3>I am a Collector</h3>
-              <p>
-                Browse original paintings, sculpture, digital art, and photography — or commission a piece built
-                around your space and budget.
-              </p>
-              <ul>
-                <li>
-                  <Icon name="check" size={16} /> Message artists directly on every commission
-                </li>
-                <li>
-                  <Icon name="check" size={16} /> Secure checkout, including UPI
-                </li>
-                <li>
-                  <Icon name="check" size={16} /> Leave a review once your piece arrives
-                </li>
-              </ul>
-              <Link className="button button-primary" href="/signup?role=buyer">
-                Join as Collector
-              </Link>
-            </div>
-            <div className="path-card">
-              <div className="path-card-top">
-                <span className="tag">Artist &amp; Creator</span>
-                <Icon className="path-card-arrow" name="arrowRight" />
-              </div>
-              <h3>I am an Artist</h3>
-              <p>
-                List original work, showcase a portfolio, and take on bespoke commissions with buyers who reach out
-                directly.
-              </p>
-              <ul>
-                <li>
-                  <Icon name="check" size={16} /> Keep your share of every sale
-                </li>
-                <li>
-                  <Icon name="check" size={16} /> Quote and manage commission briefs in one thread
-                </li>
-                <li>
-                  <Icon name="check" size={16} /> A verified profile once your work is reviewed
-                </li>
-              </ul>
-              <Link className="button button-secondary" href="/signup?role=artist">
-                Apply as Artist
-              </Link>
-            </div>
           </div>
         </section>
 
-        {collectionCards.length ? (
-          <section className="section-pad bordered-section">
-            <div className="section-heading inline-heading" data-reveal>
-              <h2>Curated Collections</h2>
+        {strip.length >= STRIP_MIN ? (
+          <section className="home-strip-section">
+            <WorkStrip label={t("home.marquee.label")} works={strip} />
+            <div className="home-wrap home-strip-foot">
+              <span>{t("home.marquee.note")}</span>
               <Link className="text-link" href="/gallery">
-                View All
+                {t("home.marquee.seeAll", { count: workCount })}
               </Link>
-            </div>
-            <div className="collection-grid">
-              {collectionCards.map((card, index) => (
-                <Link
-                  className={`collection-card group-image ${index === 1 ? "offset-card" : ""}`}
-                  data-reveal
-                  href={card.href}
-                  key={card.title}
-                  style={{ "--reveal-delay": `${index * 150}ms` }}
-                >
-                  <div className="collection-image">
-                    <LazyImage alt={`${card.title} collection`} src={card.image} />
-                  </div>
-                  <h3>{card.title}</h3>
-                  <p>{card.count}</p>
-                </Link>
-              ))}
             </div>
           </section>
         ) : null}
 
-        {artists.length ? (
-          <section className="artists-band section-pad" id="artists">
-            <div className="section-heading inline-heading" data-reveal>
-              <h2>Trending Artists</h2>
-              <Link className="text-link" href="/artists">
-                View All Artists
+        {justListed.length ? (
+          <section className="home-section home-wrap">
+            <JustListed viewAllHref="/gallery" works={justListed} />
+          </section>
+        ) : null}
+
+        {spotlight ? (
+          <section className="home-section home-wrap">
+            <div className="home-spotlight">
+              <Link className="home-spotlight-art" href={`/artwork/${spotlight.slug}`}>
+                <LazyImage
+                  alt={t("home.workAlt", { title: spotlight.title, artist: spotlight.artist.displayName })}
+                  src={detailUrl(spotlight.media[0].url)}
+                />
               </Link>
-            </div>
-            <div className="artist-grid">
-              {artists.map((artist, index) => (
-                <article
-                  className="artist-card"
-                  data-reveal
-                  key={artist.id}
-                  style={{ "--reveal-delay": `${index * 150}ms` }}
-                >
-                  <div className="artist-card-works">
-                    {artist.previews.map((preview) => (
-                      <Link
-                        className="artist-card-work group-image"
-                        href={preview.href}
-                        key={`${artist.id}-${preview.url}`}
-                        title={preview.title}
-                      >
-                        <LazyImage alt={`${preview.title} by ${artist.displayName}`} src={thumbUrl(preview.url)} />
-                      </Link>
-                    ))}
-                  </div>
-                  <Link className="artist-card-identity" href={`/artist/${artist.slug}`}>
-                    <ArtistAvatar name={artist.displayName} />
-                    <div>
-                      <h3>{artist.displayName}</h3>
-                      <p>{artist.discipline || "Artist"}</p>
-                      <p className="artist-card-count">
-                        {artist.totalWorks} {artist.totalWorks === 1 ? "work" : "works"}
-                        {artist.forSaleCount ? ` · ${artist.forSaleCount} for sale` : " · taking custom requests"}
-                      </p>
-                    </div>
+              <div className="home-spotlight-copy">
+                <span className="home-eyebrow">{t("home.spotlight.eyebrow")}</span>
+                <h2>{spotlight.title}</h2>
+                {spotlight.description ? <p>{excerpt(spotlight.description, SPOTLIGHT_EXCERPT)}</p> : null}
+                <dl className="home-spec">
+                  <dt>{t("home.spotlight.artist")}</dt>
+                  <dd>{spotlight.artist.displayName}</dd>
+                  <dt>{t("home.spotlight.medium")}</dt>
+                  <dd>{categoryLabel(spotlight.category)}</dd>
+                  <dt>{t("home.spotlight.price")}</dt>
+                  <dd>{serializeMoney(spotlight.priceCents, spotlight.currency).formatted}</dd>
+                </dl>
+                <div className="home-actions">
+                  <Link className="button button-primary" href={`/artwork/${spotlight.slug}`}>
+                    {t("home.spotlight.view")}
                   </Link>
-                </article>
-              ))}
+                  <Link className="button button-secondary" href={`/artist/${spotlight.artist.slug}`}>
+                    {t("home.spotlight.more")}
+                  </Link>
+                </div>
+              </div>
             </div>
           </section>
         ) : null}
 
-        <section className="section-pad bordered-section">
-          <h2 className="medium-heading" data-reveal>
-            Explore Mediums
-          </h2>
-          <div className="medium-list">
-            {mediums.map((medium, index) => (
+        <section className="home-section home-wrap">
+          <div className="home-head">
+            <h2>{t("home.mediums.title")}</h2>
+          </div>
+          <div className="home-mediums">
+            {mediums.map((medium) => (
               <Link
-                data-reveal
+                className="home-medium"
                 href={`/gallery?category=${encodeURIComponent(medium.category)}`}
                 key={medium.category}
-                style={{ "--reveal-delay": `${index * 100}ms` }}
               >
-                <span>{medium.label}</span>
-                <Icon name="arrowRight" />
+                <div className="home-medium-frame">
+                  {medium.image ? <LazyImage alt="" src={medium.image} /> : null}
+                </div>
+                <div className="home-medium-row">
+                  <h3>{categoryLabel(medium.category)}</h3>
+                  <span>{plural("home.mediums.works", medium.count)}</span>
+                </div>
               </Link>
             ))}
+            <Link className="home-medium home-medium-commission" href="/requests">
+              <div className="home-medium-frame">
+                <p>{t("home.mediums.commissionLead")}</p>
+                <span>{t("home.mediums.commissionBody")}</span>
+              </div>
+              <div className="home-medium-row">
+                <h3>{t("home.mediums.commissionTitle")}</h3>
+                <span>{t("home.mediums.commissionCta")}</span>
+              </div>
+            </Link>
           </div>
         </section>
+
+        <section className="home-band">
+          <div className="home-wrap home-band-grid">
+            <div className="home-band-intro">
+              <h2>{t("home.commission.title")}</h2>
+              <p>{t("home.commission.body")}</p>
+              <Link className="button home-button-inverse" href="/requests">
+                {t("home.commission.cta")}
+              </Link>
+            </div>
+            <ol className="home-steps">
+              {["step1", "step2", "step3"].map((step, index) => (
+                <li key={step}>
+                  <span className="home-step-number">{index + 1}</span>
+                  <h3>{t(`home.commission.${step}.title`)}</h3>
+                  <p>{t(`home.commission.${step}.body`)}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Signed-in visitors have already picked a side. */}
+        {!user ? (
+          <section className="home-section home-wrap">
+            <div className="home-paths">
+              <div className="home-path">
+                <span className="home-eyebrow">{t("home.paths.collectorEyebrow")}</span>
+                <h3>{t("home.paths.collectorTitle")}</h3>
+                <p>{t("home.paths.collectorBody")}</p>
+                <Link className="button button-primary" href="/signup?role=buyer">
+                  {t("home.paths.collectorCta")}
+                </Link>
+              </div>
+              <div className="home-path">
+                <span className="home-eyebrow">{t("home.paths.artistEyebrow")}</span>
+                <h3>{t("home.paths.artistTitle")}</h3>
+                <p>{t("home.paths.artistBody")}</p>
+                <Link className="button button-secondary" href="/signup?role=artist">
+                  {t("home.paths.artistCta")}
+                </Link>
+              </div>
+            </div>
+          </section>
+        ) : null}
       </main>
       <Footer />
     </>

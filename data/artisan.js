@@ -6,13 +6,6 @@ export const navItems = [
   { href: "/blog", label: "Journal", key: "journal" }
 ];
 
-export const mediums = [
-  { label: "Paintings", category: "Painting" },
-  { label: "Sculptures", category: "Sculpture" },
-  { label: "Digital Art", category: "Digital Art" },
-  { label: "Photography", category: "Photography" }
-];
-
 /**
  * What an artist practises. Used by onboarding and the studio profile, and kept
  * in step with artworkCategories so a textile or fashion designer can list the

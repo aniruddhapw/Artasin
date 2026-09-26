@@ -208,6 +208,25 @@ legend,
   color: var(--primary);
 }
 
+/* Signed-in visitors see who they are signed in as. Plain text rather than a
+   link: the profile icon beside it already opens the account menu. */
+.nav-greeting {
+  max-width: 16ch;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Below this the nav links and icons already fill the row; the phone menu
+   greets the visitor instead. */
+@media (max-width: 1180px) {
+  .nav-greeting {
+    display: none;
+  }
+}
+
 .user-menu {
   position: relative;
 }
@@ -287,20 +306,6 @@ legend,
   padding: var(--section) var(--desktop-margin);
 }
 
-.gallery-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: var(--gutter);
-  align-items: center;
-  padding-top: 72px;
-  padding-bottom: 72px;
-}
-
-.hero-copy {
-  display: grid;
-  gap: 24px;
-}
-
 h1,
 .artwork-panel h1,
 .studio-header h1,
@@ -312,11 +317,6 @@ h1,
   letter-spacing: -0.02em;
 }
 
-.hero-copy h1 {
-  max-width: 500px;
-}
-
-.hero-copy p,
 .request-header p,
 .studio-header p {
   max-width: 620px;
@@ -356,8 +356,6 @@ h1,
   opacity: 0.7;
 }
 
-.hero-art,
-.collection-image,
 .detail-image-frame,
 .more-card div {
   overflow: hidden;
@@ -365,14 +363,6 @@ h1,
   background: var(--surface-low);
 }
 
-.hero-art {
-  position: relative;
-  display: block;
-  aspect-ratio: 4 / 3;
-}
-
-.hero-art img,
-.collection-image img,
 .artist-avatar img,
 .detail-image-frame img,
 .more-card img {
@@ -384,30 +374,6 @@ h1,
 
 .group-image:hover img {
   transform: scale(1.045);
-}
-
-.image-caption-overlay {
-  position: absolute;
-  inset: auto 0 0;
-  padding: 24px;
-  color: #ffffff;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
-}
-
-.image-caption strong,
-.image-caption span {
-  display: block;
-}
-
-.image-caption strong {
-  font-size: 16px;
-  line-height: 1.4;
-}
-
-.image-caption span {
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 14px;
-  line-height: 1.4;
 }
 
 .bordered-section {
@@ -426,12 +392,9 @@ h1,
 }
 
 .section-heading h2,
-.artists-band h2,
-.medium-heading,
 .more-section h2,
 .card-heading h2,
 .process-column h2,
-.path-heading h2,
 legend {
   font-family: "Playfair Display", Georgia, serif;
   font-size: 32px;
@@ -441,35 +404,11 @@ legend {
   text-transform: none;
 }
 
-.path-heading h2 {
-  font-size: 40px;
-}
-
 .text-link {
   border-bottom: 1px solid var(--primary);
   padding-bottom: 4px;
 }
 
-.collection-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--gutter);
-}
-
-.collection-card {
-  display: block;
-}
-
-.offset-card {
-  margin-top: 96px;
-}
-
-.collection-image {
-  aspect-ratio: 1;
-  margin-bottom: 24px;
-}
-
-.collection-card h3,
 .more-card h3,
 .artwork-card h3 {
   font-family: "Playfair Display", Georgia, serif;
@@ -478,7 +417,6 @@ legend {
   line-height: 1.4;
 }
 
-.collection-card p,
 .artist-card p,
 .more-card p,
 .artwork-card p,
@@ -491,24 +429,6 @@ legend {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.4;
-}
-
-.artists-band {
-  max-width: var(--container);
-  margin: 0 auto;
-  background: var(--surface-lowest);
-}
-
-/* The band used to be a centred column; its heading now sits in a normal
-   inline-heading row, so the old centring and 64px gap have to be undone there. */
-.artists-band .section-heading h2 {
-  margin-bottom: 0;
-  text-align: left;
-}
-
-.artists-band h2 {
-  margin-bottom: 64px;
-  text-align: center;
 }
 
 .artist-grid {
@@ -527,14 +447,6 @@ legend {
   text-align: left;
 }
 
-.artist-card-works {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 4px;
-  aspect-ratio: 3 / 2;
-}
-
 /* The first piece takes the tall left column; the rest stack beside it. A lone
    piece simply fills the frame. */
 .artist-card-work:first-child {
@@ -543,10 +455,6 @@ legend {
 
 .artist-card-work:only-child {
   grid-column: span 2;
-  grid-row: span 2;
-}
-
-.artist-card-works:has(.artist-card-work:nth-child(2):last-child) .artist-card-work {
   grid-row: span 2;
 }
 
@@ -563,39 +471,6 @@ legend {
   object-fit: cover;
   display: block;
   transition: transform 700ms ease;
-}
-
-.artist-card-identity {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* The standalone avatar is 192px for the old centred card; inline beside a name
-   it needs to be a small monogram. */
-.artist-card-identity .artist-avatar {
-  flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 0;
-}
-
-.artist-card-identity .artist-avatar span {
-  font-size: 14px;
-}
-
-.artist-card-identity h3 {
-  margin: 0 0 2px;
-  font-size: 17px;
-}
-
-.artist-card-identity p {
-  margin: 0;
-}
-
-.artist-card-count {
-  margin-top: 2px;
-  font-size: 13px;
 }
 
 .artist-avatar {
@@ -632,135 +507,6 @@ legend {
   font-size: 18px;
   font-weight: 400;
   line-height: 1.6;
-}
-
-.medium-heading {
-  margin-bottom: 48px;
-}
-
-.medium-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.medium-list a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 28px 16px;
-  border-bottom: 1px solid var(--line);
-  transition: background 180ms ease;
-}
-
-.medium-list a:hover {
-  background: var(--surface-low);
-}
-
-.medium-list span:first-child {
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: 64px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.medium-list .icon {
-  opacity: 0;
-  transform: translateX(-10px);
-  transition:
-    opacity 200ms ease,
-    transform 200ms ease;
-}
-
-.medium-list a:hover .icon {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.path-heading {
-  max-width: 640px;
-  margin: 0 auto 48px;
-  text-align: center;
-  display: grid;
-  gap: 16px;
-}
-
-.path-heading p {
-  color: var(--muted);
-  font-size: 18px;
-  line-height: 1.6;
-}
-
-.path-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--gutter);
-}
-
-.path-card {
-  display: grid;
-  gap: 20px;
-  align-content: start;
-  padding: 40px;
-  border: 1px solid var(--line);
-  background: var(--surface-lowest);
-  transition: border-color 180ms ease;
-}
-
-.path-card:hover {
-  border-color: var(--primary);
-}
-
-.path-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.path-card-arrow {
-  opacity: 0;
-  transform: translateX(-10px);
-  transition:
-    opacity 200ms ease,
-    transform 200ms ease;
-}
-
-.path-card:hover .path-card-arrow {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.path-card h3 {
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 1.4;
-}
-
-.path-card > p {
-  color: var(--muted);
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-.path-card ul {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.path-card li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.path-card .button {
-  width: 100%;
 }
 
 .artwork-page {
@@ -2607,7 +2353,6 @@ textarea::placeholder {
     padding-right: var(--mobile-margin);
   }
 
-  .gallery-hero,
   .artwork-layout,
   .request-layout,
   .studio-grid,
@@ -2620,16 +2365,10 @@ textarea::placeholder {
     position: static;
   }
 
-  .collection-grid,
   .more-grid,
   .gallery-grid,
-  .kpi-grid,
-  .path-grid {
+  .kpi-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .path-card {
-    padding: 28px;
   }
 
   .admin-artist-head {
@@ -2639,10 +2378,6 @@ textarea::placeholder {
   .admin-artist-row {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
-  }
-
-  .offset-card {
-    margin-top: 0;
   }
 
   .artist-grid {
@@ -2699,14 +2434,9 @@ textarea::placeholder {
   h1,
   .artwork-panel h1,
   .studio-header h1,
-  .request-header h1,
-  .medium-list span:first-child {
+  .request-header h1 {
     font-size: 40px;
     line-height: 1.2;
-  }
-
-  .path-heading h2 {
-    font-size: 32px;
   }
 
   .nav-actions {
@@ -2717,11 +2447,6 @@ textarea::placeholder {
     display: none;
   }
 
-  .gallery-hero {
-    padding-top: 48px;
-  }
-
-  .hero-copy p,
   .request-header p,
   .studio-header p {
     font-size: 16px;
@@ -3582,11 +3307,9 @@ textarea::placeholder {
 
 /* Shimmer the space an image will fill until it arrives. :has() keeps this
    purely visual — the element is removed from the flow by the image on top. */
-.collection-image:has(.lazy-image:not(.is-loaded)),
 .more-card div:has(.lazy-image:not(.is-loaded)),
 .portfolio-card-image:has(.lazy-image:not(.is-loaded)),
-.order-history-image:has(.lazy-image:not(.is-loaded)),
-.hero-art:has(.lazy-image:not(.is-loaded)) {
+.order-history-image:has(.lazy-image:not(.is-loaded)) {
   background-image: linear-gradient(
     90deg,
     var(--surface-low) 0%,
@@ -3599,11 +3322,9 @@ textarea::placeholder {
 
 @media (prefers-reduced-motion: reduce) {
   .skeleton,
-  .collection-image:has(.lazy-image:not(.is-loaded)),
   .more-card div:has(.lazy-image:not(.is-loaded)),
   .portfolio-card-image:has(.lazy-image:not(.is-loaded)),
-  .order-history-image:has(.lazy-image:not(.is-loaded)),
-  .hero-art:has(.lazy-image:not(.is-loaded)) {
+  .order-history-image:has(.lazy-image:not(.is-loaded)) {
     animation: none;
   }
 
@@ -3612,75 +3333,7 @@ textarea::placeholder {
   }
 }
 
-/* ---------------------------------------------------------------------------
-   Homepage motion — hero entrance + scroll reveal
-   --------------------------------------------------------------------------- */
-
-@keyframes hero-rise {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.gallery-hero .hero-copy h1,
-.gallery-hero .hero-copy p,
-.gallery-hero .hero-copy .button,
-.gallery-hero .hero-art {
-  animation: hero-rise 1400ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.gallery-hero .hero-copy h1 {
-  animation-delay: 100ms;
-}
-
-.gallery-hero .hero-copy p {
-  animation-delay: 350ms;
-}
-
-.gallery-hero .hero-copy .button {
-  animation-delay: 600ms;
-}
-
-.gallery-hero .hero-art {
-  animation-delay: 400ms;
-}
-
-/* Sections below the fold start hidden and rise in once ScrollReveal's
-   IntersectionObserver marks them visible. --reveal-delay staggers cards
-   within the same grid. */
-[data-reveal] {
-  opacity: 0;
-  transform: translateY(40px);
-  transition:
-    opacity 1100ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 1100ms cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--reveal-delay, 0ms);
-}
-
-[data-reveal].is-revealed {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .gallery-hero .hero-copy h1,
-  .gallery-hero .hero-copy p,
-  .gallery-hero .hero-copy .button,
-  .gallery-hero .hero-art {
-    animation: none;
-  }
-
-  [data-reveal] {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-
   .brand-letter,
   .brand-mark::after {
     transition: none;
@@ -3944,6 +3597,9 @@ textarea::placeholder {
 :root[lang="mr"] h1,
 :root[lang="mr"] h2,
 :root[lang="mr"] h3,
+:root[lang="mr"] .home-page h2,
+:root[lang="mr"] .home-strip-caption strong,
+:root[lang="mr"] .home-medium-commission .home-medium-frame p,
 :root[lang="mr"] .request-header h1,
 :root[lang="mr"] .studio-header h1 {
   font-family: "Noto Sans Devanagari", "Playfair Display", Georgia, serif;
@@ -4332,8 +3988,6 @@ textarea::placeholder {
   font-size: 14px;
   line-height: 1.5;
 }
-
-
 
 .blog-post {
   max-width: 720px;
@@ -5054,4 +4708,638 @@ textarea::placeholder {
   .artist-card-arrow {
     transition: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Homepage
+   --------------------------------------------------------------------------- */
+
+.home-page {
+  --home-margin: var(--desktop-margin);
+  --home-gap: var(--gutter);
+}
+
+.home-wrap {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding-inline: var(--home-margin);
+}
+
+.home-page h2 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 400;
+  text-wrap: balance;
+}
+
+.home-eyebrow {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Hero */
+.home-hero {
+  display: grid;
+  /* Wide enough for both buttons on one line. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 34rem);
+  gap: var(--home-gap);
+  align-items: end;
+  padding-block: 72px 48px;
+}
+
+.home-hero h1 {
+  max-width: none;
+  font-size: clamp(44px, 6vw, 84px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.home-hero-side {
+  display: grid;
+  gap: 24px;
+}
+
+.home-hero-side > p:first-child {
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.home-hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrolling strip */
+.home-strip-section {
+  padding-bottom: 96px;
+}
+
+.home-strip {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+
+.home-strip-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  animation: home-drift 80s linear infinite;
+}
+
+.home-strip:hover .home-strip-track,
+.home-strip:focus-within .home-strip-track {
+  animation-play-state: paused;
+}
+
+/* The track holds the set twice; sliding by half of it plus half a gap moves
+   exactly one set, so the loop lands where it started. */
+@keyframes home-drift {
+  to {
+    transform: translateX(calc(-50% - 8px));
+  }
+}
+
+.home-strip-tile {
+  position: relative;
+  flex: none;
+  height: 320px;
+  min-width: 160px;
+  overflow: hidden;
+  background: var(--surface-low);
+}
+
+.home-strip-tile img {
+  width: auto;
+  height: 100%;
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-strip-tile:hover img {
+  transform: scale(1.04);
+}
+
+.home-strip-caption {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 2px;
+  padding: 40px 14px 12px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+  color: #fff;
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.home-strip-caption strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.home-strip-tile:hover .home-strip-caption,
+.home-strip-tile:focus-visible .home-strip-caption {
+  opacity: 1;
+  transform: none;
+}
+
+.home-strip-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Sections */
+.home-section {
+  padding-block: 96px;
+  border-top: 1px solid var(--line);
+}
+
+.home-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.home-head h2 {
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.1;
+}
+
+.home-head p {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.home-head-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-head-tools .text-link {
+  margin-right: 8px;
+}
+
+.home-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 200ms ease;
+}
+
+.home-arrow:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.home-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Just listed */
+.home-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 3 * var(--home-gap)) / 4);
+  gap: var(--home-gap);
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.home-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.home-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  scroll-snap-align: start;
+}
+
+/* contain, not cover: a listing card never crops the artwork. */
+.home-card-frame {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 5;
+  padding: 20px;
+  overflow: hidden;
+  background: var(--surface-low);
+}
+
+.home-card-frame img {
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  transition: transform 600ms ease;
+}
+
+.home-card:hover .home-card-frame img {
+  transform: translateY(-4px);
+}
+
+.home-card h3 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.home-card-artist {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.home-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.home-card-meta span:last-child {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Spotlight */
+.home-spotlight {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: calc(var(--home-gap) * 2);
+  align-items: center;
+}
+
+.home-spotlight-art {
+  display: block;
+  padding: 32px;
+  background: var(--surface-low);
+}
+
+.home-spotlight-art img {
+  width: 100%;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+.home-spotlight-copy {
+  display: grid;
+  align-content: center;
+  gap: 22px;
+}
+
+.home-spotlight-copy h2 {
+  font-size: clamp(36px, 4.4vw, 60px);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.home-spotlight-copy > p {
+  max-width: 44ch;
+  color: var(--muted);
+}
+
+.home-spec {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 28px;
+  padding-block: 20px;
+  border-block: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.home-spec dt {
+  color: var(--muted);
+}
+
+.home-spec dd {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mediums */
+.home-mediums {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--home-gap);
+}
+
+.home-medium {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.home-medium-frame {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--surface-low);
+}
+
+.home-medium-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-medium:hover .home-medium-frame img {
+  transform: scale(1.05);
+}
+
+.home-medium-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--primary);
+}
+
+.home-medium-row h3 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.home-medium-row span {
+  color: var(--muted);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.home-medium-commission .home-medium-frame {
+  display: grid;
+  align-content: end;
+  gap: 10px;
+  padding: 24px;
+  background: var(--text);
+  color: var(--on-primary);
+}
+
+.home-medium-commission .home-medium-frame p {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.home-medium-commission .home-medium-frame span {
+  color: #c9cbcb;
+  font-size: 14px;
+}
+
+/* Commission band */
+.home-band {
+  padding-block: 104px;
+  background: #121313;
+  color: #f4f4f2;
+}
+
+.home-band-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: calc(var(--home-gap) * 2);
+  align-items: start;
+}
+
+.home-band-intro {
+  display: grid;
+  gap: 24px;
+}
+
+.home-band h2 {
+  font-size: clamp(36px, 4.4vw, 56px);
+  line-height: 1.08;
+}
+
+.home-band-intro p {
+  max-width: 40ch;
+  color: #b9bcbc;
+}
+
+.home-button-inverse {
+  border-color: #fff;
+  background: #fff;
+  color: #000;
+}
+
+.home-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--home-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-steps li {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid #3a3d3d;
+}
+
+.home-step-number {
+  color: #6f7373;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.home-steps h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.home-steps p {
+  color: #b9bcbc;
+  font-size: 14.5px;
+}
+
+/* Collector / artist */
+.home-paths {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+}
+
+.home-path {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 40px;
+}
+
+.home-path + .home-path {
+  border-left: 1px solid var(--line);
+}
+
+.home-path h3 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.home-path p {
+  max-width: 46ch;
+  color: var(--muted);
+}
+
+.home-path .button {
+  margin-top: 8px;
+}
+
+@media (max-width: 1100px) {
+  .home-rail {
+    grid-auto-columns: calc((100% - 2 * var(--home-gap)) / 3);
+  }
+
+  .home-mediums {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-band-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .home-page {
+    --home-margin: var(--mobile-margin);
+    --home-gap: 20px;
+  }
+
+  .home-hero,
+  .home-spotlight,
+  .home-paths {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero {
+    padding-block: 40px 32px;
+  }
+
+  .home-strip-section {
+    padding-bottom: 64px;
+  }
+
+  .home-strip-tile {
+    height: 210px;
+    min-width: 110px;
+  }
+
+  .home-section {
+    padding-block: 64px;
+  }
+
+  .home-head {
+    flex-wrap: wrap;
+    align-items: start;
+  }
+
+  .home-rail {
+    grid-auto-columns: 72%;
+  }
+
+  .home-spotlight-art {
+    padding: 16px;
+  }
+
+  .home-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .home-band {
+    padding-block: 72px;
+  }
+
+  .home-path {
+    padding: 28px 24px;
+  }
+
+  .home-path + .home-path {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .home-medium-row h3 {
+    font-size: 20px;
+  }
+
+  .home-medium-commission .home-medium-frame {
+    padding: 16px;
+  }
+
+  .home-medium-commission .home-medium-frame p {
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-strip {
+    overflow-x: auto;
+  }
+
+  .home-strip-track {
+    animation: none;
+  }
+
+  .home-strip-tile img,
+  .home-card-frame img,
+  .home-medium-frame img {
+    transition: none;
+  }
+}
+
+/* Wide tracking pulls Devanagari letters apart, as it does for labels above. */
+:root[lang="mr"] .button,
+:root[lang="mr"] .text-link,
+:root[lang="mr"] .sign-in,
+:root[lang="mr"] .nav-links a,
+:root[lang="mr"] .home-eyebrow {
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Noto Sans Devanagari has no italic, and a slanted fallback looks broken. */
+:root[lang="mr"] .home-hero h1 em {
+  font-style: normal;
 }
