@@ -101,7 +101,16 @@ export function ResetPasswordForm() {
             type="password"
           />
         </label>
-        {error ? <p className="auth-error" role="alert">{error}</p> : null}
+        {error ? (
+          <>
+            <p className="auth-error" role="alert">
+              {error}
+            </p>
+            <p className="auth-note">
+              <Link href="/login">{t("auth.backToSignIn")}</Link> · <Link href="/forgot-password">{t("auth.reset.requestNew")}</Link>
+            </p>
+          </>
+        ) : null}
         <button className="button button-primary auth-submit" disabled={isSubmitting} type="submit">
           {isSubmitting ? t("auth.updating") : t("auth.updatePassword")}
         </button>

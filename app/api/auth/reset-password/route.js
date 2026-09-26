@@ -3,6 +3,7 @@ import { z } from "zod";
 import { fail, handleApiError, ok } from "@/lib/api";
 import { hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { RESET_LINK_MESSAGES, resetLinkProblem } from "@/lib/passwordReset";
 
 const resetSchema = z.object({
   token: z.string().min(1),
@@ -19,8 +20,9 @@ export async function POST(request) {
       include: { user: true }
     });
 
-    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
-      return fail("This reset link is invalid or has expired. Request a new one.", 400);
+    const problem = resetLinkProblem(resetToken);
+    if (problem) {
+      return fail(RESET_LINK_MESSAGES[problem], 400, { reason: problem });
     }
 
     const passwordHash = await hashPassword(input.password);
@@ -30,8 +32,9 @@ export async function POST(request) {
         where: { id: resetToken.userId },
         data: { passwordHash }
       }),
-      prisma.passwordResetToken.update({
-        where: { id: resetToken.id },
+      // This link and every other one still sitting in their inbox.
+      prisma.passwordResetToken.updateMany({
+        where: { userId: resetToken.userId, usedAt: null },
         data: { usedAt: new Date() }
       })
     ]);
