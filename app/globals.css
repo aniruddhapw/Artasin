@@ -5,6 +5,9 @@
   --brand-navy: #122239;
   --brand-navy-hover: #1b3050;
   --brand-gold: #e3c79a;
+  /* The off-white band above the navy bar; every offset below the fixed
+     header adds it. */
+  --nav-strip: 10px;
   --surface: #f9f9f7;
   --surface-lowest: #ffffff;
   --surface-low: #f3f3f4;
@@ -78,7 +81,7 @@ fieldset {
 }
 
 .page {
-  padding-top: 80px;
+  padding-top: calc(80px + var(--nav-strip));
 }
 
 .top-nav {
@@ -542,7 +545,7 @@ legend {
 
 .artwork-panel {
   position: sticky;
-  top: 128px;
+  top: calc(128px + var(--nav-strip));
 }
 
 .artwork-panel h1 {
@@ -681,7 +684,7 @@ dd {
   /* This shorthand overrides .page's padding-top, so its top value has to both
      clear the 80px fixed nav and leave the page heading room to breathe —
      at 80px the heading sat flush against the nav's bottom border. */
-  padding: 128px var(--desktop-margin) var(--section);
+  padding: calc(128px + var(--nav-strip)) var(--desktop-margin) var(--section);
 }
 
 .request-header {
@@ -2254,7 +2257,7 @@ textarea::placeholder {
   }
 
   .page {
-    padding-top: 132px;
+    padding-top: calc(132px + var(--nav-strip));
   }
 
   .studio-header-row {
@@ -2351,7 +2354,7 @@ textarea::placeholder {
   .studio-page,
   .legal-page,
   .blog-post-page {
-    padding-top: 168px;
+    padding-top: calc(168px + var(--nav-strip));
   }
 
   .section-pad,
@@ -3816,7 +3819,7 @@ textarea::placeholder {
 
 .cart-summary {
   position: sticky;
-  top: 128px;
+  top: calc(128px + var(--nav-strip));
   display: grid;
   gap: 16px;
   padding: 24px;
@@ -5419,7 +5422,7 @@ textarea::placeholder {
 
 .admin-review-panel {
   position: sticky;
-  top: 112px;
+  top: calc(112px + var(--nav-strip));
   display: grid;
   gap: 24px;
   padding: 24px;
@@ -5533,6 +5536,9 @@ textarea::placeholder {
    --------------------------------------------------------------------------- */
 
 .top-nav {
+  /* A border rather than padding: the phone layout's links row is placed
+     80px from the inside edge, so it stays put. */
+  border-top: var(--nav-strip) solid var(--surface);
   border-bottom-color: rgba(255, 255, 255, 0.08);
   background: var(--brand-navy);
   backdrop-filter: none;
