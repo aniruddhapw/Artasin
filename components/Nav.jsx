@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { BrandMark } from "@/components/BrandMark";
 import { Icon } from "@/components/Icon";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NavSearch } from "@/components/NavSearch";
@@ -19,8 +18,9 @@ export async function Nav({ active }) {
   return (
     <nav className="top-nav">
       <div className="nav-inner">
-        <Link className="brand" href="/">
-          <BrandMark />
+        <Link className="brand brand-logo-link" href="/">
+          {/* Cut from the brand artwork onto transparent, for the navy bar; 3x the displayed size. */}
+          <img alt="ARTASIN" className="brand-logo" height={180} src="/brand/artasin-logo.png" width={513} />
         </Link>
         <div className="nav-links">
           {navItems.map((item) => (

@@ -1,16 +1,32 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap");
 
 :root {
-  --surface: #f9f9f7;
-  --surface-lowest: #ffffff;
-  --surface-low: #f3f3f4;
-  --surface-container: #eeeeee;
-  --surface-highest: #e2e2e2;
+  /* The logo's own navy and gold. */
+  --brand-navy: #122239;
+  --brand-navy-hover: #1b3050;
+  /* Behind full-screen artwork, a shade deeper so the work stands out. */
+  --brand-navy-deep: #0b1526;
+  --heading-color: var(--brand-navy);
+  /* The logo's lettering: the page background, and headings on navy. */
+  --champagne: #edd8b8;
+  --brand-gold: #e3c79a;
+  /* The off-white band above the navy bar; every offset below the fixed
+     header adds it. */
+  --nav-strip: 10px;
+  /* The page is the champagne of the logo's lettering (sampled from the
+     artwork as it sits on navy). The other surfaces are warm steps around
+     it: lighter for panels and image mats, deeper for tags and borders. */
+  --surface: var(--champagne);
+  --surface-lowest: #fdf8f0;
+  --surface-low: #f4e6cf;
+  --surface-container: #e5cda6;
+  --surface-highest: #dcc195;
   --text: #1a1c1c;
-  --muted: #444748;
-  --outline: #747878;
-  --line: #c4c7c7;
-  --primary: #000000;
+  --muted: #4d4336;
+  --outline: #685943;
+  --line: #cdb48b;
+  /* Brand navy rather than black, for every solid dark surface. */
+  --primary: #122239;
   --on-primary: #ffffff;
   --container: 1440px;
   --desktop-margin: 64px;
@@ -58,6 +74,21 @@ img {
   max-width: 100%;
 }
 
+/* Headings in the brand navy, and in the logo's champagne on navy surfaces,
+   the same pairing as the logo itself. */
+h1,
+h2,
+h3,
+h4 {
+  color: var(--heading-color);
+}
+
+.home-band,
+.top-nav,
+.lightbox {
+  --heading-color: var(--champagne);
+}
+
 h1,
 h2,
 h3,
@@ -74,7 +105,7 @@ fieldset {
 }
 
 .page {
-  padding-top: 80px;
+  padding-top: calc(80px + var(--nav-strip));
 }
 
 .top-nav {
@@ -219,10 +250,12 @@ legend,
   white-space: nowrap;
 }
 
-/* Below this the nav links and icons already fill the row; the phone menu
-   greets the visitor instead. */
+/* Below this the nav links and icons already fill the row. The phone menu
+   greets the visitor instead, and signed out, the profile icon beside the
+   Sign in text goes to the same page. */
 @media (max-width: 1180px) {
-  .nav-greeting {
+  .nav-greeting,
+  .sign-in {
     display: none;
   }
 }
@@ -538,7 +571,7 @@ legend {
 
 .artwork-panel {
   position: sticky;
-  top: 128px;
+  top: calc(128px + var(--nav-strip));
 }
 
 .artwork-panel h1 {
@@ -677,7 +710,7 @@ dd {
   /* This shorthand overrides .page's padding-top, so its top value has to both
      clear the 80px fixed nav and leave the page heading room to breathe —
      at 80px the heading sat flush against the nav's bottom border. */
-  padding: 128px var(--desktop-margin) var(--section);
+  padding: calc(128px + var(--nav-strip)) var(--desktop-margin) var(--section);
 }
 
 .request-header {
@@ -2250,7 +2283,7 @@ textarea::placeholder {
   }
 
   .page {
-    padding-top: 132px;
+    padding-top: calc(132px + var(--nav-strip));
   }
 
   .studio-header-row {
@@ -2347,7 +2380,7 @@ textarea::placeholder {
   .studio-page,
   .legal-page,
   .blog-post-page {
-    padding-top: 168px;
+    padding-top: calc(168px + var(--nav-strip));
   }
 
   .section-pad,
@@ -2620,7 +2653,7 @@ textarea::placeholder {
 .lightbox-backdrop {
   position: absolute;
   inset: 0;
-  background: #0c0c0c;
+  background: var(--brand-navy-deep);
 }
 
 .lightbox-bar {
@@ -2723,7 +2756,7 @@ textarea::placeholder {
   height: 48px;
   transform: translateY(-50%);
   border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(12, 12, 12, 0.6);
+  background: rgba(11, 21, 38, 0.6);
   color: #ffffff;
   font-size: 26px;
   line-height: 1;
@@ -3371,7 +3404,7 @@ textarea::placeholder {
 .mobile-drawer-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 12, 0.5);
+  background: rgba(11, 21, 38, 0.5);
   animation: drawer-fade-in 220ms ease both;
 }
 
@@ -3757,7 +3790,7 @@ textarea::placeholder {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(249, 249, 247, 0.6);
+  background: rgba(237, 216, 184, 0.6);
   pointer-events: none;
 }
 
@@ -3812,7 +3845,7 @@ textarea::placeholder {
 
 .cart-summary {
   position: sticky;
-  top: 128px;
+  top: calc(128px + var(--nav-strip));
   display: grid;
   gap: 16px;
   padding: 24px;
@@ -3905,7 +3938,7 @@ textarea::placeholder {
   height: 32px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(11, 21, 38, 0.7);
   color: #fff;
   font-size: 12px;
   pointer-events: none;
@@ -3931,7 +3964,7 @@ textarea::placeholder {
 }
 
 .video-modal .lightbox-backdrop {
-  background: #000;
+  background: var(--brand-navy-deep);
 }
 
 .video-modal-frame {
@@ -4310,7 +4343,7 @@ textarea::placeholder {
 .app-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 12, 0.55);
+  background: rgba(11, 21, 38, 0.55);
 }
 
 .app-modal-card {
@@ -4391,7 +4424,7 @@ textarea::placeholder {
 .tour-spotlight {
   position: absolute;
   border: 1px solid var(--surface-lowest);
-  box-shadow: 0 0 0 9999px rgba(12, 12, 12, 0.6);
+  box-shadow: 0 0 0 9999px rgba(11, 21, 38, 0.6);
   pointer-events: none;
   transition: top 260ms ease, left 260ms ease, width 260ms ease, height 260ms ease;
 }
@@ -4851,7 +4884,7 @@ textarea::placeholder {
   display: grid;
   gap: 2px;
   padding: 40px 14px 12px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+  background: linear-gradient(transparent, rgba(11, 21, 38, 0.78));
   color: #fff;
   font-size: 13px;
   opacity: 0;
@@ -5119,25 +5152,26 @@ textarea::placeholder {
   align-content: end;
   gap: 10px;
   padding: 24px;
-  background: var(--text);
+  background: var(--brand-navy);
   color: var(--on-primary);
 }
 
 .home-medium-commission .home-medium-frame p {
+  color: var(--champagne);
   font-family: "Playfair Display", Georgia, serif;
   font-size: 26px;
   line-height: 1.2;
 }
 
 .home-medium-commission .home-medium-frame span {
-  color: #c9cbcb;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 14px;
 }
 
 /* Commission band */
 .home-band {
   padding-block: 104px;
-  background: #121313;
+  background: var(--brand-navy);
   color: #f4f4f2;
 }
 
@@ -5160,13 +5194,13 @@ textarea::placeholder {
 
 .home-band-intro p {
   max-width: 40ch;
-  color: #b9bcbc;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .home-button-inverse {
   border-color: #fff;
   background: #fff;
-  color: #000;
+  color: var(--brand-navy);
 }
 
 .home-steps {
@@ -5183,11 +5217,11 @@ textarea::placeholder {
   align-content: start;
   gap: 12px;
   padding-top: 18px;
-  border-top: 1px solid #3a3d3d;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .home-step-number {
-  color: #6f7373;
+  color: rgba(255, 255, 255, 0.45);
   font-family: "Playfair Display", Georgia, serif;
   font-size: 40px;
   line-height: 1;
@@ -5199,7 +5233,7 @@ textarea::placeholder {
 }
 
 .home-steps p {
-  color: #b9bcbc;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 14.5px;
 }
 
@@ -5415,7 +5449,7 @@ textarea::placeholder {
 
 .admin-review-panel {
   position: sticky;
-  top: 112px;
+  top: calc(112px + var(--nav-strip));
   display: grid;
   gap: 24px;
   padding: 24px;
@@ -5520,4 +5554,135 @@ textarea::placeholder {
 
 .newsletter-notice-panel p {
   margin-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Navy navbar with the gold logo
+   Scoped to .top-nav: the language toggle and buttons also appear on light
+   pages (sign-in, reset password) and keep their light styling there.
+   --------------------------------------------------------------------------- */
+
+.top-nav {
+  /* A border rather than padding: the phone layout's links row is placed
+     80px from the inside edge, so it stays put. */
+  border-top: var(--nav-strip) solid var(--surface);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background: var(--brand-navy);
+  backdrop-filter: none;
+  color: #fff;
+}
+
+.brand-logo-link {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 60px;
+}
+
+.top-nav :focus-visible {
+  outline-color: var(--brand-gold);
+}
+
+.top-nav .nav-links a {
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 160ms ease;
+}
+
+.top-nav .nav-links a:hover,
+.top-nav .nav-links a.active {
+  color: #fff;
+  opacity: 1;
+}
+
+.top-nav .nav-links a.active {
+  border-bottom-color: var(--brand-gold);
+}
+
+.top-nav .nav-actions > button,
+.top-nav .nav-actions > a:not(.sign-in),
+.top-nav .user-menu > button,
+.top-nav .sign-in {
+  color: #fff;
+}
+
+.top-nav .nav-greeting {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Navbar text, 2px up from the shared 12px label size (greeting 14 to 16). */
+.top-nav .nav-links a,
+.top-nav .sign-in,
+.top-nav .language-toggle .language-option {
+  font-size: 14px;
+}
+
+.top-nav .nav-greeting {
+  font-size: 16px;
+}
+
+.top-nav .cart-badge {
+  background: var(--brand-gold);
+  color: var(--brand-navy);
+}
+
+.top-nav .language-toggle {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.top-nav .language-toggle .language-option {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.top-nav .language-toggle .language-option + .language-option {
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.top-nav .language-toggle .language-option:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.top-nav .language-toggle .language-option.is-active {
+  background: var(--brand-gold);
+  color: var(--brand-navy);
+}
+
+/* The search box and account menu open inside the bar as light panels. */
+.top-nav .nav-search-panel,
+.top-nav .user-menu-panel {
+  color: var(--text);
+}
+
+@media (max-width: 980px) {
+  .top-nav .nav-links {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    background: var(--brand-navy);
+  }
+}
+
+/* Just above the phone layout the links still share the row with the logo,
+   and at full size the logo and 14px links pushed it up to 67px too wide. */
+@media (min-width: 981px) and (max-width: 1100px) {
+  .brand-logo {
+    height: 46px;
+  }
+
+  .top-nav .nav-inner {
+    gap: 16px;
+  }
+
+  .top-nav .nav-links {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-logo {
+    height: 40px;
+  }
 }
