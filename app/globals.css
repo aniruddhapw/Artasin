@@ -1,6 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap");
 
 :root {
+  /* The logo's own navy and gold. */
+  --brand-navy: #122239;
+  --brand-navy-hover: #1b3050;
+  --brand-gold: #e3c79a;
   --surface: #f9f9f7;
   --surface-lowest: #ffffff;
   --surface-low: #f3f3f4;
@@ -5520,4 +5524,125 @@ textarea::placeholder {
 
 .newsletter-notice-panel p {
   margin-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Navy navbar with the gold logo
+   Scoped to .top-nav: the language toggle and buttons also appear on light
+   pages (sign-in, reset password) and keep their light styling there.
+   --------------------------------------------------------------------------- */
+
+.top-nav {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background: var(--brand-navy);
+  backdrop-filter: none;
+  color: #fff;
+}
+
+.brand-logo-link {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 60px;
+}
+
+.top-nav :focus-visible {
+  outline-color: var(--brand-gold);
+}
+
+.top-nav .nav-links a {
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 160ms ease;
+}
+
+.top-nav .nav-links a:hover,
+.top-nav .nav-links a.active {
+  color: #fff;
+  opacity: 1;
+}
+
+.top-nav .nav-links a.active {
+  border-bottom-color: var(--brand-gold);
+}
+
+.top-nav .nav-actions > button,
+.top-nav .nav-actions > a:not(.sign-in),
+.top-nav .user-menu > button,
+.top-nav .sign-in {
+  color: #fff;
+}
+
+.top-nav .nav-greeting {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.top-nav .cart-badge {
+  background: var(--brand-gold);
+  color: var(--brand-navy);
+}
+
+.top-nav .language-toggle {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.top-nav .language-toggle .language-option {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.top-nav .language-toggle .language-option + .language-option {
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.top-nav .language-toggle .language-option:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.top-nav .language-toggle .language-option.is-active {
+  background: #000;
+  color: #fff;
+}
+
+/* The search box and account menu open inside the bar as light panels. */
+.top-nav .nav-search-panel,
+.top-nav .user-menu-panel {
+  color: var(--text);
+}
+
+@media (max-width: 980px) {
+  .top-nav .nav-links {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    background: var(--brand-navy);
+  }
+}
+
+/* Just above the phone layout the links still share the row with the logo,
+   and the full-size logo pushed it 32px too wide. */
+@media (min-width: 981px) and (max-width: 1100px) {
+  .brand-logo {
+    height: 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-logo {
+    height: 40px;
+  }
+}
+
+/* The homepage's main action, in the logo's navy. */
+.home-hero .button-primary {
+  border-color: var(--brand-navy);
+  background: var(--brand-navy);
+}
+
+.home-hero .button-primary:hover {
+  border-color: var(--brand-navy-hover);
+  background: var(--brand-navy-hover);
+  opacity: 1;
 }
