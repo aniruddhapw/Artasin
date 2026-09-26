@@ -4,6 +4,8 @@
   /* The logo's own navy and gold. */
   --brand-navy: #122239;
   --brand-navy-hover: #1b3050;
+  /* Behind full-screen artwork, a shade deeper so the work stands out. */
+  --brand-navy-deep: #0b1526;
   --brand-gold: #e3c79a;
   /* The off-white band above the navy bar; every offset below the fixed
      header adds it. */
@@ -17,7 +19,8 @@
   --muted: #444748;
   --outline: #747878;
   --line: #c4c7c7;
-  --primary: #000000;
+  /* Brand navy rather than black, for every solid dark surface. */
+  --primary: #122239;
   --on-primary: #ffffff;
   --container: 1440px;
   --desktop-margin: 64px;
@@ -2627,7 +2630,7 @@ textarea::placeholder {
 .lightbox-backdrop {
   position: absolute;
   inset: 0;
-  background: #0c0c0c;
+  background: var(--brand-navy-deep);
 }
 
 .lightbox-bar {
@@ -2730,7 +2733,7 @@ textarea::placeholder {
   height: 48px;
   transform: translateY(-50%);
   border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(12, 12, 12, 0.6);
+  background: rgba(11, 21, 38, 0.6);
   color: #ffffff;
   font-size: 26px;
   line-height: 1;
@@ -3378,7 +3381,7 @@ textarea::placeholder {
 .mobile-drawer-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 12, 0.5);
+  background: rgba(11, 21, 38, 0.5);
   animation: drawer-fade-in 220ms ease both;
 }
 
@@ -3912,7 +3915,7 @@ textarea::placeholder {
   height: 32px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(11, 21, 38, 0.7);
   color: #fff;
   font-size: 12px;
   pointer-events: none;
@@ -3938,7 +3941,7 @@ textarea::placeholder {
 }
 
 .video-modal .lightbox-backdrop {
-  background: #000;
+  background: var(--brand-navy-deep);
 }
 
 .video-modal-frame {
@@ -4317,7 +4320,7 @@ textarea::placeholder {
 .app-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 12, 0.55);
+  background: rgba(11, 21, 38, 0.55);
 }
 
 .app-modal-card {
@@ -4398,7 +4401,7 @@ textarea::placeholder {
 .tour-spotlight {
   position: absolute;
   border: 1px solid var(--surface-lowest);
-  box-shadow: 0 0 0 9999px rgba(12, 12, 12, 0.6);
+  box-shadow: 0 0 0 9999px rgba(11, 21, 38, 0.6);
   pointer-events: none;
   transition: top 260ms ease, left 260ms ease, width 260ms ease, height 260ms ease;
 }
@@ -4858,7 +4861,7 @@ textarea::placeholder {
   display: grid;
   gap: 2px;
   padding: 40px 14px 12px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+  background: linear-gradient(transparent, rgba(11, 21, 38, 0.78));
   color: #fff;
   font-size: 13px;
   opacity: 0;
@@ -5126,7 +5129,7 @@ textarea::placeholder {
   align-content: end;
   gap: 10px;
   padding: 24px;
-  background: var(--text);
+  background: var(--brand-navy);
   color: var(--on-primary);
 }
 
@@ -5137,14 +5140,14 @@ textarea::placeholder {
 }
 
 .home-medium-commission .home-medium-frame span {
-  color: #c9cbcb;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 14px;
 }
 
 /* Commission band */
 .home-band {
   padding-block: 104px;
-  background: #121313;
+  background: var(--brand-navy);
   color: #f4f4f2;
 }
 
@@ -5167,13 +5170,13 @@ textarea::placeholder {
 
 .home-band-intro p {
   max-width: 40ch;
-  color: #b9bcbc;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .home-button-inverse {
   border-color: #fff;
   background: #fff;
-  color: #000;
+  color: var(--brand-navy);
 }
 
 .home-steps {
@@ -5190,11 +5193,11 @@ textarea::placeholder {
   align-content: start;
   gap: 12px;
   padding-top: 18px;
-  border-top: 1px solid #3a3d3d;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .home-step-number {
-  color: #6f7373;
+  color: rgba(255, 255, 255, 0.45);
   font-family: "Playfair Display", Georgia, serif;
   font-size: 40px;
   line-height: 1;
@@ -5206,7 +5209,7 @@ textarea::placeholder {
 }
 
 .home-steps p {
-  color: #b9bcbc;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 14.5px;
 }
 
@@ -5610,8 +5613,8 @@ textarea::placeholder {
 }
 
 .top-nav .language-toggle .language-option.is-active {
-  background: #000;
-  color: #fff;
+  background: var(--brand-gold);
+  color: var(--brand-navy);
 }
 
 /* The search box and account menu open inside the bar as light panels. */
@@ -5639,16 +5642,4 @@ textarea::placeholder {
   .brand-logo {
     height: 40px;
   }
-}
-
-/* The homepage's main action, in the logo's navy. */
-.home-hero .button-primary {
-  border-color: var(--brand-navy);
-  background: var(--brand-navy);
-}
-
-.home-hero .button-primary:hover {
-  border-color: var(--brand-navy-hover);
-  background: var(--brand-navy-hover);
-  opacity: 1;
 }
