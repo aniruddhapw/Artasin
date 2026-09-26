@@ -841,7 +841,9 @@ dd {
 
 .studio-header-actions {
   display: flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 16px;
 }
 
@@ -5500,4 +5502,22 @@ textarea::placeholder {
 .admin-post-bar .artwork-status-actions {
   display: flex;
   gap: 8px;
+}
+
+.unsubscribe-actions {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  margin-bottom: 32px;
+}
+
+.newsletter-notice-panel {
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface-lowest);
+}
+
+.newsletter-notice-panel p {
+  margin-bottom: 0;
 }

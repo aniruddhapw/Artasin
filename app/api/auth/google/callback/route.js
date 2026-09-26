@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { exchangeGoogleCode, fetchGoogleProfile } from "@/lib/googleAuth";
+import { subscribeWithNotice } from "@/lib/newsletterNotice";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 
@@ -33,6 +34,7 @@ export async function GET(request) {
     const email = profile.email.toLowerCase();
     let user = await prisma.user.findUnique({ where: { googleId: profile.sub }, include: { artistProfile: true } });
 
+    let isNewAccount = false;
     if (!user) {
       const existingByEmail = await prisma.user.findUnique({ where: { email }, include: { artistProfile: true } });
       user = existingByEmail
@@ -51,6 +53,16 @@ export async function GET(request) {
             },
             include: { artistProfile: true }
           });
+      isNewAccount = !existingByEmail;
+    }
+
+    // Google signups never see the signup form's newsletter box, so they are
+    // subscribed the same way and told, with a one-click way out. Never
+    // allowed to stand between someone and signing in.
+    if (isNewAccount) {
+      await subscribeWithNotice([user], { pauseMs: 0 }).catch((error) =>
+        console.error(`Newsletter notice failed for ${user.email}:`, error.message)
+      );
     }
 
     const token = await createSessionToken(user);

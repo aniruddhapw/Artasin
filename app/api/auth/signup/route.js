@@ -13,7 +13,9 @@ const signupSchema = z.object({
   lastName: z.string().min(1),
   phone: phoneSchema,
   whatsappOptIn: z.boolean().default(false),
-  newsletterOptIn: z.boolean().default(false),
+  // The form sends the box's state; a client that leaves it out gets the
+  // same default the box shows.
+  newsletterOptIn: z.boolean().default(true),
   role: z.enum(["BUYER", "ARTIST"]).default("BUYER"),
   artist: z
     .object({

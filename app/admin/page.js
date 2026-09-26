@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { NewsletterNoticePanel } from "@/components/admin/NewsletterNoticePanel";
+import { newsletterEnabled } from "@/lib/newsletter";
+import { countNeverAsked } from "@/lib/newsletterNotice";
 import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 
@@ -33,6 +36,8 @@ export default async function AdminDashboardPage() {
     }),
     prisma.blogPost.count({ where: { status: "PENDING_REVIEW" } })
   ]);
+  // Only offered where it can work: without Resend nobody could unsubscribe.
+  const neverAskedCount = newsletterEnabled() ? await countNeverAsked() : 0;
 
   const gmvCents = settledOrders.reduce(
     (total, order) => total + order.subtotalCents + order.shippingCents + order.taxCents,
@@ -70,6 +75,8 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
         </header>
+
+        {neverAskedCount ? <NewsletterNoticePanel count={neverAskedCount} /> : null}
 
         <div className="kpi-grid admin-kpi-grid">
           <Kpi caption={`${settledOrders.length} settled orders`} title="Gross Merchandise Value" value={serializeMoney(gmvCents).formatted} />

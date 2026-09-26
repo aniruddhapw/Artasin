@@ -95,6 +95,9 @@ model User {
   // default. Resend decides who a Broadcast actually reaches; this is our own
   // record of the permission, and what gets pushed to Resend when it changes.
   newsletterOptIn Boolean             @default(false)
+  // When we told this person they had been subscribed by default. Set once,
+  // so someone who unsubscribes afterwards is never subscribed again.
+  newsletterNoticeSentAt DateTime?
   // A calendar date, not a moment — @db.Date so no timezone can shift a
   // birthday by a day. Nullable because every existing account predates it,
   // and nothing yet depends on having one.
