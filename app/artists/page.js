@@ -47,14 +47,16 @@ function latestWork(artist, t) {
   if (artwork) {
     return {
       src: thumbUrl(artwork.media[0].url),
-      alt: t("artists.workAlt", { title: artwork.title, name: artist.displayName })
+      alt: t("artists.workAlt", { title: artwork.title, name: artist.displayName }),
+      addedAt: artwork.createdAt
     };
   }
   const piece = artist.portfolioPieces[0];
   if (piece?.imageUrl) {
     return {
       src: thumbUrl(piece.imageUrl),
-      alt: t("artists.workAlt", { title: piece.title, name: artist.displayName })
+      alt: t("artists.workAlt", { title: piece.title, name: artist.displayName }),
+      addedAt: piece.createdAt
     };
   }
   return null;
@@ -94,7 +96,7 @@ export default async function ArtistsPage({ searchParams }) {
         where: { mediaType: "IMAGE" },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
         take: 1,
-        select: { title: true, imageUrl: true }
+        select: { title: true, imageUrl: true, createdAt: true }
       }
     }
   });
@@ -112,17 +114,21 @@ export default async function ArtistsPage({ searchParams }) {
     return true;
   });
 
+  const works = new Map(filtered.map((artist) => [artist.id, latestWork(artist, t)]));
+
   const sorted = [...filtered].sort((a, b) => {
     if (sort === "name") return a.displayName.localeCompare(b.displayName);
+    // Every other order shows artists with a picture first and monograms
+    // after, so the grid never alternates between the two. Having an image,
+    // from a listing or the portfolio, is what counts, not having a listing:
+    // an artist can list something with no photo, or show only past work.
+    const left = works.get(a.id);
+    const right = works.get(b.id);
+    if (Boolean(left) !== Boolean(right)) return left ? -1 : 1;
     if (sort === "works") return b._count.artworks - a._count.artworks;
     if (sort === "newest") return b.createdAt - a.createdAt;
-    // Default: whoever listed something most recently leads, and artists with
-    // nothing to show fall to the end rather than opening the page with blanks.
-    const left = a.artworks[0]?.createdAt;
-    const right = b.artworks[0]?.createdAt;
-    if (left && right) return right - left;
-    if (left) return -1;
-    if (right) return 1;
+    // Default: the most recently added image leads.
+    if (left && right) return right.addedAt - left.addedAt;
     return a.displayName.localeCompare(b.displayName);
   });
 
@@ -158,7 +164,7 @@ export default async function ArtistsPage({ searchParams }) {
         {sorted.length ? (
           <div className="artist-grid">
             {sorted.map((artist) => {
-              const work = latestWork(artist, t);
+              const work = works.get(artist.id);
               const count = artist._count.artworks;
               return (
                 <Link className="artist-card group-image" href={`/artist/${artist.slug}`} key={artist.id}>
