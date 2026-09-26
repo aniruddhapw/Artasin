@@ -157,7 +157,8 @@ export function SignupForm() {
           />
         </label>
         <label className="check-row">
-          <input name="newsletterOptIn" type="checkbox" />
+          {/* Ticked to start with: everyone gets updates unless they say no. */}
+          <input defaultChecked name="newsletterOptIn" type="checkbox" />
           <span>{t("auth.newsletterOptIn")}</span>
         </label>
         <label className="check-row">
