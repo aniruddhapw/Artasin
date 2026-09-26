@@ -41,20 +41,17 @@ export async function POST(request) {
       const token = crypto.randomBytes(32).toString("hex");
       const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-      await prisma.$transaction([
-        // Any older, still-valid link for this user stops working.
-        prisma.passwordResetToken.updateMany({
-          where: { userId: user.id, usedAt: null },
-          data: { usedAt: new Date() }
-        }),
-        prisma.passwordResetToken.create({
-          data: {
-            userId: user.id,
-            tokenHash,
-            expiresAt: new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000)
-          }
-        })
-      ]);
+      // Earlier links keep working until they expire. Cancelling them here meant
+      // anyone who asked twice and opened the first email was told to ask
+      // again, which cancelled the link they were about to try next. They all
+      // stop working together once one of them is used to change the password.
+      await prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          tokenHash,
+          expiresAt: new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000)
+        }
+      });
 
       await sendEmail({ to: user.email, ...passwordResetEmail(token, TOKEN_TTL_MINUTES) });
     }
