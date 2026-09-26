@@ -32,7 +32,13 @@ export function BlogReviewPanel({ postId, status }) {
       if (!response.ok) {
         throw new Error(formatApiError(payload, "Could not save the decision"));
       }
-      setDone(decision === "approve" ? "Approved. The post is live and the artist has been emailed." : "Rejected. The artist has been emailed.");
+      setDone(
+        decision === "approve"
+          ? "Approved. The post is live and the artist has been emailed."
+          : isLive
+            ? "Unpublished. The post is off the Journal and the artist has been emailed."
+            : "Rejected. The artist has been emailed."
+      );
       setNote("");
       router.refresh();
     } catch (decisionError) {
@@ -66,7 +72,7 @@ export function BlogReviewPanel({ postId, status }) {
             />
           </label>
           <button className="button button-secondary" disabled={Boolean(busy)} onClick={() => decide("reject")} type="button">
-            {busy === "reject" ? "Saving..." : isLive ? "Take down" : "Reject"}
+            {busy === "reject" ? "Saving..." : isLive ? "Unpublish" : "Reject"}
           </button>
         </>
       ) : null}

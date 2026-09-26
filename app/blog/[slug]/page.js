@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { ShareButton } from "@/components/ShareButton";
+import { UnpublishPostButton } from "@/components/admin/UnpublishPostButton";
+import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ogUrl } from "@/lib/images";
 import { sanitizeBlogHtml } from "@/lib/sanitizeBlogHtml";
@@ -50,11 +52,14 @@ export default async function BlogPostPage({ params }) {
     notFound();
   }
 
-  const otherPosts = await prisma.blogPost.findMany({
-    where: { artistId: post.artist.id, status: "PUBLISHED", id: { not: post.id } },
-    orderBy: { publishedAt: "desc" },
-    take: 3
-  });
+  const [otherPosts, viewer] = await Promise.all([
+    prisma.blogPost.findMany({
+      where: { artistId: post.artist.id, status: "PUBLISHED", id: { not: post.id } },
+      orderBy: { publishedAt: "desc" },
+      take: 3
+    }),
+    getAuthUser()
+  ]);
 
   // The body is sanitized again here — cheap, and a real backstop if some
   // future code path ever writes to BlogPost.body without going through the
@@ -81,6 +86,16 @@ export default async function BlogPostPage({ params }) {
           ) : null}
 
           <div className="blog-post-body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+
+          {viewer?.role === "ADMIN" ? (
+            <div className="admin-post-bar">
+              <span>Admin</span>
+              <UnpublishPostButton postId={post.id} redirectTo="/admin/blog?tab=rejected" />
+              <Link className="text-link" href={`/admin/blog/${post.id}`}>
+                Unpublish with a note
+              </Link>
+            </div>
+          ) : null}
 
           <div className="blog-post-actions">
             <ShareButton

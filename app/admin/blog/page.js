@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { UnpublishPostButton } from "@/components/admin/UnpublishPostButton";
 import { prisma } from "@/lib/db";
 
 export const metadata = {
@@ -43,8 +44,8 @@ export default async function AdminBlogPage({ searchParams }) {
         <header className="request-header">
           <h1>Journal Review</h1>
           <p>
-            Artists&apos; posts reach the Journal only once approved here. Rejecting a live post takes it down, and the
-            artist is emailed either way.
+            Artists&apos; posts reach the Journal only once approved here. Unpublish a live post from the Live tab. The
+            artist is emailed about every decision.
           </p>
         </header>
 
@@ -81,6 +82,7 @@ export default async function AdminBlogPage({ searchParams }) {
                   <Link className="small-outline" href={`/admin/blog/${post.id}`}>
                     {tab.status === "PENDING_REVIEW" ? "Review" : "Open"}
                   </Link>
+                  {tab.status === "PUBLISHED" ? <UnpublishPostButton postId={post.id} /> : null}
                 </div>
               </div>
             ))}

@@ -5475,3 +5475,29 @@ textarea::placeholder {
     position: static;
   }
 }
+
+/* Shown only to admins reading a live post on the Journal. */
+.admin-post-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-top: 48px;
+  padding: 14px 18px;
+  border: 1px dashed var(--outline);
+  background: var(--surface-low);
+  font-size: 14px;
+}
+
+.admin-post-bar > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.admin-post-bar .artwork-status-actions {
+  display: flex;
+  gap: 8px;
+}
