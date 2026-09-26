@@ -7,6 +7,8 @@
   /* Behind full-screen artwork, a shade deeper so the work stands out. */
   --brand-navy-deep: #0b1526;
   --heading-color: var(--brand-navy);
+  /* The logo's lettering: the page background, and headings on navy. */
+  --champagne: #edd8b8;
   --brand-gold: #e3c79a;
   /* The off-white band above the navy bar; every offset below the fixed
      header adds it. */
@@ -14,7 +16,7 @@
   /* The page is the champagne of the logo's lettering (sampled from the
      artwork as it sits on navy). The other surfaces are warm steps around
      it: lighter for panels and image mats, deeper for tags and borders. */
-  --surface: #edd8b8;
+  --surface: var(--champagne);
   --surface-lowest: #fdf8f0;
   --surface-low: #f4e6cf;
   --surface-container: #e5cda6;
@@ -72,9 +74,8 @@ img {
   max-width: 100%;
 }
 
-/* Headings in the brand navy. Anything that puts headings on a navy surface
-   sets --heading-color: currentColor, so they take that surface's light text
-   instead of disappearing into it. */
+/* Headings in the brand navy, and in the logo's champagne on navy surfaces,
+   the same pairing as the logo itself. */
 h1,
 h2,
 h3,
@@ -85,7 +86,7 @@ h4 {
 .home-band,
 .top-nav,
 .lightbox {
-  --heading-color: currentColor;
+  --heading-color: var(--champagne);
 }
 
 h1,
@@ -5154,6 +5155,7 @@ textarea::placeholder {
 }
 
 .home-medium-commission .home-medium-frame p {
+  color: var(--champagne);
   font-family: "Playfair Display", Georgia, serif;
   font-size: 26px;
   line-height: 1.2;
