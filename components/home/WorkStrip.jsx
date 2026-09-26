@@ -21,7 +21,10 @@ export function WorkStrip({ label, works }) {
       key={`${copy ? "copy-" : ""}${work.id}`}
       tabIndex={copy ? -1 : undefined}
     >
-      <img alt={copy ? "" : work.alt} decoding="async" loading="lazy" src={work.stripImage} />
+      {/* Not lazy: an unloaded image here has no width, so the browser never
+          sees it as visible and never fetches it. Low priority keeps these
+          behind the hero. The copy reuses the same URL, so it costs nothing. */}
+      <img alt={copy ? "" : work.alt} decoding="async" fetchPriority="low" src={work.stripImage} />
       <span className="home-strip-caption">
         <strong>{work.title}</strong>
         <span>

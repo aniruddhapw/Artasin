@@ -2217,6 +2217,13 @@ textarea::placeholder {
     border-bottom: 1px solid var(--line);
     background: rgba(249, 249, 247, 0.92);
     padding: 12px var(--mobile-margin);
+    /* Still swipeable; the link cut off at the edge shows there is more. A
+       visible scrollbar drew a thick grey bar across the page below. */
+    scrollbar-width: none;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-actions button.mobile-menu-trigger {
