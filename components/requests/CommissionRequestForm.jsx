@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { Icon } from "@/components/Icon";
 import { Spinner } from "@/components/Spinner";
 import { artworkCategories } from "@/data/artisan";
+
 const budgetRanges = [
   { label: "₹5,000 - ₹10,000", min: 5000, max: 10000 },
   { label: "₹10,000 - ₹25,000", min: 10000, max: 25000 },
@@ -15,6 +17,7 @@ const budgetRanges = [
 
 export function CommissionRequestForm({ artists, preferredArtistId }) {
   const router = useRouter();
+  const t = useT();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -35,7 +38,7 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
         const response = await fetch("/api/uploads", { method: "POST", body: formData });
         const payload = await response.json();
         if (!response.ok) {
-          throw new Error(formatApiError(payload, "Upload failed"));
+          throw new Error(formatApiError(payload, t("error.uploadFailed"), t));
         }
         uploaded.push(payload.url);
       }
@@ -79,7 +82,7 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
         return;
       }
       if (!response.ok) {
-        throw new Error(formatApiError(payload, "Unable to submit request"));
+        throw new Error(formatApiError(payload, t("request.form.submitFailed"), t));
       }
 
       router.push(`/commissions/${payload.commissionRequest.id}`);
@@ -93,15 +96,15 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
   return (
     <form className="request-form" onSubmit={handleSubmit}>
       <fieldset>
-        <legend>Project Details</legend>
+        <legend>{t("request.form.projectDetails")}</legend>
         <label>
-          <span>Project Title</span>
-          <input name="title" placeholder="e.g., Living Room Centerpiece" required type="text" />
+          <span>{t("request.form.projectTitle")}</span>
+          <input name="title" placeholder={t("request.form.projectTitlePlaceholder")} required type="text" />
         </label>
         <label>
-          <span>Preferred Artist (Optional)</span>
+          <span>{t("request.form.preferredArtist")}</span>
           <select defaultValue={preferredArtistId || ""} name="artistId">
-            <option value="">Open to recommendations</option>
+            <option value="">{t("request.form.openToRecommendations")}</option>
             {artists.map((artist) => (
               <option key={artist.id} value={artist.id}>
                 {artist.displayName}
@@ -110,26 +113,26 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
           </select>
         </label>
         <label>
-          <span>Artwork Type</span>
+          <span>{t("request.form.artworkType")}</span>
           <select defaultValue="" name="artworkType" required>
             <option disabled value="">
-              Select a type...
+              {t("request.form.selectType")}
             </option>
             {artworkCategories.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {t(`category.${type}`)}
               </option>
             ))}
           </select>
         </label>
         <label>
-          <span>Medium Preference (Optional)</span>
-          <input name="medium" placeholder="Oil on Canvas, Bronze, Digital..." type="text" />
+          <span>{t("request.form.medium")}</span>
+          <input name="medium" placeholder={t("request.form.mediumPlaceholder")} type="text" />
         </label>
         <label>
-          <span>Estimated Budget (₹)</span>
+          <span>{t("request.form.budget")}</span>
           <select defaultValue="" name="budget">
-            <option value="">Select a range...</option>
+            <option value="">{t("request.form.selectRange")}</option>
             {budgetRanges.map((range) => (
               <option key={range.label} value={range.label}>
                 {range.label}
@@ -138,15 +141,15 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
           </select>
         </label>
         <label>
-          <span>Desired Timeline</span>
-          <input name="timeline" placeholder="e.g., 3-6 months, by December" type="text" />
+          <span>{t("request.form.timeline")}</span>
+          <input name="timeline" placeholder={t("request.form.timelinePlaceholder")} type="text" />
         </label>
         <label>
-          <span>Concept Description</span>
+          <span>{t("request.form.concept")}</span>
           <textarea
             minLength={10}
             name="requirements"
-            placeholder="Describe your vision, subject matter, and the emotional resonance you are looking for..."
+            placeholder={t("request.form.conceptPlaceholder")}
             required
             rows={4}
           />
@@ -154,20 +157,20 @@ export function CommissionRequestForm({ artists, preferredArtistId }) {
       </fieldset>
 
       <fieldset>
-        <legend>Reference Material</legend>
+        <legend>{t("request.form.references")}</legend>
         <label className="upload-box">
           <Icon name="uploadFile" size={40} />
-          <strong>{isUploading ? <Spinner label="Uploading..." /> : "Upload Reference Images"}</strong>
-          <small>Drag and drop or click to browse. Max 5 files (JPG, PNG, PDF).</small>
+          <strong>{isUploading ? <Spinner label={t("artwork.form.uploading")} /> : t("request.form.uploadReferences")}</strong>
+          <small>{t("request.form.uploadHint")}</small>
           <input accept=".jpg,.jpeg,.png,.pdf" disabled={isUploading} multiple onChange={handleFilesChange} type="file" />
         </label>
         {referenceUrls.length ? (
-          <p className="upload-confirmation">{referenceUrls.length} reference file(s) attached.</p>
+          <p className="upload-confirmation">{t("request.form.attached", { count: referenceUrls.length })}</p>
         ) : null}
       </fieldset>
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       <button className="button button-primary request-submit" disabled={isSubmitting || isUploading} type="submit">
-        {isSubmitting ? "Submitting..." : "Submit Request"}
+        {isSubmitting ? t("request.form.submitting") : t("request.form.submit")}
       </button>
     </form>
   );
