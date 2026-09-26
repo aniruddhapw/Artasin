@@ -29,7 +29,7 @@ export default async function EditBlogPostPage({ params }) {
           <p>{t("blog.editPostSubtitle")}</p>
         </header>
         <section className="request-layout studio-form-layout">
-          <BlogPostForm post={post} />
+          <BlogPostForm canPublishDirectly={user.role === "ADMIN"} post={post} />
         </section>
       </main>
       <Footer variant="simple" />

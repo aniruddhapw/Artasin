@@ -42,13 +42,18 @@ export function BlogPostActions({ post }) {
       <Link className="small-outline" href={`/studio/blog/${post.id}/edit`}>
         {t("common.edit")}
       </Link>
-      {post.status === "DRAFT" ? (
-        <button className="small-outline" disabled={isSubmitting} onClick={() => updateStatus("PUBLISHED")} type="button">
-          {t("blog.publish")}
+      {post.status === "DRAFT" || post.status === "REJECTED" ? (
+        <button
+          className="small-outline"
+          disabled={isSubmitting}
+          onClick={() => updateStatus("PENDING_REVIEW")}
+          type="button"
+        >
+          {t("blog.submitForReview")}
         </button>
       ) : (
         <button className="small-outline" disabled={isSubmitting} onClick={() => updateStatus("DRAFT")} type="button">
-          {t("blog.unpublish")}
+          {post.status === "PENDING_REVIEW" ? t("blog.withdraw") : t("blog.unpublish")}
         </button>
       )}
       <button className="small-outline" disabled={isSubmitting} onClick={handleDelete} type="button">

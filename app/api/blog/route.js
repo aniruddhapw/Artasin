@@ -4,7 +4,8 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ensureSlug } from "@/lib/slug";
 import { isBlankBlogHtml, sanitizeBlogHtml } from "@/lib/sanitizeBlogHtml";
-import { notifyBlogPostPublished } from "@/lib/blogNotifications";
+import { notifyBlogPostPublished, notifyBlogPostSubmitted } from "@/lib/blogNotifications";
+import { resolveArtistStatus, statusTimestamps } from "@/lib/blogReview";
 
 // The body is now HTML from a rich text editor rather than plain text, so the
 // same visible content takes noticeably more characters to store.
@@ -15,7 +16,9 @@ const createPostSchema = z.object({
   excerpt: z.string().max(300).optional(),
   body: z.string().max(MAX_BODY_LENGTH),
   coverImageUrl: z.string().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT")
+  // PUBLISHED is still accepted from a form loaded before review existed; it
+  // submits the post like PENDING_REVIEW does.
+  status: z.enum(["DRAFT", "PENDING_REVIEW", "PUBLISHED"]).default("DRAFT")
 });
 
 async function requireArtist(request) {
@@ -26,7 +29,7 @@ async function requireArtist(request) {
   if (!user.artistProfile) {
     return { error: fail("Only artists can write blog posts", 403) };
   }
-  return { artistId: user.artistProfile.id };
+  return { artistId: user.artistProfile.id, isAdmin: user.role === "ADMIN" };
 }
 
 /** Two posts can share a title; the URL still has to be unique across the site. */
@@ -61,7 +64,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { artistId, error } = await requireArtist(request);
+    const { artistId, isAdmin, error } = await requireArtist(request);
     if (error) {
       return error;
     }
@@ -73,6 +76,7 @@ export async function POST(request) {
     }
 
     const slug = await uniqueBlogSlug(input.title);
+    const status = resolveArtistStatus({ current: undefined, requested: input.status, contentChanged: true, isAdmin });
 
     const post = await prisma.blogPost.create({
       data: {
@@ -82,13 +86,15 @@ export async function POST(request) {
         excerpt: input.excerpt || null,
         body,
         coverImageUrl: input.coverImageUrl || null,
-        status: input.status,
-        publishedAt: input.status === "PUBLISHED" ? new Date() : null
+        status,
+        ...statusTimestamps({ current: "DRAFT", next: status, publishedAt: null })
       }
     });
 
     if (post.status === "PUBLISHED") {
       await notifyBlogPostPublished(post);
+    } else if (post.status === "PENDING_REVIEW") {
+      await notifyBlogPostSubmitted(post);
     }
 
     return created({ post });

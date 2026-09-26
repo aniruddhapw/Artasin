@@ -59,9 +59,16 @@ export default async function StudioBlogPage() {
                       ? ` · ${t("blog.publishedOn", { date: dateFormat.format(post.publishedAt) })}`
                       : ""}
                   </p>
+                  {post.status === "REJECTED" ? (
+                    <p className="admin-review-note">
+                      {post.reviewNote
+                        ? t("blog.notice.rejectedWithNote", { note: post.reviewNote })
+                        : t("blog.notice.rejected")}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="order-history-meta">
-                  <span className="tag">{t(`status.${post.status}`)}</span>
+                  <span className="tag">{t(`blog.status.${post.status}`)}</span>
                   <BlogPostActions post={post} />
                 </div>
               </div>

@@ -11,7 +11,7 @@ export const metadata = {
 const settledStatuses = ["PAID", "IN_PROGRESS", "SHIPPED", "DELIVERED", "COMPLETED"];
 
 export default async function AdminDashboardPage() {
-  const [settledOrders, disputedCount, artistCount, buyerCount, openCommissionCount, recentOrders] = await Promise.all([
+  const [settledOrders, disputedCount, artistCount, buyerCount, openCommissionCount, recentOrders, pendingPostCount] = await Promise.all([
     prisma.order.findMany({
       where: { status: { in: settledStatuses } },
       select: { subtotalCents: true, shippingCents: true, taxCents: true, platformCommissionCents: true }
@@ -30,7 +30,8 @@ export default async function AdminDashboardPage() {
       },
       orderBy: { createdAt: "desc" },
       take: 8
-    })
+    }),
+    prisma.blogPost.count({ where: { status: "PENDING_REVIEW" } })
   ]);
 
   const gmvCents = settledOrders.reduce(
@@ -60,6 +61,9 @@ export default async function AdminDashboardPage() {
             </Link>
             <Link className="button button-secondary" href="/admin/artworks">
               Moderate Listings
+            </Link>
+            <Link className="button button-secondary" href="/admin/blog">
+              {pendingPostCount ? `Journal Review (${pendingPostCount})` : "Journal Review"}
             </Link>
             <Link className="button button-primary" href="/admin/artists">
               Artists &amp; Payouts
