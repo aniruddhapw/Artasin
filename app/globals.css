@@ -6,6 +6,7 @@
   --brand-navy-hover: #1b3050;
   /* Behind full-screen artwork, a shade deeper so the work stands out. */
   --brand-navy-deep: #0b1526;
+  --heading-color: var(--brand-navy);
   --brand-gold: #e3c79a;
   /* The off-white band above the navy bar; every offset below the fixed
      header adds it. */
@@ -66,6 +67,22 @@ a {
 img {
   display: block;
   max-width: 100%;
+}
+
+/* Headings in the brand navy. Anything that puts headings on a navy surface
+   sets --heading-color: currentColor, so they take that surface's light text
+   instead of disappearing into it. */
+h1,
+h2,
+h3,
+h4 {
+  color: var(--heading-color);
+}
+
+.home-band,
+.top-nav,
+.lightbox {
+  --heading-color: currentColor;
 }
 
 h1,
