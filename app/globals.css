@@ -5653,10 +5653,10 @@ textarea::placeholder {
 }
 
 /* Just above the phone layout the links still share the row with the logo,
-   and the full-size logo pushed it 32px too wide. */
+   and the full-size logo pushed it up to 35px too wide. */
 @media (min-width: 981px) and (max-width: 1100px) {
   .brand-logo {
-    height: 48px;
+    height: 46px;
   }
 }
 

@@ -19,8 +19,8 @@ export async function Nav({ active }) {
     <nav className="top-nav">
       <div className="nav-inner">
         <Link className="brand brand-logo-link" href="/">
-          {/* Gold on transparent, cut for the navy bar; 3x the displayed size. */}
-          <img alt="ARTASIN" className="brand-logo" height={168} src="/brand/artasin-logo.png" width={468} />
+          {/* Cut from the brand artwork onto transparent, for the navy bar; 3x the displayed size. */}
+          <img alt="ARTASIN" className="brand-logo" height={180} src="/brand/artasin-logo.png" width={513} />
         </Link>
         <div className="nav-links">
           {navItems.map((item) => (
