@@ -3614,15 +3614,10 @@ textarea::placeholder {
   line-height: 1.35;
 }
 
-:root[lang="mr"] .button,
-:root[lang="mr"] .text-link,
-:root[lang="mr"] .sign-in,
-:root[lang="mr"] .nav-links a,
 :root[lang="mr"] .tag,
 :root[lang="mr"] .small-outline,
 :root[lang="mr"] label span,
-:root[lang="mr"] legend,
-:root[lang="mr"] .home-eyebrow {
+:root[lang="mr"] legend {
   letter-spacing: 0.02em;
   text-transform: none;
 }
@@ -5331,6 +5326,16 @@ textarea::placeholder {
   .home-medium-frame img {
     transition: none;
   }
+}
+
+/* Wide tracking pulls Devanagari letters apart, as it does for labels above. */
+:root[lang="mr"] .button,
+:root[lang="mr"] .text-link,
+:root[lang="mr"] .sign-in,
+:root[lang="mr"] .nav-links a,
+:root[lang="mr"] .home-eyebrow {
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 /* Noto Sans Devanagari has no italic, and a slanted fallback looks broken. */
