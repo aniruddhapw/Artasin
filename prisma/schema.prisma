@@ -25,7 +25,9 @@ enum PortfolioMediaType {
 
 enum BlogPostStatus {
   DRAFT
+  PENDING_REVIEW
   PUBLISHED
+  REJECTED
 }
 
 enum ArtworkStatus {
@@ -185,6 +187,11 @@ model BlogPost {
   coverImageUrl String?
   status       BlogPostStatus @default(DRAFT)
   publishedAt  DateTime?
+  // When the artist last sent it for review; orders the admin queue.
+  submittedAt  DateTime?
+  reviewedAt   DateTime?
+  // The admin's reason when a post is not approved, shown to the artist.
+  reviewNote   String?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   artist       ArtistProfile  @relation(fields: [artistId], references: [id], onDelete: Cascade)

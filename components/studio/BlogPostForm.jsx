@@ -35,10 +35,28 @@ function isBlankRichText(html) {
   return !parsed.textContent.trim() && !parsed.querySelector("img");
 }
 
-export function BlogPostForm({ post }) {
+/** Where the post stands in review, shown above the form while editing. */
+function reviewNotice(post, t) {
+  if (post?.status === "PENDING_REVIEW") return { text: t("blog.notice.pending") };
+  if (post?.status === "PUBLISHED") return { text: t("blog.notice.live") };
+  if (post?.status === "REJECTED") {
+    return {
+      rejected: true,
+      text: post.reviewNote ? t("blog.notice.rejectedWithNote", { note: post.reviewNote }) : t("blog.notice.rejected")
+    };
+  }
+  return null;
+}
+
+/**
+ * `canPublishDirectly` is for admins, whose posts skip review; the server
+ * decides either way, this only changes the button's label.
+ */
+export function BlogPostForm({ post, canPublishDirectly = false }) {
   const t = useT();
   const router = useRouter();
   const isEditing = Boolean(post);
+  const notice = reviewNotice(post, t);
 
   const [title, setTitle] = useState(post?.title || "");
   const [excerpt, setExcerpt] = useState(post?.excerpt || "");
@@ -112,15 +130,20 @@ export function BlogPostForm({ post }) {
     }
   }
 
-  // Two explicit actions (draft / publish) rather than one submit button, so
+  // Two explicit actions (draft / submit) rather than one submit button, so
   // the form itself does nothing on Enter — pressing it in the title field
-  // should not silently publish a half-written post.
+  // should not silently submit a half-written post.
   function handleSubmit(event) {
     event.preventDefault();
   }
 
   return (
     <form className="request-form" onSubmit={handleSubmit}>
+      {notice ? (
+        <p className={`verification-banner${notice.rejected ? " verification-banner-rejected" : ""}`}>{notice.text}</p>
+      ) : null}
+      <p className="field-hint">{t("blog.guidance")}</p>
+
       <fieldset>
         <legend>{t("blog.form.detailsLegend")}</legend>
 
@@ -192,10 +215,16 @@ export function BlogPostForm({ post }) {
         <button
           className="button button-primary"
           disabled={isSubmitting || isUploading}
-          onClick={() => submitAs("PUBLISHED")}
+          onClick={() => submitAs("PENDING_REVIEW")}
           type="button"
         >
-          {isSubmitting ? <Spinner label={t("common.saving")} /> : t("blog.publish")}
+          {isSubmitting ? (
+            <Spinner label={t("common.saving")} />
+          ) : canPublishDirectly ? (
+            t("blog.publish")
+          ) : (
+            t("blog.submitForReview")
+          )}
         </button>
       </div>
     </form>
