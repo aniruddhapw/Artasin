@@ -3961,7 +3961,8 @@ textarea::placeholder {
 :root[lang="mr"] .tag,
 :root[lang="mr"] .small-outline,
 :root[lang="mr"] label span,
-:root[lang="mr"] legend {
+:root[lang="mr"] legend,
+:root[lang="mr"] .artists-tagline {
   letter-spacing: 0.02em;
   text-transform: none;
 }
