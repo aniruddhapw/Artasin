@@ -6,8 +6,8 @@ export default function manifest() {
       "Shop original paintings, sculpture, and photography from independent artists, or commission a custom piece made for your space.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f9f9f7",
-    theme_color: "#000000",
+    background_color: "#edd8b8",
+    theme_color: "#122239",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icon-512.png", sizes: "512x512", type: "image/png" },

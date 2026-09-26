@@ -11,15 +11,18 @@
   /* The off-white band above the navy bar; every offset below the fixed
      header adds it. */
   --nav-strip: 10px;
-  --surface: #f9f9f7;
-  --surface-lowest: #ffffff;
-  --surface-low: #f3f3f4;
-  --surface-container: #eeeeee;
-  --surface-highest: #e2e2e2;
+  /* The page is the champagne of the logo's lettering (sampled from the
+     artwork as it sits on navy). The other surfaces are warm steps around
+     it: lighter for panels and image mats, deeper for tags and borders. */
+  --surface: #edd8b8;
+  --surface-lowest: #fdf8f0;
+  --surface-low: #f4e6cf;
+  --surface-container: #e5cda6;
+  --surface-highest: #dcc195;
   --text: #1a1c1c;
-  --muted: #444748;
-  --outline: #747878;
-  --line: #c4c7c7;
+  --muted: #4d4336;
+  --outline: #685943;
+  --line: #cdb48b;
   /* Brand navy rather than black, for every solid dark surface. */
   --primary: #122239;
   --on-primary: #ffffff;
@@ -3784,7 +3787,7 @@ textarea::placeholder {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(249, 249, 247, 0.6);
+  background: rgba(237, 216, 184, 0.6);
   pointer-events: none;
 }
 
