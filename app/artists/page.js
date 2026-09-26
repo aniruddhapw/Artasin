@@ -5,17 +5,30 @@ import { Footer } from "@/components/Footer";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
+import { getTranslations } from "@/lib/i18n";
 import { thumbUrl } from "@/lib/images";
 
-export const metadata = {
-  title: "Artists",
-  description:
-    "Browse every verified artist on ARTASIN — painters, sculptors, photographers, and digital artists taking commissions.",
-  alternates: { canonical: "/artists" }
-};
+export async function generateMetadata() {
+  const { t } = await getTranslations();
+  return {
+    title: t("artists.title"),
+    description: t("artists.description"),
+    alternates: { canonical: "/artists" }
+  };
+}
 
 function text(value) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+/**
+ * Disciplines picked from the onboarding list have a translation; anything an
+ * artist typed in themselves does not, and shows exactly as they wrote it.
+ */
+function disciplineLabel(t, discipline) {
+  const key = `discipline.${discipline}`;
+  const label = t(key);
+  return label === key ? discipline : label;
 }
 
 /**
@@ -26,17 +39,23 @@ function text(value) {
  * back to a monogram rather than a placeholder image. Fourteen identical grey
  * tiles would read as a broken page; a monogram reads as a design.
  */
-function latestWork(artist) {
+function latestWork(artist, t) {
   // The newest listing is not always the one to show: a listing can be saved
   // without images, and stopping at the first would drop an artist to a
   // monogram while they have perfectly good work a row further down.
   const artwork = artist.artworks.find((row) => row.media[0]?.url);
   if (artwork) {
-    return { src: thumbUrl(artwork.media[0].url), alt: `${artwork.title} by ${artist.displayName}` };
+    return {
+      src: thumbUrl(artwork.media[0].url),
+      alt: t("artists.workAlt", { title: artwork.title, name: artist.displayName })
+    };
   }
   const piece = artist.portfolioPieces[0];
   if (piece?.imageUrl) {
-    return { src: thumbUrl(piece.imageUrl), alt: `${piece.title} by ${artist.displayName}` };
+    return {
+      src: thumbUrl(piece.imageUrl),
+      alt: t("artists.workAlt", { title: piece.title, name: artist.displayName })
+    };
   }
   return null;
 }
@@ -48,6 +67,7 @@ export default async function ArtistsPage({ searchParams }) {
   const location = text(params?.location);
   const showing = text(params?.showing);
   const sort = text(params?.sort);
+  const { t } = await getTranslations();
 
   const artists = await prisma.artistProfile.findMany({
     where: {
@@ -81,10 +101,10 @@ export default async function ArtistsPage({ searchParams }) {
 
   // The dropdowns offer what artists have actually filled in. Most profiles
   // have neither field, so a fixed list of mediums would mostly lead nowhere.
-  const [mediums, locations] = [
-    [...new Set(artists.map((a) => text(a.discipline)).filter(Boolean))].sort(),
-    [...new Set(artists.map((a) => text(a.location)).filter(Boolean))].sort()
-  ];
+  const mediums = [...new Set(artists.map((a) => text(a.discipline)).filter(Boolean))]
+    .sort()
+    .map((value) => ({ value, label: disciplineLabel(t, value) }));
+  const locations = [...new Set(artists.map((a) => text(a.location)).filter(Boolean))].sort();
 
   const filtered = artists.filter((artist) => {
     if (showing === "for-sale") return artist._count.artworks > 0;
@@ -107,6 +127,8 @@ export default async function ArtistsPage({ searchParams }) {
   });
 
   const isFiltered = Boolean(q || medium || location || showing);
+  const countKey = `artists.count${isFiltered ? "Matching" : "Verified"}${sorted.length === 1 ? "One" : ""}`;
+  const [emptyBefore, emptyAfter] = t("artists.empty").split("{link}");
 
   return (
     <>
@@ -114,18 +136,16 @@ export default async function ArtistsPage({ searchParams }) {
       <main className="page request-page artists-page">
         <header className="artists-header">
           <div>
-            <h1>Artists</h1>
-            <p className="artists-lede">Meet the artists behind the work.</p>
-            <p className="artists-count">
-              {sorted.length} {isFiltered ? "matching" : "verified"} {sorted.length === 1 ? "artist" : "artists"}
-            </p>
+            <h1>{t("artists.title")}</h1>
+            <p className="artists-lede">{t("artists.lede")}</p>
+            <p className="artists-count">{t(countKey, { count: sorted.length })}</p>
           </div>
           <p className="artists-tagline">
-            Diverse voices,
+            {t("artists.tagline1")}
             <br />
-            timeless traditions,
+            {t("artists.tagline2")}
             <br />
-            contemporary perspectives.
+            {t("artists.tagline3")}
           </p>
         </header>
 
@@ -138,7 +158,7 @@ export default async function ArtistsPage({ searchParams }) {
         {sorted.length ? (
           <div className="artist-grid">
             {sorted.map((artist) => {
-              const work = latestWork(artist);
+              const work = latestWork(artist, t);
               const count = artist._count.artworks;
               return (
                 <Link className="artist-card group-image" href={`/artist/${artist.slug}`} key={artist.id}>
@@ -153,16 +173,23 @@ export default async function ArtistsPage({ searchParams }) {
                     <div>
                       <h2>
                         {artist.displayName}
-                        <VerifiedMark />
+                        <VerifiedMark label={t("artists.verified")} title={t("artists.verifiedArtist")} />
                       </h2>
                       <p className="artist-card-meta">
-                        {[text(artist.discipline) || "Artist", text(artist.location)]
+                        {[
+                          text(artist.discipline) ? disciplineLabel(t, text(artist.discipline)) : t("artists.artist"),
+                          text(artist.location)
+                        ]
                           .filter(Boolean)
                           .join(" · ")}
                       </p>
                       <p className="artist-card-stats">
-                        <span>{count ? `${count} ${count === 1 ? "work" : "works"}` : "No listings yet"}</span>
-                        <span>Commissions available</span>
+                        <span>
+                          {count
+                            ? t(count === 1 ? "artists.worksOne" : "artists.works", { count })
+                            : t("artists.noListings")}
+                        </span>
+                        <span>{t("artists.commissions")}</span>
                       </p>
                     </div>
                     <span aria-hidden="true" className="artist-card-arrow">
@@ -175,7 +202,9 @@ export default async function ArtistsPage({ searchParams }) {
           </div>
         ) : (
           <p className="empty-state">
-            No artists match that. <Link href="/artists">Clear the filters</Link> to see everyone.
+            {emptyBefore}
+            <Link href="/artists">{t("artists.clearFilters")}</Link>
+            {emptyAfter}
           </p>
         )}
       </main>
@@ -185,10 +214,10 @@ export default async function ArtistsPage({ searchParams }) {
 }
 
 /** Every artist in this directory is verified — the page only lists approved profiles. */
-function VerifiedMark() {
+function VerifiedMark({ label, title }) {
   return (
-    <span className="artist-verified" title="Verified artist">
-      <span className="visually-hidden">Verified</span>
+    <span className="artist-verified" title={title}>
+      <span className="visually-hidden">{label}</span>
       <svg aria-hidden="true" height="15" viewBox="0 0 24 24" width="15">
         <circle cx="12" cy="12" fill="currentColor" r="12" />
         <path d="m7 12.4 3.2 3.2L17 9" fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" />
