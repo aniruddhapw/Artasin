@@ -22,6 +22,7 @@ export async function Footer({ variant = "full" }) {
         <div className="footer-links">
           <div>
             {variant === "full" ? <span>Directory</span> : null}
+            <Link href="/about">{t("footer.about")}</Link>
             <Link href="/studio">{t("footer.artistResources")}</Link>
             <Link href="/requests">{t("footer.commissionGuide")}</Link>
           </div>

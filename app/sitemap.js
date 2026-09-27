@@ -28,6 +28,7 @@ export default async function sitemap() {
     { url: `${siteUrl}/blog`, changeFrequency: "daily", priority: 0.6 },
     { url: `${siteUrl}/artists`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/requests`, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${siteUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${siteUrl}/terms`, changeFrequency: "yearly", priority: 0.3 }
   ];
