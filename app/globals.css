@@ -1773,6 +1773,22 @@ textarea::placeholder {
   align-content: center;
 }
 
+/* Beside the form on wide screens, the introduction stays in view while a
+   long form (sign-up) scrolls past it, rather than sitting halfway down the
+   page next to the form's middle. */
+@media (min-width: 981px) {
+  /* Both columns start together, so a short form (forgot password) lines up
+     with the pinned introduction instead of floating below it. */
+  .auth-grid {
+    align-items: start;
+  }
+
+  .auth-editorial {
+    position: sticky;
+    top: 48px;
+  }
+}
+
 .auth-editorial p {
   color: var(--muted);
   font-size: 12px;
