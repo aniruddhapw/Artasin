@@ -5492,3 +5492,121 @@ textarea::placeholder {
     height: 34px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   About
+   --------------------------------------------------------------------------- */
+
+.about-motto {
+  max-width: 900px;
+  margin: 0 0 var(--section);
+  padding: 8px 0 8px 32px;
+  border-left: 2px solid var(--primary);
+}
+
+.about-motto figcaption {
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.about-motto blockquote {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(28px, 3.6vw, 44px);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.about-section {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 80px;
+}
+
+.about-section h2,
+.about-cta h2 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.about-prose {
+  display: grid;
+  gap: 18px;
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.about-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+
+.about-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-list li {
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.about-cta {
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+  padding: 56px;
+  border: 1px solid var(--line);
+  background: var(--surface-lowest);
+}
+
+.about-cta > p {
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.about-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.about-contact a {
+  border-bottom: 1px solid currentColor;
+  color: var(--text);
+}
+
+@media (max-width: 860px) {
+  .about-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .about-motto {
+    padding-left: 20px;
+  }
+
+  .about-section {
+    margin-bottom: 56px;
+  }
+
+  .about-cta {
+    padding: 28px 24px;
+  }
+}
+
