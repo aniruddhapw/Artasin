@@ -12,6 +12,9 @@ import { detailUrl, stripUrl, thumbUrl } from "@/lib/images";
 
 const RECENT_POOL = 40;
 const STRIP_LIMIT = 16;
+// The strip under the hero shows paintings only; the rest of the page covers
+// every medium.
+const STRIP_CATEGORY = "Painting";
 // Fewer than this can't fill a wide screen, and a strip that scrolls a couple
 // of tiles across empty space looks broken rather than calm.
 const STRIP_MIN = 6;
@@ -105,12 +108,19 @@ async function getMediums(spotlightId) {
 }
 
 export default async function HomePage() {
-  const [{ t }, user, artistCount, workCount, recent, spotlight] = await Promise.all([
+  const [{ t }, user, artistCount, workCount, recent, paintings, paintingCount, spotlight] = await Promise.all([
     getTranslations(),
     getAuthUser(),
     prisma.artistProfile.count({ where: { verificationStatus: "APPROVED" } }),
     prisma.artwork.count({ where: { status: "PUBLISHED" } }),
     prisma.artwork.findMany({ where: withImage, include: cardInclude, orderBy: { createdAt: "desc" }, take: RECENT_POOL }),
+    prisma.artwork.findMany({
+      where: { ...withImage, category: STRIP_CATEGORY },
+      include: cardInclude,
+      orderBy: { createdAt: "desc" },
+      take: RECENT_POOL
+    }),
+    prisma.artwork.count({ where: { status: "PUBLISHED", category: STRIP_CATEGORY } }),
     getSpotlight()
   ]);
   const mediums = await getMediums(spotlight?.id);
@@ -134,7 +144,7 @@ export default async function HomePage() {
     stripImage: stripUrl(artwork.media[0].url)
   });
 
-  const strip = interleaveByArtist(recent).slice(0, STRIP_LIMIT).map(toCard);
+  const strip = interleaveByArtist(paintings).slice(0, STRIP_LIMIT).map(toCard);
   const justListed = recent.slice(0, JUST_LISTED_LIMIT).map(toCard);
   const plural = (key, count) => t(count === 1 ? `${key}One` : key, { count });
 
@@ -169,8 +179,8 @@ export default async function HomePage() {
             <WorkStrip label={t("home.marquee.label")} works={strip} />
             <div className="home-wrap home-strip-foot">
               <span>{t("home.marquee.note")}</span>
-              <Link className="text-link" href="/gallery">
-                {t("home.marquee.seeAll", { count: workCount })}
+              <Link className="text-link" href={`/gallery?category=${STRIP_CATEGORY}`}>
+                {t(paintingCount === 1 ? "home.marquee.seeAllOne" : "home.marquee.seeAll", { count: paintingCount })}
               </Link>
             </div>
           </section>
