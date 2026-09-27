@@ -169,7 +169,6 @@ export default async function HomePage() {
             <p className="home-hero-facts">
               <span>{plural("home.hero.artists", artistCount)}</span>
               <span>{plural("home.hero.works", workCount)}</span>
-              <span>{t("home.hero.checkout")}</span>
             </p>
           </div>
         </section>
