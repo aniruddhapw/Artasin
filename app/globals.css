@@ -1824,6 +1824,21 @@ textarea::placeholder {
   line-height: 1.4;
 }
 
+/* \`label span\` styles field names as small uppercase labels. Checkbox rows
+   and the role cards also sit in a span inside a label, but they are
+   sentences, and in capitals they read as shouting. */
+.check-row span,
+.role-grid span,
+.role-grid small {
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.role-grid strong {
+  letter-spacing: 0.02em;
+}
+
 .auth-form-header a,
 .auth-options a {
   color: var(--primary);
