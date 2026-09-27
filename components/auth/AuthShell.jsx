@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/BrandLogo";
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
 
 export function AuthShell({ children, eyebrow, title, body }) {
@@ -6,7 +7,7 @@ export function AuthShell({ children, eyebrow, title, body }) {
     <main className="auth-page">
       <div className="auth-topbar">
         <Link className="auth-brand" href="/">
-          ARTASIN
+          <BrandLogo />
         </Link>
         {/* Sign-in is the first screen an artist meets, so the language switch
             has to be reachable before they are through it. */}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandMark } from "@/components/BrandMark";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Icon } from "@/components/Icon";
 import { getTranslations } from "@/lib/i18n";
 
@@ -9,8 +9,8 @@ export async function Footer({ variant = "full" }) {
     <footer className={`footer footer--${variant}`}>
       <div className="footer-grid">
         <div className="footer-brand">
-          <Link href="/">
-            <BrandMark />
+          <Link className="footer-logo" href="/">
+            <BrandLogo />
           </Link>
           {variant === "full" ? (
             <p>
