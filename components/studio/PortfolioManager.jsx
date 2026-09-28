@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { Spinner } from "@/components/Spinner";
@@ -17,6 +17,10 @@ const emptyDraft = { title: "", medium: "", year: "", description: "", mediaType
  * and the filename is the closest thing to one the artist has already written —
  * seeding from it turns a dozen empty fields into a dozen fields to skim.
  */
+function smooth() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
+
 function titleFromFilename(name) {
   const base = String(name || "").replace(/\.[^.]+$/, "");
   return base.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
@@ -31,10 +35,27 @@ export function PortfolioManager({ pieces: initialPieces }) {
   // works on the one photo the existing piece already has.
   const [photos, setPhotos] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  // The title as saved, for the "Editing ..." bar; the draft title changes as they type.
+  const [editingTitle, setEditingTitle] = useState("");
+  // The piece just saved, briefly highlighted in the list so the change is visible.
+  const [savedId, setSavedId] = useState(null);
+  const [notice, setNotice] = useState("");
+  const formRef = useRef(null);
+  const titleRef = useRef(null);
+  const rowRefs = useRef(new Map());
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
+
+  useEffect(() => {
+    if (!savedId) return undefined;
+    const timer = setTimeout(() => {
+      setSavedId(null);
+      setNotice("");
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [savedId]);
 
   const isEditing = Boolean(editingId);
   const isFull = pieces.length >= MAX_PIECES && !isEditing;
@@ -109,12 +130,21 @@ export function PortfolioManager({ pieces: initialPieces }) {
 
   function resetForm() {
     setEditingId(null);
+    setEditingTitle("");
     setDraft(emptyDraft);
     setPhotos([]);
   }
 
+  /**
+   * The form sits above the list, so on a phone the Edit button is often a
+   * long way below it. Without bringing the form into view, pressing Edit
+   * appeared to do nothing at all.
+   */
   function startEdit(piece) {
     setEditingId(piece.id);
+    setEditingTitle(piece.title);
+    setNotice("");
+    setSavedId(null);
     setPhotos([]);
     setDraft({
       title: piece.title,
@@ -126,20 +156,39 @@ export function PortfolioManager({ pieces: initialPieces }) {
       videoUrl: piece.videoUrl || ""
     });
     setError("");
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: smooth(), block: "start" });
+      titleRef.current?.focus({ preventScroll: true });
+    });
+  }
+
+  function scrollToPiece(id) {
+    requestAnimationFrame(() => {
+      rowRefs.current.get(id)?.scrollIntoView({ behavior: smooth(), block: "center" });
+    });
   }
 
   function cancelEdit() {
+    const id = editingId;
     resetForm();
     setError("");
+    if (id) scrollToPiece(id);
   }
 
-  /** The fields every piece in a batch shares — only the title differs. */
+  /**
+   * The fields every piece in a batch shares — only the title differs.
+   *
+   * An emptied field has to be sent as null when editing: left out, the API
+   * reads it as "unchanged", so clearing a piece's medium, year or notes
+   * silently kept the old value.
+   */
   function sharedFields(title) {
+    const empty = isEditing ? null : undefined;
     return {
       title,
-      medium: draft.medium.trim() || undefined,
-      year: draft.year ? Number(draft.year) : undefined,
-      description: draft.description.trim() || undefined
+      medium: draft.medium.trim() || empty,
+      year: draft.year ? Number(draft.year) : empty,
+      description: draft.description.trim() || empty
     };
   }
 
@@ -198,6 +247,9 @@ export function PortfolioManager({ pieces: initialPieces }) {
         editingId ? current.map((row) => (row.id === editingId ? piece : row)) : [...current, piece]
       );
       resetForm();
+      setSavedId(piece.id);
+      setNotice(t("portfolio.saved", { title: piece.title }));
+      scrollToPiece(piece.id);
       router.refresh();
     } catch (submitError) {
       setError(submitError.message);
@@ -236,7 +288,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
   }
 
   async function handleDelete(piece) {
-    if (!window.confirm(`Remove "${piece.title}" from your portfolio?`)) {
+    if (!window.confirm(t("portfolio.confirmRemove", { title: piece.title }))) {
       return;
     }
     setBusyId(piece.id);
@@ -271,7 +323,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
 
     try {
       // Only the two swapped rows change position, so persist just those.
-      await Promise.all(
+      const responses = await Promise.all(
         [index, target].map((position) =>
           fetch(`/api/portfolio/${reordered[position].id}`, {
             method: "PATCH",
@@ -280,6 +332,10 @@ export function PortfolioManager({ pieces: initialPieces }) {
           })
         )
       );
+      // fetch only rejects on a network failure; a refused save is still a failure.
+      if (responses.some((response) => !response.ok)) {
+        throw new Error("reorder failed");
+      }
       router.refresh();
     } catch (moveError) {
       setPieces(pieces);
@@ -301,7 +357,15 @@ export function PortfolioManager({ pieces: initialPieces }) {
 
   return (
     <div className="portfolio-manager">
-      <form className="request-form portfolio-form" onSubmit={handleSubmit}>
+      <form className="request-form portfolio-form" onSubmit={handleSubmit} ref={formRef}>
+        {isEditing ? (
+          <div className="portfolio-editing-bar" role="status">
+            <span>{t("portfolio.editingBanner", { title: editingTitle })}</span>
+            <button className="text-link" onClick={cancelEdit} type="button">
+              {t("common.cancel")}
+            </button>
+          </div>
+        ) : null}
         <fieldset>
           <legend>{isEditing ? t("portfolio.editPastWork") : t("portfolio.addPastWork")}</legend>
 
@@ -423,6 +487,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
                 maxLength={160}
                 onChange={(event) => updateDraft("title", event.target.value)}
                 placeholder="e.g., Monsoon Study III"
+                ref={titleRef}
                 required
                 type="text"
                 value={draft.title}
@@ -494,7 +559,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
         </div>
         {isFull ? (
           <p className="upload-confirmation">
-            You have reached the {MAX_PIECES}-piece limit. Remove one to add another.
+            {t("portfolio.limitReached", { count: MAX_PIECES })}
           </p>
         ) : null}
       </form>
@@ -506,11 +571,29 @@ export function PortfolioManager({ pieces: initialPieces }) {
             {pieces.length} {pieces.length === 1 ? t("portfolio.piece") : t("portfolio.pieces")}
           </span>
         </div>
+        {notice ? (
+          <p className="upload-confirmation portfolio-notice" role="status">
+            {notice}
+          </p>
+        ) : null}
 
         {pieces.length ? (
           <div className="order-history-list">
             {pieces.map((piece, index) => (
-              <div className="order-history-row portfolio-row" key={piece.id}>
+              <div
+                className={[
+                  "order-history-row portfolio-row",
+                  piece.id === editingId ? "is-editing" : "",
+                  piece.id === savedId ? "is-saved" : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                key={piece.id}
+                ref={(node) => {
+                  if (node) rowRefs.current.set(piece.id, node);
+                  else rowRefs.current.delete(piece.id);
+                }}
+              >
                 <div className="order-history-image">
                   {piece.mediaType === "VIDEO" ? (
                     <span className="portfolio-row-video">
@@ -524,16 +607,19 @@ export function PortfolioManager({ pieces: initialPieces }) {
                   )}
                 </div>
                 <div className="order-history-details">
-                  <h3>{piece.title}</h3>
+                  <h3>
+                    {piece.title}
+                    {piece.id === editingId ? <span className="tag portfolio-editing-tag">{t("portfolio.editingTag")}</span> : null}
+                  </h3>
                   <p>
-                    {[piece.medium, piece.year].filter(Boolean).join(" · ") || "Past work"}
+                    {[piece.medium, piece.year].filter(Boolean).join(" · ") || t("portfolio.pastWork")}
                   </p>
                   {piece.description ? <p className="portfolio-row-note">{piece.description}</p> : null}
                 </div>
                 <div className="order-history-meta portfolio-row-actions">
                   <button
-                    aria-label="Move earlier"
-                    className="small-outline"
+                    aria-label={t("portfolio.moveEarlier", { title: piece.title })}
+                    className="small-outline portfolio-move"
                     disabled={index === 0 || busyId === piece.id}
                     onClick={() => handleMove(index, -1)}
                     type="button"
@@ -541,18 +627,25 @@ export function PortfolioManager({ pieces: initialPieces }) {
                     &#8593;
                   </button>
                   <button
-                    aria-label="Move later"
-                    className="small-outline"
+                    aria-label={t("portfolio.moveLater", { title: piece.title })}
+                    className="small-outline portfolio-move"
                     disabled={index === pieces.length - 1 || busyId === piece.id}
                     onClick={() => handleMove(index, 1)}
                     type="button"
                   >
                     &#8595;
                   </button>
-                  <button className="small-outline" onClick={() => startEdit(piece)} type="button">
+                  <button
+                    aria-label={t("portfolio.editPiece", { title: piece.title })}
+                    className="small-outline"
+                    disabled={piece.id === editingId}
+                    onClick={() => startEdit(piece)}
+                    type="button"
+                  >
                     {t("common.edit")}
                   </button>
                   <button
+                    aria-label={t("portfolio.removePiece", { title: piece.title })}
                     className="small-outline"
                     disabled={busyId === piece.id}
                     onClick={() => handleDelete(piece)}
