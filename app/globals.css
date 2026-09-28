@@ -3063,7 +3063,7 @@ textarea::placeholder {
   white-space: nowrap;
 }
 
-.portfolio-row-actions button[aria-label^="Move"] {
+.portfolio-row-actions .portfolio-move {
   padding: 6px 8px;
 }
 
@@ -5924,4 +5924,94 @@ textarea::placeholder {
 :root[lang="mr"] .about-eyebrow {
   letter-spacing: 0.02em;
   text-transform: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Portfolio editing
+   --------------------------------------------------------------------------- */
+
+/* Scrolled to on Edit and after saving; clear of the fixed navbar. */
+.portfolio-form,
+.portfolio-row {
+  scroll-margin-top: 120px;
+}
+
+.portfolio-editing-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  border-left: 2px solid var(--primary);
+  background: var(--surface-low);
+  font-size: 15px;
+}
+
+.portfolio-editing-bar span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.portfolio-row.is-editing {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.portfolio-row.is-saved {
+  animation: portfolio-saved 2400ms ease-out;
+}
+
+@keyframes portfolio-saved {
+  from {
+    background: var(--surface-highest);
+  }
+  to {
+    background: var(--surface-lowest);
+  }
+}
+
+.portfolio-editing-tag {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.portfolio-notice {
+  margin-bottom: 16px;
+}
+
+.portfolio-row .order-history-details h3 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+  .portfolio-form,
+  .portfolio-row {
+    scroll-margin-top: 160px;
+  }
+
+  /* Four controls could not fit on one line beside a 96px indent, so they ran
+     off the side of the screen. They get a row of their own: two arrows and
+     two equal buttons, each a comfortable 44px tall. */
+  .portfolio-row .portfolio-row-actions {
+    display: grid;
+    grid-template-columns: 48px 48px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .portfolio-row .portfolio-row-actions button {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-row.is-saved {
+    animation: none;
+    background: var(--surface-low);
+  }
 }
