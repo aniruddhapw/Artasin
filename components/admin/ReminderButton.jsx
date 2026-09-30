@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 
-export function PhoneReminderButton({ pending }) {
+/**
+ * Sends one of the admin reminder emails. `endpoint` is an admin route whose
+ * POST sends it and returns { sent, skipped }; `pending` is how many it will
+ * reach, shown on the button so nobody emails a crowd by accident.
+ */
+export function ReminderButton({ endpoint, pending }) {
   const [confirming, setConfirming] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [result, setResult] = useState("");
@@ -13,7 +18,7 @@ export function PhoneReminderButton({ pending }) {
     setIsSending(true);
     setError("");
     try {
-      const response = await fetch("/api/admin/phone-reminder", { method: "POST" });
+      const response = await fetch(endpoint, { method: "POST" });
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(formatApiError(payload, "Could not send the reminder"));

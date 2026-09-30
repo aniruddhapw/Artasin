@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { AdminArtistRow } from "@/components/admin/AdminArtistRow";
+import { ReminderButton } from "@/components/admin/ReminderButton";
 import { prisma } from "@/lib/db";
+import { loadEmptyStudioRecipients } from "@/lib/firstListingReminder";
 
 export const metadata = {
   title: "Manage Artists"
@@ -11,14 +13,18 @@ export const metadata = {
 const earnedStatuses = ["PAID", "IN_PROGRESS", "SHIPPED", "DELIVERED", "COMPLETED"];
 
 export default async function AdminArtistsPage() {
-  const artists = await prisma.artistProfile.findMany({
-    include: {
-      orders: { where: { status: { in: earnedStatuses } }, select: { artistPayoutCents: true } },
-      payouts: { select: { amountCents: true } },
-      _count: { select: { artworks: true } }
-    },
-    orderBy: { displayName: "asc" }
-  });
+  const [artists, emptyStudios] = await Promise.all([
+    prisma.artistProfile.findMany({
+      include: {
+        orders: { where: { status: { in: earnedStatuses } }, select: { artistPayoutCents: true } },
+        payouts: { select: { amountCents: true } },
+        _count: { select: { artworks: true } }
+      },
+      orderBy: { displayName: "asc" }
+    }),
+    loadEmptyStudioRecipients()
+  ]);
+  const emptyStudioCount = emptyStudios.deliverable.length;
 
   const rows = artists.map((artist) => {
     const earnedCents = artist.orders.reduce((total, order) => total + order.artistPayoutCents, 0);
@@ -51,6 +57,16 @@ export default async function AdminArtistsPage() {
             </Link>
           </div>
         </header>
+
+        {emptyStudioCount ? (
+          <article className="dashboard-card admin-notice">
+            <h2>Artists With No Work Listed</h2>
+            <p>
+              {`${emptyStudioCount === 1 ? "1 approved artist hasn’t" : `${emptyStudioCount} approved artists haven’t`} added any artwork yet, so collectors can’t find them in the gallery. Emailing them links straight to the listing form.`}
+            </p>
+            <ReminderButton endpoint="/api/admin/first-listing-reminder" pending={emptyStudioCount} />
+          </article>
+        ) : null}
 
         <div className="admin-artist-table">
           <div className="admin-artist-head">

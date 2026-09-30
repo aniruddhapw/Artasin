@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
-import { PhoneReminderButton } from "@/components/admin/PhoneReminderButton";
+import { ReminderButton } from "@/components/admin/ReminderButton";
 import { serializeMoney } from "@/lib/api";
 import { isUndeliverableEmail } from "@/lib/email";
 import { prisma } from "@/lib/db";
@@ -102,7 +102,7 @@ export default async function AdminBuyersPage() {
             <p>
               {`${missingPhoneCount === 1 ? "1 person has" : `${missingPhoneCount} people have`} no phone number on file, so they can’t receive order or custom request notifications. Emailing them links to their profile, where they can add one.`}
             </p>
-            <PhoneReminderButton pending={missingPhoneCount} />
+            <ReminderButton endpoint="/api/admin/phone-reminder" pending={missingPhoneCount} />
           </article>
         ) : null}
 
