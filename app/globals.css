@@ -6015,3 +6015,42 @@ textarea::placeholder {
     background: var(--surface-low);
   }
 }
+
+/* Password fields: the eye button sits at the right end of the underline. */
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.password-toggle:hover,
+.password-toggle[aria-pressed="true"] {
+  color: var(--text);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: -6px;
+}
+
+/* Browsers draw their own reveal button in password fields; ours replaces it. */
+.password-field input::-ms-reveal {
+  display: none;
+}
