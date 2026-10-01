@@ -30,7 +30,8 @@ export function AddPhoneForm({ firstName, next }) {
       if (!response.ok) {
         throw new Error(formatApiError(payload, t("auth.addPhone.error"), t));
       }
-      router.push(next);
+      // Straight on to verifying it, which steps aside if WhatsApp isn't set up.
+      router.push(`/verify-phone?redirect=${encodeURIComponent(next)}`);
       router.refresh();
     } catch (submitError) {
       setError(submitError.message);

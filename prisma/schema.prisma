@@ -88,6 +88,10 @@ model User {
   // Stored in E.164 (+919876543210) — see lib/phone.js. Messaging providers
   // reject anything else, and a number cannot be reliably fixed up later.
   phone           String?
+  // When this phone number was proven to be theirs, by sending a code to
+  // Artasin's WhatsApp from it (lib/phoneVerification.js). Cleared whenever
+  // the number changes.
+  phoneVerifiedAt DateTime?
   // WhatsApp requires explicit opt-in before a business may message someone,
   // so this has to be recorded per user rather than assumed from consent.
   whatsappOptIn   Boolean             @default(false)
@@ -113,6 +117,24 @@ model User {
   reviews         Review[]
   passwordResets  PasswordResetToken[]
   pushSubscriptions PushSubscription[]
+  phoneVerifications PhoneVerification[]
+}
+
+// A code someone sends to Artasin's WhatsApp to prove the phone number is
+// theirs. Tied to the number it was made for, so changing the number on the
+// account afterwards can't verify the new one with the old code.
+model PhoneVerification {
+  id        String    @id @default(cuid())
+  userId    String
+  phone     String
+  code      String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([userId])
 }
 
 model PasswordResetToken {

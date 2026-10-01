@@ -26,6 +26,7 @@ export default async function AdminBuyersPage() {
       lastName: true,
       role: true,
       phone: true,
+      phoneVerifiedAt: true,
       createdAt: true,
       artistProfile: { select: { slug: true, displayName: true } },
       buyerOrders: {
@@ -56,6 +57,7 @@ export default async function AdminBuyersPage() {
       name: `${user.firstName} ${user.lastName}`,
       email: user.email,
       phone: user.phone,
+      phoneVerified: Boolean(user.phoneVerifiedAt),
       role: user.role,
       artistProfile: user.artistProfile,
       joined: user.createdAt,
@@ -123,7 +125,12 @@ export default async function AdminBuyersPage() {
                   <a className="admin-buyer-email" href={`mailto:${row.email}`}>
                     {row.email}
                   </a>
-                  {row.phone ? <span className="admin-buyer-phone">{row.phone}</span> : null}
+                  {row.phone ? (
+                    <span className="admin-buyer-phone">
+                      {row.phone}
+                      {row.phoneVerified ? <span title="Verified on WhatsApp"> ✓</span> : null}
+                    </span>
+                  ) : null}
                 </div>
                 <span data-label="Joined">{dateFormat.format(row.joined)}</span>
                 <span data-label="Orders">
