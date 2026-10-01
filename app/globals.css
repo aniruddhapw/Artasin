@@ -6069,3 +6069,100 @@ textarea::placeholder {
   padding: 0 14px;
   font-size: 11px;
 }
+
+/* Studio profile: the private photo for Artasin's Instagram. */
+.promo-photo {
+  margin-top: 48px;
+}
+
+.promo-photo-intro {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.promo-photo-private {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+
+.promo-photo-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.promo-photo-body:not(:has(.promo-photo-preview)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.promo-photo-preview {
+  width: 160px;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.promo-photo-controls {
+  display: grid;
+  gap: 16px;
+}
+
+.promo-photo-controls .upload-box {
+  min-height: 120px;
+  padding: 24px;
+}
+
+.promo-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .promo-photo-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .promo-photo-preview {
+    width: 140px;
+  }
+}
+
+/* Admin: artists' promo photos, for the social media team. */
+.promo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.promo-gallery-card {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.promo-gallery-card img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.promo-gallery-card figcaption {
+  display: grid;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.promo-gallery-card figcaption strong {
+  font-size: 16px;
+}
+
+.promo-gallery-card figcaption span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
