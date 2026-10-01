@@ -6,6 +6,7 @@ import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 const oauthErrors = {
   google_auth_failed: "Google Sign-In failed. Please try again.",
@@ -77,12 +78,11 @@ export function LoginForm() {
         </label>
         <label>
           <span>{t("auth.password")}</span>
-          <input
+          <PasswordInput
             autoComplete="current-password"
             name="password"
             placeholder="Enter your password"
             required
-            type="password"
           />
         </label>
         <div className="auth-options">

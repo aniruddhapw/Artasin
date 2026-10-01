@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 export function ChangePasswordForm({ hasPassword }) {
   const t = useT();
@@ -51,7 +52,7 @@ export function ChangePasswordForm({ hasPassword }) {
       {hasPassword ? (
         <label>
           <span>{t("account.currentPassword")}</span>
-          <input autoComplete="current-password" name="currentPassword" required type="password" />
+          <PasswordInput autoComplete="current-password" name="currentPassword" required />
         </label>
       ) : (
         <p className="account-hint">
@@ -61,18 +62,17 @@ export function ChangePasswordForm({ hasPassword }) {
       )}
       <label>
         <span>{hasPassword ? t("account.newPassword") : t("auth.password")}</span>
-        <input
+        <PasswordInput
           autoComplete="new-password"
           minLength={8}
           name="newPassword"
           placeholder="At least 8 characters"
           required
-          type="password"
         />
       </label>
       <label>
         <span>{t("account.confirmPassword")}</span>
-        <input autoComplete="new-password" minLength={8} name="confirmPassword" required type="password" />
+        <PasswordInput autoComplete="new-password" minLength={8} name="confirmPassword" required />
       </label>
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       {success ? <p className="account-success" role="status">{success}</p> : null}

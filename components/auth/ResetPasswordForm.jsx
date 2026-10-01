@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 export function ResetPasswordForm() {
   const t = useT();
@@ -81,24 +82,22 @@ export function ResetPasswordForm() {
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
           <span>{t("account.newPassword")}</span>
-          <input
+          <PasswordInput
             autoComplete="new-password"
             minLength={8}
             name="password"
             placeholder={t("auth.atLeast8")}
             required
-            type="password"
           />
         </label>
         <label>
           <span>{t("auth.confirmNewPassword")}</span>
-          <input
+          <PasswordInput
             autoComplete="new-password"
             minLength={8}
             name="confirmPassword"
             placeholder="Re-enter your new password"
             required
-            type="password"
           />
         </label>
         {error ? (

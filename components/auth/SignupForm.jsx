@@ -8,6 +8,7 @@ import { SignupSuccessModal } from "@/components/auth/SignupSuccessModal";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { ensureSlug } from "@/lib/slug";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 export function SignupForm() {
   const t = useT();
@@ -147,13 +148,12 @@ export function SignupForm() {
         </label>
         <label>
           <span>{t("auth.password")}</span>
-          <input
+          <PasswordInput
             autoComplete="new-password"
             minLength={8}
             name="password"
             placeholder={t("auth.atLeast8")}
             required
-            type="password"
           />
         </label>
         <label className="check-row">
