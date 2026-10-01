@@ -24,6 +24,65 @@ export const artistDisciplines = [
   "Mixed Media"
 ];
 
+/**
+ * The second dropdown on the listing form: once an artist picks Painting or
+ * Sculpture they choose what kind. Groups become <optgroup>s; a null label
+ * means no heading. Values are stored in English and translated on display
+ * through `style.<value>`. A category not listed here has no styles.
+ */
+export const artworkStyleGroups = {
+  Painting: [
+    [
+      "styleGroup.subject",
+      [
+        "Landscape",
+        "Portrait",
+        "Abstract",
+        "Still Life",
+        "Figurative",
+        "Floral",
+        "Wildlife",
+        "Cityscape",
+        "Seascape",
+        "Religious",
+        "Contemporary"
+      ]
+    ],
+    [
+      "styleGroup.traditional",
+      ["Madhubani", "Warli", "Gond", "Pichwai", "Tanjore", "Pattachitra", "Kalamkari", "Miniature"]
+    ],
+    [null, ["Other"]]
+  ],
+  Sculpture: [
+    [null, ["Figurative", "Abstract", "Religious", "Wildlife", "Bust", "Relief", "Installation", "Contemporary", "Other"]]
+  ]
+};
+
+/** Every style that can go with this category, or [] if it has none. */
+export function stylesFor(category) {
+  return (artworkStyleGroups[category] || []).flatMap(([, styles]) => styles);
+}
+
+/**
+ * The style to store for a category, or an error message. Categories with
+ * styles need one from their own list; any other category stores none, so
+ * moving a painting to Textile can't leave "Landscape" behind on it.
+ */
+export function resolveStyle(category, style) {
+  const allowed = stylesFor(category);
+  if (!allowed.length) {
+    return { style: null };
+  }
+  if (!style) {
+    return { error: "is required" };
+  }
+  if (!allowed.includes(style)) {
+    return { error: "Choose one from the list" };
+  }
+  return { style };
+}
+
 export const artworkCategories = [
   "Painting",
   "Sculpture",

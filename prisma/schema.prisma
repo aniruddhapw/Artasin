@@ -210,6 +210,10 @@ model Artwork {
   slug           String        @unique
   description    String
   category       String
+  // What kind of painting or sculpture (see artworkStyleGroups in
+  // data/artisan.js). Null for categories without styles, and for listings
+  // made before styles existed.
+  style          String?
   medium         String
   dimensions     String
   year           Int?

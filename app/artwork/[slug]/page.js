@@ -10,7 +10,11 @@ import { StarRating } from "@/components/StarRating";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
+import { createTranslator } from "@/lib/i18n";
 import { galleryImages, ogUrl, thumbUrl } from "@/lib/images";
+
+// The rest of this page is in English, so the style label is too.
+const t = createTranslator("en");
 
 // A hard slice(0, 160) can land mid-word, which reads as broken in a search
 // snippet — back up to the last full word instead.
@@ -142,6 +146,18 @@ export default async function ArtworkDetailPage({ params }) {
                   </Link>
                 </dd>
               </div>
+              {artwork.style ? (
+                <div>
+                  <dt>Style</dt>
+                  <dd>
+                    <Link
+                      href={`/gallery?category=${encodeURIComponent(artwork.category)}&style=${encodeURIComponent(artwork.style)}`}
+                    >
+                      {t(`style.${artwork.style}`)}
+                    </Link>
+                  </dd>
+                </div>
+              ) : null}
               <div>
                 <dt>Medium</dt>
                 <dd>{artwork.medium}</dd>

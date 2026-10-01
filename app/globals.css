@@ -6054,3 +6054,18 @@ textarea::placeholder {
 .password-field input::-ms-reveal {
   display: none;
 }
+
+/* Gallery: the style pills sit tight under the category pills they refine. */
+.filter-row:has(+ .filter-row-sub) {
+  margin-bottom: 16px;
+}
+
+.filter-row-sub {
+  gap: 8px;
+}
+
+.filter-row-sub .filter-pill {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 11px;
+}
