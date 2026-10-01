@@ -170,6 +170,22 @@ model ArtistProfile {
   blogPosts          BlogPost[]
   portfolioPieces    PortfolioPiece[]
   reviews            Review[]
+  promoPhoto         ArtistPromoPhoto?
+}
+
+// A photo of the artist for Artasin's Instagram and other promotion. Never
+// shown on the site. Kept in its own table rather than on ArtistProfile so a
+// public query that loads a profile can't carry it along by accident.
+model ArtistPromoPhoto {
+  id          String        @id @default(cuid())
+  artistId    String        @unique
+  url         String
+  // When the artist ticked the box letting us post it. A photo is only ever
+  // saved with this set.
+  consentedAt DateTime
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  artist      ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
 }
 
 /// Past work an artist has already completed elsewhere. Not for sale — it exists

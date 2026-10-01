@@ -55,6 +55,9 @@ export default async function AdminArtistsPage() {
             <Link className="button button-secondary" href="/admin/artworks">
               Artworks
             </Link>
+            <Link className="button button-secondary" href="/admin/promo-photos">
+              Promo Photos
+            </Link>
           </div>
         </header>
 
