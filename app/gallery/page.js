@@ -5,7 +5,11 @@ import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
-import { artworkCategories as categories } from "@/data/artisan";
+import { artworkCategories as categories, stylesFor } from "@/data/artisan";
+import { createTranslator } from "@/lib/i18n";
+
+// The rest of this page is in English, so its labels are too.
+const t = createTranslator("en");
 
 export const metadata = {
   title: "Collection",
@@ -17,25 +21,38 @@ export default async function GalleryPage({ searchParams }) {
   const params = await searchParams;
   const category = typeof params?.category === "string" ? params.category : undefined;
   const q = typeof params?.q === "string" ? params.q : undefined;
+  const style = category && stylesFor(category).includes(params?.style) ? params.style : undefined;
 
-  const artworks = await prisma.artwork.findMany({
-    where: {
-      status: "PUBLISHED",
-      category: category || undefined,
-      OR: q
-        ? [
-            { title: { contains: q, mode: "insensitive" } },
-            { description: { contains: q, mode: "insensitive" } },
-            { artist: { displayName: { contains: q, mode: "insensitive" } } }
-          ]
-        : undefined
-    },
-    include: {
-      artist: { select: { displayName: true, slug: true } },
-      media: { take: 1, orderBy: { sortOrder: "asc" } }
-    },
-    orderBy: { createdAt: "desc" }
-  });
+  const [artworks, styleCounts] = await Promise.all([
+    prisma.artwork.findMany({
+      where: {
+        status: "PUBLISHED",
+        category: category || undefined,
+        style,
+        OR: q
+          ? [
+              { title: { contains: q, mode: "insensitive" } },
+              { description: { contains: q, mode: "insensitive" } },
+              { artist: { displayName: { contains: q, mode: "insensitive" } } }
+            ]
+          : undefined
+      },
+      include: {
+        artist: { select: { displayName: true, slug: true } },
+        media: { take: 1, orderBy: { sortOrder: "asc" } }
+      },
+      orderBy: { createdAt: "desc" }
+    }),
+    // Only styles that have work behind them get a pill, so no filter is a dead end.
+    category && stylesFor(category).length
+      ? prisma.artwork.groupBy({
+          by: ["style"],
+          where: { status: "PUBLISHED", category, style: { not: null } },
+          _count: true
+        })
+      : []
+  ]);
+  const listedStyles = stylesFor(category).filter((item) => styleCounts.some((row) => row.style === item));
 
   return (
     <>
@@ -45,7 +62,7 @@ export default async function GalleryPage({ searchParams }) {
           <h1>The Collection</h1>
           <p>
             {artworks.length} original {artworks.length === 1 ? "work" : "works"} available
-            {category ? ` in ${category}` : ""}
+            {category ? ` in ${style ? `${t(`style.${style}`)} ` : ""}${category}` : ""}
             {q ? ` matching "${q}"` : ""}.
           </p>
         </header>
@@ -65,6 +82,26 @@ export default async function GalleryPage({ searchParams }) {
           ))}
         </div>
 
+        {listedStyles.length ? (
+          <div className="filter-row filter-row-sub">
+            <Link
+              className={!style ? "filter-pill is-active" : "filter-pill"}
+              href={`/gallery?category=${encodeURIComponent(category)}`}
+            >
+              {t("gallery.allStyles")}
+            </Link>
+            {listedStyles.map((item) => (
+              <Link
+                className={style === item ? "filter-pill is-active" : "filter-pill"}
+                href={`/gallery?category=${encodeURIComponent(category)}&style=${encodeURIComponent(item)}`}
+                key={item}
+              >
+                {t(`style.${item}`)}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+
         {artworks.length ? (
           <div className="gallery-grid">
             {artworks.map((artwork) => (
@@ -78,7 +115,7 @@ export default async function GalleryPage({ searchParams }) {
                 <h3>{artwork.title}</h3>
                 <p>{artwork.artist.displayName}</p>
                 <p>
-                  {artwork.category} &middot; {serializeMoney(artwork.priceCents, artwork.currency).formatted}
+                  {artwork.style ? t(`style.${artwork.style}`) : artwork.category} &middot; {serializeMoney(artwork.priceCents, artwork.currency).formatted}
                 </p>
               </Link>
             ))}

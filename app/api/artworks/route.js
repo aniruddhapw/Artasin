@@ -3,6 +3,7 @@ import { created, fail, handleApiError, mediaUrlSchema, moneyToCents, ok } from 
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ensureSlug } from "@/lib/slug";
+import { resolveStyle } from "@/data/artisan";
 
 const createArtworkSchema = z.object({
   // .trim() runs before .min(1), so a title of just spaces is rejected
@@ -17,6 +18,7 @@ const createArtworkSchema = z.object({
     .optional(),
   description: z.string().trim().min(1),
   category: z.string().trim().min(1),
+  style: z.string().trim().optional(),
   medium: z.string().trim().min(1),
   dimensions: z.string().trim().min(1),
   year: z.number().int().optional(),
@@ -99,6 +101,10 @@ export async function POST(request) {
     if (input.status === "PUBLISHED" && user.artistProfile.verificationStatus !== "APPROVED") {
       return fail("Your studio must be verified by an admin before you can publish listings", 403);
     }
+    const resolved = resolveStyle(input.category, input.style);
+    if (resolved.error) {
+      return fail("Validation failed", 400, { fieldErrors: { style: [resolved.error] } });
+    }
 
     const artwork = await prisma.artwork.create({
       data: {
@@ -107,6 +113,7 @@ export async function POST(request) {
         slug: await uniqueArtworkSlug(input.slug || input.title),
         description: input.description,
         category: input.category,
+        style: resolved.style,
         medium: input.medium,
         dimensions: input.dimensions,
         year: input.year,

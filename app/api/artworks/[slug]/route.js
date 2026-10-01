@@ -2,6 +2,7 @@ import { z } from "zod";
 import { fail, handleApiError, mediaUrlSchema, moneyToCents, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { resolveStyle } from "@/data/artisan";
 
 const updateArtworkSchema = z.object({
   title: z.string().trim().min(1).optional(),
@@ -12,6 +13,7 @@ const updateArtworkSchema = z.object({
     .optional(),
   description: z.string().trim().min(1).optional(),
   category: z.string().trim().min(1).optional(),
+  style: z.string().trim().optional(),
   medium: z.string().trim().min(1).optional(),
   dimensions: z.string().trim().min(1).optional(),
   year: z.number().int().optional(),
@@ -110,6 +112,17 @@ export async function PATCH(request, context) {
       return fail("Your studio must be verified by an admin before you can publish listings", 403);
     }
 
+    // Only checked when the category or style is being changed, so a status
+    // change on a listing from before styles existed still goes through.
+    let style;
+    if (input.category !== undefined || input.style !== undefined) {
+      const resolved = resolveStyle(input.category ?? artwork.category, input.style);
+      if (resolved.error) {
+        return fail("Validation failed", 400, { fieldErrors: { style: [resolved.error] } });
+      }
+      style = resolved.style;
+    }
+
     const updated = await prisma.artwork.update({
       where: { id: artwork.id },
       data: {
@@ -117,6 +130,7 @@ export async function PATCH(request, context) {
         slug: input.slug,
         description: input.description,
         category: input.category,
+        style,
         medium: input.medium,
         dimensions: input.dimensions,
         year: input.year,

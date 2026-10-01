@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
 import { useT } from "@/components/i18n/LocaleProvider";
-import { artworkCategories } from "@/data/artisan";
+import { artworkCategories, artworkStyleGroups } from "@/data/artisan";
 import { Spinner } from "@/components/Spinner";
 
 const MAX_IMAGES = 5;
@@ -18,6 +18,9 @@ export function ArtworkForm({ artwork, verificationStatus }) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Drives the style dropdown, which only appears for categories with styles.
+  const [category, setCategory] = useState(artwork?.category || "");
+  const styleGroups = artworkStyleGroups[category];
 
   const remainingSlots = MAX_IMAGES - images.length;
 
@@ -89,6 +92,7 @@ export function ArtworkForm({ artwork, verificationStatus }) {
       title,
       description: formData.get("description"),
       category: formData.get("category"),
+      style: formData.get("style") || undefined,
       medium: formData.get("medium"),
       dimensions: formData.get("dimensions"),
       year: year ? Number(year) : undefined,
@@ -144,17 +148,47 @@ export function ArtworkForm({ artwork, verificationStatus }) {
         <div className="auth-two-col" data-tour="artwork-details">
           <label>
             <span>{t("artwork.form.category")}</span>
-            <select defaultValue={artwork?.category || ""} name="category" required>
+            <select name="category" onChange={(event) => setCategory(event.target.value)} required value={category}>
               <option disabled value="">
                 {t("artwork.form.selectCategory")}
               </option>
-              {artworkCategories.map((category) => (
-                <option key={category} value={category}>
-                  {t(`category.${category}`)}
+              {artworkCategories.map((item) => (
+                <option key={item} value={item}>
+                  {t(`category.${item}`)}
                 </option>
               ))}
             </select>
           </label>
+          {styleGroups ? (
+            <label>
+              <span>{t("artwork.form.style")}</span>
+              {/* Keyed by category so switching category starts the choice over. */}
+              <select
+                defaultValue={category === artwork?.category ? artwork?.style || "" : ""}
+                key={category}
+                name="style"
+                required
+              >
+                <option disabled value="">
+                  {t("artwork.form.selectStyle")}
+                </option>
+                {styleGroups.map(([groupKey, styles]) => {
+                  const options = styles.map((style) => (
+                    <option key={style} value={style}>
+                      {t(`style.${style}`)}
+                    </option>
+                  ));
+                  return groupKey ? (
+                    <optgroup key={groupKey} label={t(groupKey)}>
+                      {options}
+                    </optgroup>
+                  ) : (
+                    options
+                  );
+                })}
+              </select>
+            </label>
+          ) : null}
           <label>
             <span>{t("artwork.form.medium")}</span>
             <input defaultValue={artwork?.medium} name="medium" placeholder="Oil on Canvas" required type="text" />
