@@ -6166,3 +6166,61 @@ textarea::placeholder {
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+
+/* Phone verification over WhatsApp (account page and /verify-phone). */
+.phone-verify {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.phone-verify-intro,
+.phone-verify-manual {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.phone-verify-manual {
+  font-size: 14px;
+}
+
+.phone-verify-steps {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.phone-verify-open {
+  justify-self: start;
+}
+
+.phone-verify-waiting {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  animation: phone-verify-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes phone-verify-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone-verify-waiting {
+    animation: none;
+  }
+}
+
+.phone-verified {
+  margin: 24px 0 0;
+  font-weight: 600;
+}
+
+.phone-verified span {
+  color: #1f7a3d;
+}

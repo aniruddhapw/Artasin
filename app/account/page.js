@@ -4,10 +4,12 @@ import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
 import { DateOfBirthForm } from "@/components/account/DateOfBirthForm";
 import { NewsletterForm } from "@/components/account/NewsletterForm";
 import { PhoneForm } from "@/components/account/PhoneForm";
+import { PhoneVerification } from "@/components/account/PhoneVerification";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { getAuthUser } from "@/lib/auth";
 import { getTranslations } from "@/lib/i18n";
+import { isWhatsAppVerificationEnabled } from "@/lib/whatsapp";
 
 export const metadata = {
   title: "Account Settings"
@@ -73,6 +75,9 @@ export default async function AccountPage() {
           <article className="dashboard-card">
             <h2>{t("account.updatePhone")}</h2>
             <PhoneForm defaultPhone={user.phone} defaultWhatsappOptIn={user.whatsappOptIn} />
+            {user.phone && isWhatsAppVerificationEnabled() ? (
+              <PhoneVerification phone={user.phone} verified={Boolean(user.phoneVerifiedAt)} />
+            ) : null}
           </article>
 
           <article className="dashboard-card">

@@ -20,7 +20,12 @@ export async function PATCH(request) {
 
     const updated = await prisma.user.update({
       where: { id: user.id },
-      data: { phone: input.phone, whatsappOptIn: input.whatsappOptIn },
+      data: {
+        phone: input.phone,
+        whatsappOptIn: input.whatsappOptIn,
+        // A new number hasn't been proven yet, whatever the old one had.
+        ...(input.phone !== user.phone ? { phoneVerifiedAt: null } : {})
+      },
       include: { artistProfile: true }
     });
 

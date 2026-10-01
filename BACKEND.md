@@ -63,3 +63,26 @@ Payments are modeled through `Order` and `Transaction`, created via the provider
 File uploads go through the storage abstraction in `lib/storage.js` (see `README.md`), defaulting to local disk under `public/uploads/`.
 
 Meetings are modeled through `Meeting`. The current provider label is `manual`; Google Meet, Zoom, or Calendar integration can be added behind the same route.
+
+### Phone verification over WhatsApp
+
+People prove their phone number is theirs by sending a code *to* Artasin on WhatsApp (`lib/whatsapp.js`, `lib/phoneVerification.js`). Receiving messages, and replying within 24 hours, is free on Meta's WhatsApp Cloud API, so verifications cost nothing; an SMS code would cost money on every send.
+
+It's switched off until `WHATSAPP_BUSINESS_NUMBER` is set. While off, the verify page, the account-page button and the studio banner all stay hidden.
+
+| Variable | What it is |
+| --- | --- |
+| `WHATSAPP_BUSINESS_NUMBER` | Artasin's WhatsApp number with country code, e.g. `919876543210`. Turns the feature on. |
+| `WHATSAPP_APP_SECRET` | Meta app → App settings → Basic → App secret. Used to check each webhook really came from Meta. |
+| `WHATSAPP_VERIFY_TOKEN` | Any long random string you choose; entered again in the webhook settings below. |
+| `WHATSAPP_ACCESS_TOKEN` | A permanent System User token with `whatsapp_business_messaging`. Only for the confirmation reply; verification works without it. |
+| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp → API Setup → Phone number ID. Also only for the reply. |
+
+One-time setup:
+
+1. At developers.facebook.com, create an app of type **Business** and add the **WhatsApp** product.
+2. Under WhatsApp → API Setup, add Artasin's number. It must not be registered on the regular WhatsApp or WhatsApp Business app; a spare SIM works. Verify it by SMS or call.
+3. Under WhatsApp → Configuration → Webhook, set the callback URL to `https://artasin.in/api/whatsapp/webhook` and the verify token to `WHATSAPP_VERIFY_TOKEN`, then subscribe to the **messages** field.
+4. Create a System User in Business Settings, give it the app and the WhatsApp account, and generate a permanent token with `whatsapp_business_messaging`.
+5. Add the variables above in Vercel (Production) and redeploy.
+6. Check: sign in, go to Account, tap **Verify on WhatsApp** and send the message. The page should confirm within a few seconds.

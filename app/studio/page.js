@@ -6,10 +6,12 @@ import { OrderShipAction } from "@/components/studio/OrderShipAction";
 import { ShareLinkRow } from "@/components/ShareButton";
 import { TourLauncher } from "@/components/studio/TourLauncher";
 import { VerificationBanner } from "@/components/studio/VerificationBanner";
+import { PhoneVerifyBanner } from "@/components/account/PhoneVerifyBanner";
 import { YearSelector } from "@/components/studio/YearSelector";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getTranslations } from "@/lib/i18n";
+import { isWhatsAppVerificationEnabled } from "@/lib/whatsapp";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
@@ -91,6 +93,9 @@ export default async function StudioPage({ searchParams }) {
       <Nav active="requests" />
       <main className="page studio-page">
         <VerificationBanner verificationStatus={user.artistProfile.verificationStatus} />
+        {isWhatsAppVerificationEnabled() && !user.phoneVerifiedAt ? (
+          <PhoneVerifyBanner href="/verify-phone?redirect=/studio" t={t} />
+        ) : null}
         <header className="studio-header studio-header-row">
           <div>
             <h1>{t("studio.title")}</h1>
