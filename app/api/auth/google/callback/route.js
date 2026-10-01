@@ -4,6 +4,7 @@ import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { exchangeGoogleCode, fetchGoogleProfile } from "@/lib/googleAuth";
 import { subscribeWithNotice } from "@/lib/newsletterNotice";
+import { afterSignIn, safeRedirectPath } from "@/lib/redirects";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 
@@ -69,8 +70,9 @@ export async function GET(request) {
     await setSessionCookie(token);
 
     const fallback = user.role === "ARTIST" ? "/studio" : "/";
-    const destination = redirectTarget && redirectTarget.startsWith("/") ? redirectTarget : fallback;
-    return NextResponse.redirect(`${siteUrl}${destination}`);
+    const destination = safeRedirectPath(redirectTarget, fallback);
+    // Google sign-in skips the signup form, phone field and all.
+    return NextResponse.redirect(`${siteUrl}${afterSignIn(user, destination)}`);
   } catch (err) {
     console.error("Google OAuth callback failed:", err);
     return NextResponse.redirect(`${siteUrl}/login?error=google_auth_failed`);

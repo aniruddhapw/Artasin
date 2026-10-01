@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { formatApiError } from "@/lib/formErrors";
+import { afterSignIn, safeRedirectPath } from "@/lib/redirects";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -45,7 +46,7 @@ export function LoginForm() {
       }
 
       const fallback = payload.user.role === "ARTIST" ? "/studio" : "/";
-      router.push(redirect && redirect.startsWith("/") ? redirect : fallback);
+      router.push(afterSignIn(payload.user, safeRedirectPath(redirect, fallback)));
       router.refresh();
     } catch (submitError) {
       setError(submitError.message);
