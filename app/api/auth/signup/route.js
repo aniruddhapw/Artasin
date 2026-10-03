@@ -1,10 +1,14 @@
 import { z } from "zod";
-import { created, handleApiError, rateLimited } from "@/lib/api";
+import { created, fail, handleApiError, rateLimited } from "@/lib/api";
 import { createSessionToken, hashPassword, publicUser, setSessionCookie } from "@/lib/auth";
+import { uniqueArtistSlug } from "@/lib/artistSlug";
 import { prisma } from "@/lib/db";
 import { phoneSchema } from "@/lib/phone";
 import { syncNewsletterContactQuietly } from "@/lib/resendContacts";
 import { checkRateLimit, rateLimitKeyForIp } from "@/lib/rateLimit";
+
+const EMAIL_TAKEN = "An account with this email already exists. Sign in instead, or reset your password if you've forgotten it.";
+const EMAIL_TAKEN_GOOGLE = "This email is already registered with Google. Use \"Continue with Google\" to sign in.";
 
 const signupSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
@@ -45,7 +49,25 @@ export async function POST(request) {
     }
 
     const input = signupSchema.parse(await request.json());
+
+    // Say plainly that the account exists, and how to get into it. Most of
+    // these are people who joined with Google before and forgot.
+    const existing = await prisma.user.findUnique({
+      where: { email: input.email },
+      select: { googleId: true, passwordHash: true }
+    });
+    if (existing) {
+      return fail(
+        existing.googleId && !existing.passwordHash ? EMAIL_TAKEN_GOOGLE : EMAIL_TAKEN,
+        409
+      );
+    }
+
     const passwordHash = await hashPassword(input.password);
+    const artistSlug =
+      input.role === "ARTIST"
+        ? await uniqueArtistSlug(input.artist?.slug || `${input.firstName} ${input.lastName}`)
+        : undefined;
 
     const user = await prisma.user.create({
       data: {
@@ -63,7 +85,7 @@ export async function POST(request) {
                 create: {
                   displayName:
                     input.artist?.displayName || `${input.firstName} ${input.lastName}`,
-                  slug: input.artist?.slug || `${input.firstName}-${input.lastName}`.toLowerCase(),
+                  slug: artistSlug,
                   discipline: input.artist?.discipline,
                   location: input.artist?.location
                 }
