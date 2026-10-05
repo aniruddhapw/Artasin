@@ -42,10 +42,16 @@ export function directUrl(url) {
   return `${url.slice(0, at + 1)}${host.replace("-pooler.", ".")}${tail}`;
 }
 
+export function shouldMigrate(env) {
+  return env.VERCEL_ENV === "production" || (env.VERCEL_ENV === "preview" && env.MIGRATE_ON_DEPLOY === "true");
+}
+
 function main() {
-  // Only production. Preview builds have no database of their own to migrate,
-  // and a local `next build` should never touch a remote one.
-  if (process.env.VERCEL_ENV !== "production") {
+  // Production, plus any preview that has a database of its own and says so
+  // with MIGRATE_ON_DEPLOY=true (the dev branch, on its Neon dev branch).
+  // Other previews have no database to migrate, and a local `next build`
+  // should never touch a remote one.
+  if (!shouldMigrate(process.env)) {
     console.log(`[migrate] VERCEL_ENV=${process.env.VERCEL_ENV || "unset"} — skipping migrations.`);
     return 0;
   }

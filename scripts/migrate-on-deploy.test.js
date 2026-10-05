@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-const { directUrl } = await import("./migrate-on-deploy.js");
+const { directUrl, shouldMigrate } = await import("./migrate-on-deploy.js");
 
 /**
  * Getting this wrong means migrations run over PgBouncer, which fails
@@ -41,5 +41,21 @@ describe("directUrl", () => {
 
   it("returns a URL with no credentials untouched rather than guessing", () => {
     assert.equal(directUrl("not a url at all"), "not a url at all");
+  });
+});
+
+describe("shouldMigrate", () => {
+  it("migrates production", () => {
+    assert.equal(shouldMigrate({ VERCEL_ENV: "production" }), true);
+  });
+
+  it("migrates a preview only when it has its own database and opts in", () => {
+    assert.equal(shouldMigrate({ VERCEL_ENV: "preview", MIGRATE_ON_DEPLOY: "true" }), true);
+    assert.equal(shouldMigrate({ VERCEL_ENV: "preview" }), false);
+  });
+
+  it("never migrates from a local build", () => {
+    assert.equal(shouldMigrate({}), false);
+    assert.equal(shouldMigrate({ MIGRATE_ON_DEPLOY: "true" }), false);
   });
 });
