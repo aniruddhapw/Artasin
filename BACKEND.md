@@ -86,3 +86,19 @@ One-time setup:
 4. Create a System User in Business Settings, give it the app and the WhatsApp account, and generate a permanent token with `whatsapp_business_messaging`.
 5. Add the variables above in Vercel (Production) and redeploy.
 6. Check: sign in, go to Account, tap **Verify on WhatsApp** and send the message. The page should confirm within a few seconds.
+
+### Dev environment
+
+`dev` is a long-lived git branch deployed by Vercel as a preview at https://artisan-exchange-git-dev-aniruddhapws-projects.vercel.app, behind Vercel's login. It runs against the Neon branch `dev`, a copy-on-write copy of production taken on 5 Oct 2026, so it holds real users' data.
+
+Its settings in Vercel are Preview-scoped to the `dev` branch:
+
+- `DATABASE_URL`: the Neon `dev` branch (pooled).
+- `JWT_SECRET`: its own, so production sessions don't work there and vice versa.
+- `EMAIL_PROVIDER=console`: email is logged, never sent, so nobody gets mail from dev.
+- `NEXT_PUBLIC_SITE_URL`: the dev URL above.
+- `MIGRATE_ON_DEPLOY=true`: runs pending migrations against the dev database on each deploy (scripts/migrate-on-deploy.js).
+
+Image uploads need the Cloudinary variables added to Preview (dev) as well. They're stored as sensitive in Vercel, so they have to be re-entered rather than copied. Google sign-in, push notifications and WhatsApp aren't set up there.
+
+To try a change on dev, merge it into `dev` and push. To refresh the data from production, reset the Neon branch from its parent: `neon branches reset dev --parent`. That discards everything written on dev.
