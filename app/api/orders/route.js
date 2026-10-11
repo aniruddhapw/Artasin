@@ -3,6 +3,7 @@ import { created, fail, handleApiError, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getPaymentProvider, getPlatformCommissionRate } from "@/lib/payments";
+import { CHECKOUT_CLOSED, checkoutOpen } from "@/lib/checkoutGate";
 
 const orderSchema = z.object({
   artworkId: z.string().optional(),
@@ -44,6 +45,10 @@ export async function POST(request) {
     const user = await getAuthUser(request);
     if (!user) {
       return fail("Authentication required", 401);
+    }
+
+    if (!checkoutOpen()) {
+      return fail(CHECKOUT_CLOSED, 503);
     }
 
     const input = orderSchema.parse(await request.json());

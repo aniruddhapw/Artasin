@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 import { createTranslator } from "@/lib/i18n";
 import { galleryImages, ogUrl, thumbUrl } from "@/lib/images";
+import { checkoutOpen } from "@/lib/checkoutGate";
 
 // The rest of this page is in English, so the style label is too.
 const t = createTranslator("en");
@@ -186,7 +187,11 @@ export default async function ArtworkDetailPage({ params }) {
               ) : null}
             </dl>
             <div className="stack-actions">
-              {isAvailable ? (
+              {isAvailable && !checkoutOpen() ? (
+                <button className="button button-primary" disabled type="button">
+                  {t("checkout.closedButton")}
+                </button>
+              ) : isAvailable ? (
                 <>
                   <Link className="button button-primary" href={`/checkout?artworkId=${artwork.id}`}>
                     Purchase
@@ -200,6 +205,7 @@ export default async function ArtworkDetailPage({ params }) {
                   Sold
                 </button>
               )}
+              {isAvailable && !checkoutOpen() ? <p className="checkout-closed-note">{t("checkout.closedNote")}</p> : null}
               <Link
                 className="button button-secondary"
                 href={`/requests?artistId=${artwork.artist.id}&artistName=${encodeURIComponent(artwork.artist.displayName)}`}

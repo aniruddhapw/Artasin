@@ -9,12 +9,18 @@ import { getAuthUser } from "@/lib/auth";
 import { getCart } from "@/lib/cart";
 import { getTranslations } from "@/lib/i18n";
 import { thumbUrl } from "@/lib/images";
+import { CheckoutClosed } from "@/components/checkout/CheckoutClosed";
+import { checkoutOpen } from "@/lib/checkoutGate";
 
 export const metadata = {
   title: "Cart"
 };
 
 export default async function CartPage() {
+  if (!checkoutOpen()) {
+    return <CheckoutClosed />;
+  }
+
   const user = await getAuthUser();
   if (!user) {
     redirect("/login?redirect=/cart");

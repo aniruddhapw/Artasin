@@ -3,6 +3,7 @@ import { created, fail, handleApiError } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { getCart } from "@/lib/cart";
 import { prisma } from "@/lib/db";
+import { CHECKOUT_CLOSED, checkoutOpen } from "@/lib/checkoutGate";
 
 const cartCheckoutSchema = z.object({
   shippingAddress: z.record(z.string(), z.any()).optional()
@@ -23,6 +24,10 @@ export async function POST(request) {
     const user = await getAuthUser(request);
     if (!user) {
       return fail("Authentication required", 401);
+    }
+
+    if (!checkoutOpen()) {
+      return fail(CHECKOUT_CLOSED, 503);
     }
 
     const input = cartCheckoutSchema.parse(await request.json());

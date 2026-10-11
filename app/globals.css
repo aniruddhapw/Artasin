@@ -6224,3 +6224,11 @@ textarea::placeholder {
 .phone-verified span {
   color: #1f7a3d;
 }
+
+/* Artwork page: shown in place of the buy buttons while checkout is closed. */
+.checkout-closed-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}

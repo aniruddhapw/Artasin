@@ -9,6 +9,7 @@ import { getAuthUser, publicUser } from "@/lib/auth";
 import { navItems } from "@/data/artisan";
 import { getCartCount } from "@/lib/cart";
 import { getTranslations } from "@/lib/i18n";
+import { checkoutOpen } from "@/lib/checkoutGate";
 
 export async function Nav({ active }) {
   const authUser = await getAuthUser();
@@ -44,14 +45,16 @@ export async function Nav({ active }) {
             <span className="nav-greeting">{t("nav.greeting", { name: user.firstName })}</span>
           ) : null}
           <NavSearch />
-          <Link
-            aria-label={cartCount ? t("cart.itemCount", { count: cartCount }) : t("cart.title")}
-            className="cart-link"
-            href={user ? "/cart" : "/login?redirect=/cart"}
-          >
-            <Icon name="bag" />
-            {cartCount ? <span className="cart-badge">{cartCount}</span> : null}
-          </Link>
+          {checkoutOpen() ? (
+            <Link
+              aria-label={cartCount ? t("cart.itemCount", { count: cartCount }) : t("cart.title")}
+              className="cart-link"
+              href={user ? "/cart" : "/login?redirect=/cart"}
+            >
+              <Icon name="bag" />
+              {cartCount ? <span className="cart-badge">{cartCount}</span> : null}
+            </Link>
+          ) : null}
           <NavUserMenu user={user} />
           <MobileMenu user={user} />
         </div>

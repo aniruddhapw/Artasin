@@ -8,12 +8,18 @@ import { getCart } from "@/lib/cart";
 import { prisma } from "@/lib/db";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
+import { CheckoutClosed } from "@/components/checkout/CheckoutClosed";
+import { checkoutOpen } from "@/lib/checkoutGate";
 
 export const metadata = {
   title: "Checkout"
 };
 
 export default async function CheckoutPage({ searchParams }) {
+  if (!checkoutOpen()) {
+    return <CheckoutClosed />;
+  }
+
   const params = await searchParams;
   const fromCart = params?.fromCart === "1";
   const artworkId = typeof params?.artworkId === "string" ? params.artworkId : undefined;

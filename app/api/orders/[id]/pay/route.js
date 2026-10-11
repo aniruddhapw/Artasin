@@ -4,12 +4,17 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { orderConfirmedBuyerEmail, orderSoldArtistEmail } from "@/lib/emails";
 import { getPaymentProvider } from "@/lib/payments";
+import { CHECKOUT_CLOSED, checkoutOpen } from "@/lib/checkoutGate";
 
 export async function POST(request, context) {
   try {
     const user = await getAuthUser(request);
     if (!user) {
       return fail("Authentication required", 401);
+    }
+
+    if (!checkoutOpen()) {
+      return fail(CHECKOUT_CLOSED, 503);
     }
 
     const { id } = await context.params;
