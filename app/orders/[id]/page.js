@@ -7,6 +7,7 @@ import { Nav } from "@/components/Nav";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
+import { isOfflinePayments } from "@/lib/paymentMode";
 
 export const metadata = {
   title: "Order Confirmation"
@@ -51,6 +52,9 @@ export default async function OrderDetailPage({ params }) {
     notFound();
   }
 
+  // While payment is taken directly, an unpaid order is a request the team
+  // will follow up, not a payment the buyer still has to make.
+  const awaitingTeam = isOfflinePayments() && order.status === "PENDING_PAYMENT";
   const totalCents = order.subtotalCents + order.shippingCents + order.taxCents + order.buyerServiceFeeCents;
   const shippingAddress = order.shippingAddress;
 
@@ -60,8 +64,14 @@ export default async function OrderDetailPage({ params }) {
       <main className="page request-page">
         <div className="order-confirmation">
           <div>
-            <p className="tag">{statusLabels[order.status] || order.status}</p>
-            <h1>{order.status === "PAID" ? "Order Confirmed" : "Order Placed"}</h1>
+            <p className="tag">{awaitingTeam ? "Order Received" : statusLabels[order.status] || order.status}</p>
+            <h1>{order.status === "PAID" ? "Order Confirmed" : awaitingTeam ? "Order Received" : "Order Placed"}</h1>
+            {awaitingTeam && isOwner ? (
+              <p className="order-contact-note" role="status">
+                Thank you! The Artasin team will contact you shortly at {user.email}
+                {user.phone ? ` or ${user.phone}` : ""} to arrange payment and delivery. Nothing has been charged yet.
+              </p>
+            ) : null}
             <p>
               {order.artwork ? (
                 <>

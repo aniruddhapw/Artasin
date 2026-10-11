@@ -8,6 +8,7 @@ import { getCart } from "@/lib/cart";
 import { prisma } from "@/lib/db";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
+import { isOfflinePayments } from "@/lib/paymentMode";
 
 export const metadata = {
   title: "Checkout"
@@ -141,6 +142,7 @@ export default async function CheckoutPage({ searchParams }) {
             commissionRequestId={commissionRequestId}
             defaultEmail={user.email}
             fromCart={fromCart}
+            offline={isOfflinePayments()}
           />
         </section>
       </main>

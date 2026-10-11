@@ -6224,3 +6224,17 @@ textarea::placeholder {
 .phone-verified span {
   color: #1f7a3d;
 }
+
+/* Checkout and order pages while payment is arranged directly with the team. */
+.checkout-offline-note,
+.order-contact-note {
+  margin: 0;
+  padding: 16px 20px;
+  border-left: 2px solid var(--primary);
+  background: var(--surface-low);
+  line-height: 1.6;
+}
+
+.order-contact-note {
+  margin-top: 16px;
+}

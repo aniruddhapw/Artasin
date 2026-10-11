@@ -3,6 +3,7 @@ import { created, fail, handleApiError, ok } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getPaymentProvider, getPlatformCommissionRate } from "@/lib/payments";
+import { notifyOrdersRequested } from "@/lib/orderRequests";
 
 const orderSchema = z.object({
   artworkId: z.string().optional(),
@@ -110,6 +111,11 @@ export async function POST(request) {
         where: { id: input.commissionRequestId },
         data: { status: "ACCEPTED" }
       });
+    }
+
+    // Taken as a request: the team contacts the buyer and records the payment.
+    if (paymentProvider.name === "offline") {
+      await notifyOrdersRequested([order.id]);
     }
 
     // Everything the browser needs to open the provider's checkout. The key
