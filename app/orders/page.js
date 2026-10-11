@@ -7,6 +7,7 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
+import { isOfflinePayments } from "@/lib/paymentMode";
 
 export const metadata = {
   title: "Order History"
@@ -24,7 +25,8 @@ const statusLabels = {
   DISPUTED: "Disputed"
 };
 
-export default async function OrdersPage() {
+export default async function OrdersPage({ searchParams }) {
+  const params = await searchParams;
   const user = await getAuthUser();
   if (!user) {
     redirect("/login?redirect=/orders");
@@ -55,6 +57,13 @@ export default async function OrdersPage() {
           </p>
         </header>
 
+        {params?.placed === "1" && isOfflinePayments() ? (
+          <p className="order-contact-note" role="status">
+            Thank you! We&rsquo;ve received your order. The Artasin team will contact you shortly to arrange payment and
+            delivery. Nothing has been charged yet.
+          </p>
+        ) : null}
+
         {orders.length ? (
           <div className="order-history-list">
             {orders.map((order) => (
@@ -79,7 +88,11 @@ export default async function OrdersPage() {
                       order.currency
                     ).formatted}
                   </strong>
-                  <span className="tag">{statusLabels[order.status] || order.status}</span>
+                  <span className="tag">
+                    {order.status === "PENDING_PAYMENT" && isOfflinePayments()
+                      ? "Order Received"
+                      : statusLabels[order.status] || order.status}
+                  </span>
                 </div>
               </Link>
             ))}

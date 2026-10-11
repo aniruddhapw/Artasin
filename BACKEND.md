@@ -102,3 +102,14 @@ Its settings in Vercel are Preview-scoped to the `dev` branch:
 Image uploads need the Cloudinary variables added to Preview (dev) as well. They're stored as sensitive in Vercel, so they have to be re-entered rather than copied. Google sign-in, push notifications and WhatsApp aren't set up there.
 
 To try a change on dev, merge it into `dev` and push. To refresh the data from production, reset the Neon branch from its parent: `neon branches reset dev --parent`. That discards everything written on dev.
+
+### Taking payment directly (offline orders)
+
+Until Razorpay is set up, the live site takes orders as **requests** and payment is arranged with the buyer outside the site (`PAYMENT_PROVIDER=offline`, see `lib/paymentMode.js`). On production, `manual` (or an unset `PAYMENT_PROVIDER`) is treated as `offline`, because `manual` confirms any order without taking money. Setting `PAYMENT_PROVIDER=razorpay` with its keys switches it off.
+
+1. The buyer checks out. The order is created as **Awaiting Payment**; nothing is marked paid or sold, and the piece stays listed.
+2. The team gets an email with the buyer's name, email and phone, the shipping address, each piece with its artist's contact details and the commission split, and a warning if another order is open for the same piece. The buyer gets "We've received your order. We'll contact you shortly."
+3. Contact the buyer and take payment.
+4. Go to **Admin → Order Requests** (`/admin/orders`) and click **Mark as paid**. The piece is marked sold and the buyer and the artist are emailed, as an online payment would. **Cancel order** closes a request without emailing anyone. If another order for the same piece was paid first, the piece is no longer for sale and the other orders can only be cancelled.
+
+`ADMIN_NOTIFICATION_EMAIL` (comma separated) is where order emails and journal-review notices go. Without it they go to admin accounts that can receive mail; the seeded `admin@example.com` can't.

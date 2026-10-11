@@ -19,7 +19,7 @@ function loadRazorpayScript() {
   });
 }
 
-export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail, fromCart = false }) {
+export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail, fromCart = false, offline = false }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,6 +86,12 @@ export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail, fro
           throw new Error(cartPayload.error || "Unable to create your orders");
         }
 
+        // Taken as requests: the team gets in touch, so there is nothing to pay here.
+        if (cartPayload.offline) {
+          router.push("/orders?placed=1");
+          router.refresh();
+          return;
+        }
         for (const created of cartPayload.orders) {
           await fetch(`/api/orders/${created.id}/pay`, {
             method: "POST",
@@ -110,6 +116,11 @@ export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail, fro
       }
 
       const { order, payment } = createPayload;
+      if (payment?.provider === "offline") {
+        router.push(`/orders/${order.id}?placed=1`);
+        router.refresh();
+        return;
+      }
       let paymentResult = {};
 
       if (payment?.provider === "razorpay") {
@@ -176,9 +187,15 @@ export function CheckoutForm({ artworkId, commissionRequestId, defaultEmail, fro
           </label>
         </div>
       </fieldset>
+      {offline ? (
+        <p className="checkout-offline-note">
+          Payment is arranged directly. After you place your order, the Artasin team will contact you to complete
+          payment and delivery. You won&rsquo;t be charged now.
+        </p>
+      ) : null}
       {error ? <p className="auth-error" role="alert">{error}</p> : null}
       <button className="button button-primary request-submit" disabled={isSubmitting} type="submit">
-        {isSubmitting ? "Processing..." : "Complete Purchase"}
+        {isSubmitting ? "Processing..." : offline ? "Place Order" : "Complete Purchase"}
       </button>
     </form>
   );

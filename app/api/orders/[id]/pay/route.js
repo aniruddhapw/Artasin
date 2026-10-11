@@ -4,12 +4,19 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { orderConfirmedBuyerEmail, orderSoldArtistEmail } from "@/lib/emails";
 import { getPaymentProvider } from "@/lib/payments";
+import { isOfflinePayments } from "@/lib/paymentMode";
 
 export async function POST(request, context) {
   try {
     const user = await getAuthUser(request);
     if (!user) {
       return fail("Authentication required", 401);
+    }
+
+    // Nothing here can confirm a payment made outside the site; an admin
+    // records it once it has actually arrived.
+    if (isOfflinePayments()) {
+      return fail("This order is paid directly with the Artasin team. We'll be in touch to arrange payment.", 409);
     }
 
     const { id } = await context.params;

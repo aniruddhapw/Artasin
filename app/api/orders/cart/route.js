@@ -3,6 +3,8 @@ import { created, fail, handleApiError } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { getCart } from "@/lib/cart";
 import { prisma } from "@/lib/db";
+import { notifyOrdersRequested } from "@/lib/orderRequests";
+import { isOfflinePayments } from "@/lib/paymentMode";
 
 const cartCheckoutSchema = z.object({
   shippingAddress: z.record(z.string(), z.any()).optional()
@@ -83,7 +85,14 @@ export async function POST(request) {
       where: { userId: user.id, artworkId: { in: orders.map((order) => order.artworkId) } }
     });
 
-    return created({ orders, skipped: available.length - orders.length });
+    // While payment is taken directly, these are requests: tell the team and
+    // the buyer, and have the browser skip the payment step.
+    const offline = isOfflinePayments();
+    if (offline) {
+      await notifyOrdersRequested(orders.map((order) => order.id));
+    }
+
+    return created({ orders, skipped: available.length - orders.length, offline });
   } catch (error) {
     return handleApiError(error);
   }
