@@ -32,5 +32,7 @@ export interface GalleryCallbacks {
 export interface GalleryApi {
   focus(index: number): void;
   setInsets(next: GalleryInsets): void;
+  /** Shows or hides the wandering visitors (not the desk representative). */
+  setVisitorsVisible(visible: boolean): void;
   dispose(): void;
 }

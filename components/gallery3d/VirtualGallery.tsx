@@ -25,6 +25,8 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
   const [failed, setFailed] = useState(false);
   const [showHelp, setShowHelp] = useState(true);
   const [showList, setShowList] = useState(false);
+  const [showVisitors, setShowVisitors] = useState(true);
+  const showVisitorsRef = useRef(true);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -51,6 +53,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
         });
         apiRef.current = api;
         api.setInsets(insetsRef.current);
+        api.setVisitorsVisible(showVisitorsRef.current);
       })
       .catch(() => setFailed(true));
 
@@ -84,6 +87,9 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
       const bottom = covering ? Math.max(0, stageBox.bottom - covering.getBoundingClientRect().top) : 0;
       const insets = { top: Math.round(top), bottom: Math.round(bottom) };
       insetsRef.current = insets;
+      // The help and works panels open just below the buttons, however many
+      // rows those wrap onto.
+      stage.style.setProperty("--walk-top", `${insets.top}px`);
       apiRef.current?.setInsets(insets);
     }
     const observer = new ResizeObserver(measure);
@@ -94,23 +100,32 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    showVisitorsRef.current = showVisitors;
+    apiRef.current?.setVisitorsVisible(showVisitors);
+  }, [showVisitors]);
+
+  // Stops in the hall: every painting, then the custom-orders desk at the end.
+  const deskIndex = paintings.length;
+  const stops = paintings.length + 1;
+
   const focus = useCallback(
     (index: number) => {
-      const next = (index + paintings.length) % paintings.length;
+      const next = (index + stops) % stops;
       apiRef.current?.focus(next);
       setShowList(false);
       setShowHelp(false);
     },
-    [paintings.length]
+    [stops]
   );
 
   // From the entrance, Next starts at the first painting and Previous at the last.
   const step = useCallback(
     (delta: number) => {
       const last = lastRef.current;
-      focus(last === null ? (delta > 0 ? 0 : paintings.length - 1) : last + delta);
+      focus(last === null ? (delta > 0 ? 0 : stops - 1) : last + delta);
     },
-    [focus, paintings.length]
+    [focus, stops]
   );
 
   useEffect(() => {
@@ -132,6 +147,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
   }, [step]);
 
   const painting = selected === null ? null : paintings[selected];
+  const atDesk = selected === deskIndex;
   const loading = progress < paintings.length;
 
   return (
@@ -153,6 +169,14 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
         </Link>
         <button className="walk-chip" onClick={() => setShowList((open) => !open)} type="button">
           {showList ? "Close list" : `All works (${paintings.length})`}
+        </button>
+        <button
+          aria-pressed={showVisitors}
+          className={showVisitors ? "walk-chip is-active" : "walk-chip"}
+          onClick={() => setShowVisitors((on) => !on)}
+          type="button"
+        >
+          Visitors
         </button>
         <button className="walk-chip" onClick={() => setShowHelp((open) => !open)} type="button">
           {showHelp ? "Hide help" : "Help"}
@@ -178,6 +202,9 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
             <li>
               <strong>Visit a painting</strong> — click it, or use Next / Previous
             </li>
+            <li>
+              <strong>Custom orders</strong> — visit the desk at the end of the hall
+            </li>
           </ul>
         </div>
       ) : null}
@@ -197,6 +224,16 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
                 </button>
               </li>
             ))}
+            <li className="walk-list-desk">
+              <button
+                className={atDesk ? "is-active" : ""}
+                onClick={() => focus(deskIndex)}
+                type="button"
+              >
+                <span>Custom orders desk</span>
+                <small>Commission an original piece</small>
+              </button>
+            </li>
           </ol>
         </nav>
       ) : null}
@@ -219,6 +256,21 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
               <strong>{painting.price}</strong>
               <Link className="button button-primary" href={`/artwork/${painting.slug}`}>
                 View artwork
+              </Link>
+            </div>
+          </article>
+        ) : null}
+        {atDesk ? (
+          <article aria-live="polite" className="walk-card">
+            <p className="walk-eyebrow">ARTASIN custom orders</p>
+            <h2>Looking for something made just for you?</h2>
+            <p>
+              Tell us the subject, size, style and budget you have in mind, and we will match
+              you with an artist to create it.
+            </p>
+            <div className="walk-card-actions">
+              <Link className="button button-primary" href="/requests">
+                Request a custom piece
               </Link>
             </div>
           </article>
