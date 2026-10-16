@@ -45,3 +45,12 @@ export function format(dictionary: Partial<Dictionary>, key: TranslationKey, var
 
 /** English, for code that has no locale (emails, admin screens). */
 export const english: Translate = (key, vars) => format(en, key, vars);
+
+/**
+ * Translates a key built from data (a category or style typed by an artist,
+ * say), or shows `fallback` when no translation exists — the value as
+ * written is more useful than a raw key.
+ */
+export function translateOr(t: Translate, key: string, fallback: string): string {
+  return hasTranslation(key) ? t(key) : fallback;
+}

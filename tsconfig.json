@@ -20,9 +20,8 @@
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "allowJs": true,
-    "checkJs": false,
-    "types": [
+    "allowJs": false,
+        "types": [
       "node"
     ],
     "plugins": [
@@ -46,6 +45,7 @@
   ],
   "exclude": [
     "node_modules",
-    ".next/cache"
+    ".next/cache",
+    ".claude"
   ]
 }

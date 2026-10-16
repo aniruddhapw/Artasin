@@ -1,15 +1,15 @@
 import type { NextConfig } from "next";
 
 // Razorpay's checkout is loaded as a same-page <script src> (see
-// components/checkout/CheckoutForm.jsx) and opens its own hosted iframe, so
+// components/checkout/CheckoutForm.tsx) and opens its own hosted iframe, so
 // both need an explicit CSP allowance rather than the default same-origin-only
 // policy. 'unsafe-inline' stays in script/style-src because the app has a
-// small inline <script> in app/layout.js and relies on Next's own injected
+// small inline <script> in app/layout.tsx and relies on Next's own injected
 // styles — a nonce-based CSP would be stricter but is a bigger, riskier
 // change than what was asked for here. fonts.googleapis.com/fonts.gstatic.com
 // are allowlisted for the Google Fonts @import in app/globals.css.
 // www.youtube-nocookie.com is the host of the portfolio video player
-// (lib/youtube.js youtubeEmbedUrl); without it every video opens to a black box.
+// (lib/youtube.ts youtubeEmbedUrl); without it every video opens to a black box.
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",

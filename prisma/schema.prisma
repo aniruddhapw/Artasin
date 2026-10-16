@@ -85,11 +85,11 @@ model User {
   firstName       String
   lastName        String
   role            UserRole            @default(BUYER)
-  // Stored in E.164 (+919876543210) — see lib/phone.js. Messaging providers
+  // Stored in E.164 (+919876543210) — see lib/phone.ts. Messaging providers
   // reject anything else, and a number cannot be reliably fixed up later.
   phone           String?
   // When this phone number was proven to be theirs, by sending a code to
-  // Artasin's WhatsApp from it (lib/phoneVerification.js). Cleared whenever
+  // Artasin's WhatsApp from it (lib/phoneVerification.ts). Cleared whenever
   // the number changes.
   phoneVerifiedAt DateTime?
   // WhatsApp requires explicit opt-in before a business may message someone,
@@ -249,7 +249,7 @@ model Artwork {
   description    String
   category       String
   // What kind of painting or sculpture (see artworkStyleGroups in
-  // data/artisan.js). Null for categories without styles, and for listings
+  // data/artisan.ts). Null for categories without styles, and for listings
   // made before styles existed.
   style          String?
   medium         String
@@ -424,7 +424,7 @@ model Review {
 }
 
 // One row per rate-limit bucket (e.g. "signup:ip:1.2.3.4"). Hit counts and
-// their window are updated in place by a single atomic upsert in lib/rateLimit.js
+// their window are updated in place by a single atomic upsert in lib/rateLimit.ts
 // rather than read-then-write, so concurrent requests on different serverless
 // instances can't race each other into undercounting.
 model RateLimitHit {

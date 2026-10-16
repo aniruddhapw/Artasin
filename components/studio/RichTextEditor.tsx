@@ -15,7 +15,7 @@ import { errorMessage } from "@/lib/errorMessage";
  * lists, a quote, links, and inline images. Deliberately not a kitchen-sink
  * editor: this is the same "keep it simple" call the rest of the studio
  * makes, just with formatting instead of none. What the toolbar can produce
- * is exactly what lib/sanitizeBlogHtml.js allows through on save — the two
+ * is exactly what lib/sanitizeBlogHtml.ts allows through on save — the two
  * are meant to be read together.
  */
 export function RichTextEditor({

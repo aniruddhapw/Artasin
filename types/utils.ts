@@ -9,3 +9,8 @@ export function isNonEmpty<T>(list: readonly T[]): list is NonEmptyArray<T> {
 
 /** Inline styles that also set CSS custom properties, e.g. `{ "--fill": "40%" }`. */
 export type StyleWithVariables = CSSProperties & { [variable: `--${string}`]: string | number };
+
+/** For `.filter(isPresent)`: drops null and undefined and narrows the type. */
+export function isPresent<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}

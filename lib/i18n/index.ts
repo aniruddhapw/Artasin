@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { dictionaries, type Dictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, format, isLocale, type Locale, type Translate } from "@/lib/i18n/shared";
 
-export { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALES, hasTranslation, isLocale } from "@/lib/i18n/shared";
+export { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALES, hasTranslation, isLocale, translateOr } from "@/lib/i18n/shared";
 export type { Locale, Translate, TranslationVars } from "@/lib/i18n/shared";
 export type { Dictionary, TranslationKey } from "@/lib/i18n/dictionaries";
 

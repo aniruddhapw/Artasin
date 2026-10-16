@@ -18,6 +18,8 @@ declare global {
       VERCEL_ENV?: string;
       CRON_SECRET?: string;
       ALLOW_PROD_SEED?: string;
+      /** "true" lets a preview deploy (the dev site) run migrations. */
+      MIGRATE_ON_DEPLOY?: string;
       ADMIN_NOTIFICATION_EMAIL?: string;
 
       // Sign-in

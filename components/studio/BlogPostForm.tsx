@@ -25,7 +25,7 @@ const RichTextEditor = dynamic(
  * A pre-submit check only — whether the editor has any actual content
  * (visible text, or an image with nothing else). The real, security-relevant
  * sanitization and the matching server-side blank check happen in the API
- * (lib/sanitizeBlogHtml.js), which does not ship to the browser.
+ * (lib/sanitizeBlogHtml.ts), which does not ship to the browser.
  */
 /** The fields of a post the editor loads and shows. */
 type EditablePost = Pick<BlogPost, "id" | "title" | "excerpt" | "body" | "coverImageUrl" | "status" | "reviewNote">;
