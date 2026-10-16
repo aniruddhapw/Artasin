@@ -1,5 +1,7 @@
 # Artasin
 
+[![CI](https://github.com/aniruddhapw/Artasin/actions/workflows/ci.yml/badge.svg)](https://github.com/aniruddhapw/Artasin/actions/workflows/ci.yml)
+
 A minimalist, editorial-style art marketplace built with Next.js (App Router) and Prisma/PostgreSQL. Artists list original paintings, sculpture, digital art, and photography, keep a portfolio, and write a blog; collectors browse, add to cart, purchase, and commission bespoke work; the platform takes a commission on every transaction.
 
 ## Stack
@@ -286,7 +288,7 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
 ## Known Follow-ups
 
 - `.env.example` is empty; it should list the variables above so `cp .env.example .env` gives you a real starting point.
-- Automated tests cover the pure logic in `lib/` and `data/` (`*.test.js`, run by Node's built-in runner). There are no API, integration or end-to-end tests yet, and no CI runs `npm test` or `npm run lint` on pull requests.
+- Automated tests cover the pure logic in `lib/` and `data/` (`*.test.js`, run by Node's built-in runner). There are no API, integration or end-to-end tests yet, and CI (`.github/workflows/ci.yml`) runs lint, the tests and a production build against a throwaway Postgres on every pull request.
 - Images render via plain `<img>` tags (through `components/LazyImage.jsx`) rather than `next/image`; swapping in `next/image` would add automatic resizing/optimization but requires reworking several CSS-driven aspect-ratio containers.
 - Artist payouts are still recorded manually by an admin (`Payout` model) rather than settled automatically. Razorpay Route can split a payment between the platform and the artist at capture time; that's the upgrade path once volume justifies applying for it.
 - There is no dedicated `Dispute` model; disputes reuse the `DISPUTED`/`REFUNDED` `OrderStatus` values (see `/admin/disputes` and `POST /api/orders/:id/dispute`), which is enough for a single order-level dispute but has no room for a reason, evidence, or a history of multiple back-and-forth resolutions.
