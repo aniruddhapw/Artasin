@@ -20,7 +20,7 @@ const LOOK_TIME = [5, 15];
 const PERSONAL_SPACE = 0.75;
 const VIEWER_SPACE = 1.3;
 
-export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glowTexture }) {
+export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glowTexture, desk }) {
   const count = hung.length ? Math.min(Math.max(Math.round(hung.length / 3), 3), 12) : 0;
 
   // A fixed seed gives every visit the same crowd.
@@ -69,18 +69,45 @@ export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glow
     visitors.push(buildVisitor(i));
   }
 
-  function buildVisitor(index) {
+  // A random outfit for a visitor. Each choice draws from the seeded random,
+  // so the crowd is the same on every visit.
+  function randomLook() {
+    const look = {
+      scale: between([0.9, 1.06]),
+      clothes: pickFrom(CLOTHES),
+      trousers: pickFrom(TROUSERS),
+      skin: pickFrom(SKIN),
+      shoes: pickFrom(SHOES),
+      coat: random() < 0.4
+    };
+    const accessory = random();
+    if (accessory < 0.45) {
+      look.hair = pickFrom(HAIR);
+      look.bun = random() < 0.4;
+    } else if (accessory < 0.62) {
+      look.hat = pickFrom([0x2b2b2e, 0xb48a5a, 0xe9e2d3]);
+    }
+    if (random() < 0.3) {
+      look.scarf = pickFrom([0xa65a3f, 0xe9e2d3, 0x3d4a5c, 0xb48a5a]);
+    }
+    if (random() < 0.3) {
+      look.bag = pickFrom([0xd9ccb4, 0x2b2b2e, 0x8a5a3a]);
+      look.bagArm = random() < 0.5 ? 0 : 1;
+    }
+    return look;
+  }
+
+  // Builds one figure, facing +Z with its feet at the origin.
+  function buildFigure(look) {
     const root = new THREE.Group();
     const body = new THREE.Group();
     root.add(body);
-    const scale = between([0.9, 1.06]);
-    root.scale.setScalar(scale);
+    root.scale.setScalar(look.scale);
 
-    const clothes = material(pickFrom(CLOTHES));
-    const trousers = material(pickFrom(TROUSERS));
-    const skin = material(pickFrom(SKIN));
-    const shoes = material(pickFrom(SHOES));
-    const wearsCoat = random() < 0.4;
+    const clothes = material(look.clothes);
+    const trousers = material(look.trousers);
+    const skin = material(look.skin);
+    const shoes = material(look.shoes);
 
     const limb = (geo, mat, x, y, drop) => {
       const pivot = new THREE.Group();
@@ -105,7 +132,7 @@ export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glow
     torso.scale.set(1, 1, 0.72);
     torso.position.y = 1.2;
     body.add(torso);
-    if (wearsCoat) {
+    if (look.coat) {
       const coat = new THREE.Mesh(geometry.coat, clothes);
       coat.scale.set(1, 1, 0.78);
       coat.position.y = 0.92;
@@ -125,35 +152,34 @@ export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glow
     head.add(new THREE.Mesh(geometry.head, skin));
     body.add(head);
 
-    const accessory = random();
-    if (accessory < 0.45) {
-      const hair = new THREE.Mesh(geometry.hair, material(pickFrom(HAIR)));
+    if (look.hair !== undefined) {
+      const hair = new THREE.Mesh(geometry.hair, material(look.hair));
       hair.position.y = 0.01;
       hair.rotation.x = -0.25;
       head.add(hair);
-      if (random() < 0.4) {
+      if (look.bun) {
         const bun = new THREE.Mesh(geometry.bun, hair.material);
         bun.position.set(0, 0.07, -0.1);
         head.add(bun);
       }
-    } else if (accessory < 0.62) {
-      const hat = material(pickFrom([0x2b2b2e, 0xb48a5a, 0xe9e2d3]));
+    } else if (look.hat !== undefined) {
+      const hat = material(look.hat);
       const brim = new THREE.Mesh(geometry.brim, hat);
       brim.position.y = 0.07;
       const crown = new THREE.Mesh(geometry.crown, hat);
       crown.position.y = 0.12;
       head.add(brim, crown);
     }
-    if (random() < 0.3) {
-      const scarf = new THREE.Mesh(geometry.scarf, material(pickFrom([0xa65a3f, 0xe9e2d3, 0x3d4a5c, 0xb48a5a])));
+    if (look.scarf !== undefined) {
+      const scarf = new THREE.Mesh(geometry.scarf, material(look.scarf));
       scarf.rotation.x = Math.PI / 2;
       scarf.position.y = 1.52;
       body.add(scarf);
     }
-    if (random() < 0.3) {
-      const bag = new THREE.Mesh(geometry.bag, material(pickFrom([0xd9ccb4, 0x2b2b2e, 0x8a5a3a])));
+    if (look.bag !== undefined) {
+      const bag = new THREE.Mesh(geometry.bag, material(look.bag));
       bag.position.set(0, -0.42, 0);
-      arms[random() < 0.5 ? 0 : 1].add(bag);
+      arms[look.bagArm].add(bag);
     }
 
     const shadow = new THREE.Mesh(geometry.shadow, shadowMaterial);
@@ -162,6 +188,11 @@ export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glow
     root.add(shadow);
 
     scene.add(root);
+    return { root, body, head, legs, arms };
+  }
+
+  function buildVisitor(index) {
+    const { root, body, head, legs, arms } = buildFigure(randomLook());
 
     const visitor = {
       root,
@@ -223,6 +254,63 @@ export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glow
     return vector;
   }
 
+  // The ARTASIN representative behind the custom-orders desk: dressed in the
+  // house black with a terracotta scarf and a name badge, facing the hall.
+  const representative = desk ? buildRepresentative(desk) : null;
+
+  function buildRepresentative({ x, z }) {
+    const figure = buildFigure({
+      scale: 1,
+      clothes: 0x1d1d1f,
+      trousers: 0x1d1d1f,
+      skin: SKIN[2],
+      shoes: 0x161616,
+      coat: false,
+      hair: HAIR[0],
+      bun: true,
+      scarf: 0xa65a3f
+    });
+    const badge = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.01), material(0xf4f1ea));
+    badge.position.set(0.09, 1.33, 0.125);
+    figure.body.add(badge);
+    figure.root.position.set(x, 0, z);
+    const meshes = [];
+    figure.root.traverse((object) => {
+      if (object.isMesh && object.material !== shadowMaterial) {
+        meshes.push(object);
+      }
+    });
+    return { ...figure, meshes, sway: 0, look: 0, wave: 0, waveCooldown: 0 };
+  }
+
+  function updateRepresentative(dt, viewer) {
+    const rep = representative;
+    const dx = viewer.x - rep.root.position.x;
+    const dz = viewer.z - rep.root.position.z;
+    const distance = Math.hypot(dx, dz);
+    // Follow the viewer with a turn of the head once they are in the room's
+    // far end, and wave once as they reach the desk.
+    const towards = distance < 14 ? clampAngle(Math.atan2(dx, dz), 0.9) : 0;
+    rep.look += (towards - rep.look) * Math.min(dt * 3, 1);
+    rep.head.rotation.y = reducedMotion ? 0 : rep.look;
+    rep.waveCooldown = Math.max(rep.waveCooldown - dt, 0);
+    if (!reducedMotion && distance < 5 && dz > 0 && !rep.waveCooldown && !rep.wave) {
+      rep.wave = 2.4;
+      rep.waveCooldown = 25;
+    }
+    rep.sway += dt * (reducedMotion ? 0 : 0.6);
+    rep.body.rotation.z = Math.sin(rep.sway) * 0.015;
+    let raise = 0;
+    if (rep.wave > 0) {
+      rep.wave = Math.max(rep.wave - dt, 0);
+      // Ease the arm up, wave, and back down.
+      raise = Math.min(1, (2.4 - rep.wave) * 3, rep.wave * 3);
+    }
+    const arm = rep.arms[1];
+    arm.rotation.z = 0.06 + raise * (2.45 + Math.sin(rep.wave * 11) * 0.22);
+    arm.rotation.x = -raise * 0.25;
+  }
+
   let focused = null;
   const desired = new THREE.Vector3();
   const push = new THREE.Vector3();
@@ -230,6 +318,9 @@ export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glow
 
   function update(dt, viewer, focusedIndex) {
     focused = focusedIndex;
+    if (representative) {
+      updateRepresentative(dt, viewer);
+    }
     for (const visitor of visitors) {
       const { root } = visitor;
 
@@ -316,7 +407,12 @@ export function createVisitors(THREE, scene, { hung, bounds, reducedMotion, glow
     }
   }
 
-  return { update, setVisible, count };
+  return { update, setVisible, count, representativeMeshes: representative?.meshes ?? [] };
+}
+
+function clampAngle(angle, limit) {
+  const wrapped = wrapAngle(angle);
+  return Math.min(Math.max(wrapped, -limit), limit);
 }
 
 function wrapAngle(angle) {
