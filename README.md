@@ -6,14 +6,14 @@ A minimalist, editorial-style art marketplace built with Next.js (App Router) an
 
 ## Stack
 
-- Next.js 16 (App Router, React 19)
+- TypeScript (strict), Next.js 16 (App Router, React 19)
 - PostgreSQL via Prisma 7 with the `@prisma/adapter-pg` driver adapter
 - JWT sessions in an HttpOnly cookie (`jose`, `bcryptjs`)
 - Zod request validation on every mutating API route
 - Tiptap rich-text editing for artist blog posts, sanitized server-side with `sanitize-html`
 - Browser push via `web-push`, transactional email via Resend
 - English/Marathi UI from cookie-selected dictionaries (`lib/i18n`)
-- Installable PWA (`app/manifest.js`, `public/sw.js`) with an offline fallback page
+- Installable PWA (`app/manifest.ts`, `public/sw.js`) with an offline fallback page
 - File storage for uploads: local disk in development, Cloudinary in production (see [Storage](#storage))
 
 ## Getting Started
@@ -38,7 +38,7 @@ The app runs at `http://localhost:3000` by default (`npm run dev -- -p 3001` to 
 > **⚠️ Local development only.** These accounts — including an admin login —
 > are created with a fixed, publicly-documented password. `npm run db:seed`
 > refuses to run against a non-local `DATABASE_URL` for exactly this
-> reason (see `prisma/seed.js`). If this was ever seeded into production
+> reason (see `prisma/seed.ts`). If this was ever seeded into production
 > before that guard existed, rotate `admin@example.com`'s password
 > immediately via `/account` → Change Password.
 
@@ -82,16 +82,16 @@ The table below is the full set of variables the app reads.
 ### Auth
 
 - `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/session`.
-- Sessions are a JWT in an HttpOnly, SameSite=Lax cookie (`lib/auth.js`).
+- Sessions are a JWT in an HttpOnly, SameSite=Lax cookie (`lib/auth.ts`).
 - `proxy.js` (Next's middleware convention as of Next 16) gates `/studio`, `/admin`, `/orders`, `/commissions`, `/checkout`, and `/account` at the edge by verifying the JWT and role; individual API routes and server components re-check ownership against the database before returning data.
 - **Password reset**: `POST /api/auth/forgot-password` always answers the same way whether or not the address exists, and mails a single-use token (`PasswordResetToken`) when it does; `POST /api/auth/reset-password` consumes it. `POST /api/auth/change-password` handles the signed-in case from `/account`.
-- **Rate limiting**: signup, login, and forgot-password go through `lib/rateLimit.js`. It counts hits in a `RateLimitHit` table rather than process memory, because Vercel's serverless functions don't share memory across invocations — an in-process counter would only ever see a fraction of the traffic aimed at a route. Expired buckets are swept opportunistically on roughly 1 in 200 hits, so there's no cron job to configure.
+- **Rate limiting**: signup, login, and forgot-password go through `lib/rateLimit.ts`. It counts hits in a `RateLimitHit` table rather than process memory, because Vercel's serverless functions don't share memory across invocations — an in-process counter would only ever see a fraction of the traffic aimed at a route. Expired buckets are swept opportunistically on roughly 1 in 200 hits, so there's no cron job to configure.
 - **Google Sign-In**: `GET /api/auth/google` redirects to Google's consent screen (with a random `state` value stashed in a short-lived HttpOnly cookie for CSRF protection); `GET /api/auth/google/callback` validates that state, exchanges the code, and either links the Google account to an existing user with the same (verified) email or creates a new `BUYER` account — it never creates an `ARTIST` account, since that needs a display name/slug Google doesn't provide. The resulting session is the same JWT cookie password login uses, so the rest of the app doesn't know or care which method a user signed in with. `User.passwordHash` is nullable to support Google-only accounts; `POST /api/auth/login` returns a distinct error message if you try to password-login into one. Requires a Google Cloud OAuth client with `${NEXT_PUBLIC_SITE_URL}/api/auth/google/callback` registered as an authorized redirect URI (both local and production URLs need their own entry).
 - **Becoming an artist**: a signed-in buyer can upgrade in place via `POST /api/account/become-artist`, which creates the `ArtistProfile` (deriving a unique studio slug from the display name), flips the role to `ARTIST`, and re-issues the session cookie so the new role takes effect immediately. New artists start at `PENDING` verification and can't publish until an admin approves them from `/admin/artists`.
 
 ### Payments
 
-`lib/payments.js` defines a small provider interface (`createIntent` / `confirmIntent` / `clientKey`) so the UI and API routes never hardcode payment behavior:
+`lib/payments.ts` defines a small provider interface (`createIntent` / `confirmIntent` / `clientKey`) so the UI and API routes never hardcode payment behavior:
 
 - `manual` (default): creates a mock payment intent and settles it immediately when the buyer confirms checkout. Good for demos and local development — **never use it in production**, since it marks orders paid without taking any money.
 - `razorpay`: real payments. Requires `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`.
@@ -107,42 +107,42 @@ Every order stores `platformCommissionCents` and `artistPayoutCents`, computed f
 
 ### Cart and checkout
 
-Every listing is a unique original, so a cart line is a `CartItem` pointing at one artwork with no quantity. `lib/cart.js` re-checks availability on every read and reports sold, unpublished, or archived pieces separately, so `/cart` can say what happened instead of silently dropping a row or quoting a price for something that's gone. `POST /api/orders/cart` turns the still-available items into orders; a single artwork can also be bought directly from `/artwork/[slug]` via `POST /api/orders`.
+Every listing is a unique original, so a cart line is a `CartItem` pointing at one artwork with no quantity. `lib/cart.ts` re-checks availability on every read and reports sold, unpublished, or archived pieces separately, so `/cart` can say what happened instead of silently dropping a row or quoting a price for something that's gone. `POST /api/orders/cart` turns the still-available items into orders; a single artwork can also be bought directly from `/artwork/[slug]` via `POST /api/orders`.
 
 ### Virtual gallery
 
-`/gallery/walk` hangs every published painting (category `Painting`) in a walk-through 3D hall built with Three.js (`components/gallery3d/`). Visitors drag to look, walk with WASD/arrow keys, the scroll wheel or by tapping the floor, and click a painting (or use Next/Previous and the works list) to glide up to it and see its details with a link to the artwork page. The hall grows with the number of paintings, alternating left and right walls. At the far end of the hall, under the ARTASIN sign, a custom-orders desk with a representative (who turns to the viewer and waves) is the last Next/Previous stop and the last entry in the works list; selecting it shows a card linking to `/requests` to commission a piece. Faceless, mannequin-style visitors (`components/gallery3d/visitors.js`, built from simple shapes with no model downloads) wander between paintings, stop to look, step aside from the painting you walk up to, and can be hidden with the Visitors button; there is about one per three paintings, 3 to 12 in all, and they stand still under `prefers-reduced-motion`. Three.js is loaded with a dynamic `import()` so it only ships on this page, and browsers without WebGL get a link back to `/gallery`. Textures come from `textureUrl` in `lib/images.js` (1280px Cloudinary variant); Cloudinary sends CORS headers, which WebGL needs to use the image.
+`/gallery/walk` hangs every published painting (category `Painting`) in a walk-through 3D hall built with Three.js (`components/gallery3d/`). Visitors drag to look, walk with WASD/arrow keys, the scroll wheel or by tapping the floor, and click a painting (or use Next/Previous and the works list) to glide up to it and see its details with a link to the artwork page. The hall grows with the number of paintings, alternating left and right walls. At the far end of the hall, under the ARTASIN sign, a custom-orders desk with a representative (who turns to the viewer and waves) is the last Next/Previous stop and the last entry in the works list; selecting it shows a card linking to `/requests` to commission a piece. Faceless, mannequin-style visitors (`components/gallery3d/visitors.ts`, built from simple shapes with no model downloads) wander between paintings, stop to look, step aside from the painting you walk up to, and can be hidden with the Visitors button; there is about one per three paintings, 3 to 12 in all, and they stand still under `prefers-reduced-motion`. Three.js is loaded with a dynamic `import()` so it only ships on this page, and browsers without WebGL get a link back to `/gallery`. Textures come from `textureUrl` in `lib/images.ts` (1280px Cloudinary variant); Cloudinary sends CORS headers, which WebGL needs to use the image.
 
 ### Search
 
-`components/NavSearch.jsx` puts a search box in the nav on every page; it pushes to `/gallery?q=…`, which matches against artwork title, description, and artist display name. The `/api/artworks` list endpoint takes the same `q` parameter.
+`components/NavSearch.tsx` puts a search box in the nav on every page; it pushes to `/gallery?q=…`, which matches against artwork title, description, and artist display name. The `/api/artworks` list endpoint takes the same `q` parameter.
 
 ### Storage
 
-`lib/storage.js` defines a provider interface (`save(file)` → URL) used by `POST /api/uploads` for artwork images, portfolio media, blog images, and commission reference files.
+`lib/storage.ts` defines a provider interface (`save(file)` → URL) used by `POST /api/uploads` for artwork images, portfolio media, blog images, and commission reference files.
 
 - `local` (default): writes into `public/uploads/`. **Only works for local development** — most production hosts (including Vercel) run on an ephemeral, read-only filesystem, so files written here will not persist or may not be servable at all.
 - `cloudinary`: uploads to Cloudinary and returns its `secure_url`. Requires `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. This is what production should use.
 
-Add another provider (e.g. S3) by adding an entry to the `providers` map in `lib/storage.js`.
+Add another provider (e.g. S3) by adding an entry to the `providers` map in `lib/storage.ts`.
 
-Uploads are stored untransformed, so `lib/images.js` rewrites Cloudinary URLs on the way out — inserting a transformation segment so grids get a small file while the zoom view keeps the original. Non-Cloudinary URLs (local `/uploads/` files, the bundled placeholder) pass through untouched. `components/LazyImage.jsx` defers off-screen images behind a shimmer placeholder and fades them in once decoded.
+Uploads are stored untransformed, so `lib/images.ts` rewrites Cloudinary URLs on the way out — inserting a transformation segment so grids get a small file while the zoom view keeps the original. Non-Cloudinary URLs (local `/uploads/` files, the bundled placeholder) pass through untouched. `components/LazyImage.tsx` defers off-screen images behind a shimmer placeholder and fades them in once decoded.
 
 ### Commissions
 
-`CommissionRequest` moves through `SUBMITTED → ARTIST_REVIEW → QUOTED → ACCEPTED → IN_PROGRESS → FINAL_REVIEW → COMPLETED` (or `REJECTED`/`CANCELLED`); the transitions an artist may make are the `artistNextStatuses` map in `app/api/commissions/[id]/route.js`. `MEETING_REQUESTED` exists in the enum and counts as pending on the studio dashboard, but no route currently moves a request into it. Buyers file a brief from `/requests`; artists quote from `/studio/commissions/[id]`; buyers accept a quote from `/commissions/[id]`, which routes to `/checkout?commissionRequestId=...` and creates an `Order` tied back to the brief. Both sides can message (`Message`) and schedule meetings (`Meeting`) on the same thread.
+`CommissionRequest` moves through `SUBMITTED → ARTIST_REVIEW → QUOTED → ACCEPTED → IN_PROGRESS → FINAL_REVIEW → COMPLETED` (or `REJECTED`/`CANCELLED`); the transitions an artist may make are the `artistNextStatuses` map in `app/api/commissions/[id]/route.ts`. `MEETING_REQUESTED` exists in the enum and counts as pending on the studio dashboard, but no route currently moves a request into it. Buyers file a brief from `/requests`; artists quote from `/studio/commissions/[id]`; buyers accept a quote from `/commissions/[id]`, which routes to `/checkout?commissionRequestId=...` and creates an `Order` tied back to the brief. Both sides can message (`Message`) and schedule meetings (`Meeting`) on the same thread.
 
 A message that sits unanswered for six hours or more triggers exactly one follow-up email, sent by the daily cron at `/api/cron/message-followups` (scheduled in `vercel.json`, authenticated with `CRON_SECRET`). An active back-and-forth never emails at all, since each reply becomes the thread's newest message and resets the check; `Message.followupEmailSentAt` keeps a catch-up run from double-sending.
 
 ### Portfolio and blog
 
-Beyond listings for sale, an artist keeps a portfolio (`PortfolioPiece`, up to 24 pieces, images or YouTube videos normalized to a bare video id by `lib/youtube.js`) and writes blog posts (`BlogPost`, `DRAFT` → `PUBLISHED`), both managed from `/studio`. Portfolio images can be uploaded several at a time. Publishing a post emails every other user once, at the moment it flips to `PUBLISHED` — not on later edits (`lib/blogNotifications.js`).
+Beyond listings for sale, an artist keeps a portfolio (`PortfolioPiece`, up to 24 pieces, images or YouTube videos normalized to a bare video id by `lib/youtube.ts`) and writes blog posts (`BlogPost`, `DRAFT` → `PUBLISHED`), both managed from `/studio`. Portfolio images can be uploaded several at a time. Publishing a post emails every other user once, at the moment it flips to `PUBLISHED` — not on later edits (`lib/blogNotifications.ts`).
 
-Blog bodies are real HTML from a Tiptap editor, which makes them the one place in the app where user content is rendered with `dangerouslySetInnerHTML`. `lib/sanitizeBlogHtml.js` runs a deliberately narrow allowlist — exactly the tags and attributes the editor's toolbar can produce — on write, so the database only ever holds clean HTML, and again on read as a backstop.
+Blog bodies are real HTML from a Tiptap editor, which makes them the one place in the app where user content is rendered with `dangerouslySetInnerHTML`. `lib/sanitizeBlogHtml.ts` runs a deliberately narrow allowlist — exactly the tags and attributes the editor's toolbar can produce — on write, so the database only ever holds clean HTML, and again on read as a backstop.
 
 ### Reviews
 
-Once an `Order` reaches `DELIVERED` or `COMPLETED`, the buyer can leave a one-time 1-5 star rating and optional comment (`POST /api/orders/:id/review`), enforced by a unique constraint on `Review.orderId`. Average ratings and the review list surface on both the artwork page and the artist's profile page (`components/StarRating.jsx`).
+Once an `Order` reaches `DELIVERED` or `COMPLETED`, the buyer can leave a one-time 1-5 star rating and optional comment (`POST /api/orders/:id/review`), enforced by a unique constraint on `Review.orderId`. Average ratings and the review list surface on both the artwork page and the artist's profile page (`components/StarRating.tsx`).
 
 ### Admin
 
@@ -152,7 +152,7 @@ Admins also pin which artwork is the homepage hero (`POST /api/admin/hero`); cle
 
 ### Phone numbers
 
-`lib/phone.js` normalizes typed numbers to E.164 (`+919876543210`) before storing them, assuming India when no country code is given. Numbers are stored normalized because WhatsApp and every SMS provider require E.164 — a number kept as "98765 43210" isn't messageable later without guessing. Users separately opt in to WhatsApp contact; unreadable input is rejected at validation time rather than stored unusable.
+`lib/phone.ts` normalizes typed numbers to E.164 (`+919876543210`) before storing them, assuming India when no country code is given. Numbers are stored normalized because WhatsApp and every SMS provider require E.164 — a number kept as "98765 43210" isn't messageable later without guessing. Users separately opt in to WhatsApp contact; unreadable input is rejected at validation time rather than stored unusable.
 
 ### Localization
 
@@ -160,14 +160,14 @@ Admins also pin which artwork is the homepage hero (`POST /api/admin/hero`); cle
 
 ### Notifications
 
-`lib/email.js` defines a provider interface (`send({ to, subject, html })`) and `lib/emails.js` holds the HTML templates, so routes never build email markup inline:
+`lib/email.ts` defines a provider interface (`send({ to, subject, html })`) and `lib/emails.ts` holds the HTML templates, so routes never build email markup inline:
 
 - `console` (default): logs the email to the server console instead of sending it. Used automatically in local dev when no `RESEND_API_KEY` is set.
 - `resend`: sends via the [Resend](https://resend.com) API. Requires `RESEND_API_KEY` and a domain verified in Resend (set `EMAIL_FROM` to an address on that domain).
 
-`sendEmail()` swallows and logs failures rather than throwing, so a broken email provider never blocks the underlying order/commission action. Current triggers: order paid (buyer + artist), order shipped/delivered (buyer), order refunded (buyer), dispute filed (all admins), new commission request (artist), commission quoted/rejected (buyer), unanswered commission message (the other party, via cron), password reset, admin-triggered missing-phone reminder, and artist verification approved/rejected. A published blog post is *not* in that list — it goes out as a Broadcast instead, see [Newsletter](#newsletter). (`artistUploadReminderEmail` in `lib/emails.js` is written but not wired to anything yet.) Add another trigger by importing `sendEmail` and a template function from `lib/emails.js` at the point the underlying state changes.
+`sendEmail()` swallows and logs failures rather than throwing, so a broken email provider never blocks the underlying order/commission action. Current triggers: order paid (buyer + artist), order shipped/delivered (buyer), order refunded (buyer), dispute filed (all admins), new commission request (artist), commission quoted/rejected (buyer), unanswered commission message (the other party, via cron), password reset, admin-triggered missing-phone reminder, and artist verification approved/rejected. A published blog post is *not* in that list — it goes out as a Broadcast instead, see [Newsletter](#newsletter). (`artistUploadReminderEmail` in `lib/emails.ts` is written but not wired to anything yet.) Add another trigger by importing `sendEmail` and a template function from `lib/emails.ts` at the point the underlying state changes.
 
-Browser push runs alongside email for commission messages: `POST /api/push/subscribe` stores a `PushSubscription` and `lib/push.js` sends through `web-push`. Like email it's fire-and-forget — a push failure never fails the message send — and the whole thing no-ops when the VAPID keys are absent. Expired subscriptions are pruned when the push service rejects them.
+Browser push runs alongside email for commission messages: `POST /api/push/subscribe` stores a `PushSubscription` and `lib/push.ts` sends through `web-push`. Like email it's fire-and-forget — a push failure never fails the message send — and the whole thing no-ops when the VAPID keys are absent. Expired subscriptions are pruned when the push service rejects them.
 
 ### Newsletter
 
@@ -175,7 +175,7 @@ Transactional email addresses one person because something happened to them, and
 they want to hear from us. Marketing email is the opposite on both counts, so it runs on separate rails: Resend
 *Broadcasts*, sent to a contact list rather than to rows in our database.
 
-`lib/resendContacts.js` mirrors users into that list. It stays switched off until `RESEND_API_KEY`,
+`lib/resendContacts.ts` mirrors users into that list. It stays switched off until `RESEND_API_KEY`,
 `RESEND_SEGMENT_ID` and `RESEND_NEWSLETTER_TOPIC_ID` are all set, so local dev and preview deployments touch
 nothing real — the same shape as the `console` email provider.
 
@@ -197,7 +197,7 @@ but it means the flag must never be read as "this person will receive it", only 
 Signup swallows a failed contact sync rather than failing the signup, so the list can fall behind. `npm run
 resend:sync` is idempotent and is how it catches up.
 
-`lib/broadcasts.js` sends to that list. Publishing a blog post is the only thing that does so far: it hands one
+`lib/broadcasts.ts` sends to that list. Publishing a blog post is the only thing that does so far: it hands one
 message to Resend and lets the subscriber list decide who receives it. `topicId` is optional to the Resend API
 and mandatory here — omit it and Resend mails every subscribed contact in the segment without consulting topic
 preferences at all, which is the behaviour this whole arrangement exists to stop.
@@ -211,7 +211,7 @@ Two consequences worth knowing:
 
 ### Migrations on deploy
 
-`vercel.json` sets the build command to `node scripts/migrate-on-deploy.js && next build`, so a production build
+`vercel.json` sets the build command to `tsx scripts/migrate-on-deploy.ts && next build`, so a production build
 applies pending migrations before it compiles anything.
 
 This exists because it went wrong. Vercel does not run migrations on its own, every one had been applied by hand
@@ -238,14 +238,35 @@ previous release survives them — add columns, and don't drop one in the same r
 
 `next.config.js` sets a Content-Security-Policy plus `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` on every response. The CSP explicitly allows Razorpay's checkout script and iframe and Google Fonts; `'unsafe-inline'` remains in `script-src`/`style-src` for the app's one inline script and Next's injected styles. If you add a third-party script, widget, or font host, it needs an entry here or the browser will block it.
 
+## TypeScript
+
+The codebase is strict TypeScript (`strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`) with `allowJs` off. TypeScript is pinned to 6.0 because typescript-eslint does not support 7.x yet. `npm run typecheck` generates Next's route types (`next typegen`) and runs `tsc --noEmit`; CI runs it on every pull request.
+
+Where types come from, so nothing is declared twice:
+
+- **Database rows:** Prisma's generated types. Components take `Pick<Model, ...>` of the fields they show. Query fragments kept in a constant use `satisfies Prisma.ArtworkInclude` (or `WhereInput`) so result types stay exact.
+- **Request bodies:** each API route's Zod schema; `z.infer` wherever a type is needed.
+- **Route parameters:** Next's generated `PageProps<"/route">`, `LayoutProps` and `RouteContext<"/api/...">`.
+- **Shapes that cross the client/server boundary:** `types/` — `api.ts` (`ApiErrorBody`, `PublicUser`, `Money`), `orders.ts` (`ShippingAddress`), `utils.ts` (`NonEmptyArray`, `isPresent`, `StyleWithVariables`), plus `env.d.ts` and `razorpay.d.ts`.
+- **View models a page builds for one component:** exported from that component (`JustListedWork`, `PortfolioItem`, `GalleryPainting`, ...).
+
+Conventions:
+
+- **Translations are typed.** `TranslationKey` comes from the English dictionary and Marathi must have exactly the same keys. Keys built from typed values (style lists, statuses, tour steps) are checked at compile time; keys built from database text go through `translateOr`.
+- **Untrusted data is narrowed at the edge:** JSON columns (`parseShippingAddress`), third-party responses (Razorpay, Google, Meta: only the fields read), env values (`effectiveProviderName`).
+- **Guards return results, not exceptions.** API helpers return `Guarded<T>` (`{ error }` or the loaded values); server pages use `requireUser` / `requireArtist` (`lib/pageAuth.ts`).
+- **Lint rules:** no `any`, and type-only imports use `import type`.
+- **Scripts:** the seed and scripts run through `tsx`, which also resolves the `@/` alias.
+
 ## Scripts
 
 ```bash
 npm run dev                 # start the dev server
 npm run build               # production build
 npm run start               # run the production build
-npm test                    # Node's built-in test runner
-npm run lint                # ESLint (Next.js core-web-vitals rules plus ESLint recommended)
+npm test                    # Node's built-in test runner, through tsx
+npm run lint                # ESLint (Next.js core-web-vitals and TypeScript rules, plus ESLint recommended)
+npm run typecheck           # generate Next's route types, then tsc --noEmit
 npm run db:generate         # regenerate the Prisma client
 npm run db:migrate          # create/run a migration (local dev)
 npm run db:migrate:deploy   # apply existing migrations without prompting (production)
@@ -293,7 +314,7 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
 
 - `.env.example` is empty; it should list the variables above so `cp .env.example .env` gives you a real starting point.
 - Automated tests cover the pure logic in `lib/` and `data/` (`*.test.js`, run by Node's built-in runner). There are no API, integration or end-to-end tests yet, and CI (`.github/workflows/ci.yml`) runs lint, the tests and a production build against a throwaway Postgres on every pull request.
-- Images render via plain `<img>` tags (through `components/LazyImage.jsx`) rather than `next/image`; swapping in `next/image` would add automatic resizing/optimization but requires reworking several CSS-driven aspect-ratio containers.
+- Images render via plain `<img>` tags (through `components/LazyImage.tsx`) rather than `next/image`; swapping in `next/image` would add automatic resizing/optimization but requires reworking several CSS-driven aspect-ratio containers.
 - Artist payouts are still recorded manually by an admin (`Payout` model) rather than settled automatically. Razorpay Route can split a payment between the platform and the artist at capture time; that's the upgrade path once volume justifies applying for it.
 - There is no dedicated `Dispute` model; disputes reuse the `DISPUTED`/`REFUNDED` `OrderStatus` values (see `/admin/disputes` and `POST /api/orders/:id/dispute`), which is enough for a single order-level dispute but has no room for a reason, evidence, or a history of multiple back-and-forth resolutions.
 - Email notifications don't cover meeting scheduling or payouts.
