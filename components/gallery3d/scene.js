@@ -31,6 +31,11 @@ const DESK_DEPTH = 0.75;
 const DESK_HEIGHT = 1.05;
 const DESK_FROM_END_WALL = 2.2;
 
+// components/BrandLogo.jsx shows the same file; its pixel size sets the aspect.
+const LOGO_URL = "/brand/artasin-lockup.png";
+const LOGO_WIDTH = 499;
+const LOGO_HEIGHT = 132;
+
 const WALL_COLOR = 0xf4f1ea;
 const FRAME_COLOR = 0x1d1a17;
 
@@ -123,12 +128,31 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
     scene.add(strip);
   }
 
-  const sign = makeSignTexture(THREE, paintings.length);
-  const signMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(4.8, 1.2),
-    new THREE.MeshBasicMaterial({ map: sign, transparent: true, depthWrite: false })
+  // The end wall carries the real ARTASIN lockup (the brushstroke A and the
+  // wordmark, the same file as the nav logo), with a line about the room below.
+  const logoWidth = 3.4;
+  const logoMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(logoWidth, logoWidth * (LOGO_HEIGHT / LOGO_WIDTH)),
+    new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 0 })
   );
-  signMesh.position.set(0, 3.05, endZ + 0.02);
+  logoMesh.position.set(0, 3.2, endZ + 0.02);
+  scene.add(logoMesh);
+  new THREE.TextureLoader().load(LOGO_URL, (texture) => {
+    if (disposed) {
+      texture.dispose();
+      return;
+    }
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = maxAnisotropy;
+    logoMesh.material.map = texture;
+    logoMesh.material.opacity = 1;
+    logoMesh.material.needsUpdate = true;
+  });
+  const signMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.8, 0.3),
+    new THREE.MeshBasicMaterial({ map: makeSignTexture(THREE, paintings.length), transparent: true, depthWrite: false })
+  );
+  signMesh.position.set(0, 2.52, endZ + 0.02);
   scene.add(signMesh);
 
   // -------------------------------------------------------------- paintings
@@ -860,18 +884,15 @@ function makePlaqueTexture(THREE, painting) {
 
 function makeSignTexture(THREE, count) {
   const width = 1024;
-  const height = 256;
+  const height = 64;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   ctx.textAlign = "center";
-  ctx.fillStyle = "#1a1c1c";
-  ctx.font = '400 104px "Playfair Display", Georgia, serif';
-  ctx.fillText("ARTASIN", width / 2, 120);
   ctx.fillStyle = "#444748";
   ctx.font = '600 30px Inter, "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(`THE COLLECTION · ${count} ${count === 1 ? "PAINTING" : "PAINTINGS"}`, width / 2, 196);
+  ctx.fillText(`THE COLLECTION · ${count} ${count === 1 ? "PAINTING" : "PAINTINGS"}`, width / 2, 42);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
