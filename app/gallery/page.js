@@ -65,6 +65,9 @@ export default async function GalleryPage({ searchParams }) {
             {category ? ` in ${style ? `${t(`style.${style}`)} ` : ""}${category}` : ""}
             {q ? ` matching "${q}"` : ""}.
           </p>
+          <Link className="button button-secondary gallery-walk-link" href="/gallery/walk">
+            Walk the gallery in 3D
+          </Link>
         </header>
 
         <div className="filter-row">

@@ -25,6 +25,7 @@ export default async function sitemap() {
   const staticRoutes = [
     { url: `${siteUrl}/`, changeFrequency: "daily", priority: 1 },
     { url: `${siteUrl}/gallery`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${siteUrl}/gallery/walk`, changeFrequency: "daily", priority: 0.7 },
     { url: `${siteUrl}/blog`, changeFrequency: "daily", priority: 0.6 },
     { url: `${siteUrl}/artists`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/requests`, changeFrequency: "weekly", priority: 0.6 },
