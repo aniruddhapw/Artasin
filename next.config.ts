@@ -1,0 +1,46 @@
+import type { NextConfig } from "next";
+
+// Razorpay's checkout is loaded as a same-page <script src> (see
+// components/checkout/CheckoutForm.tsx) and opens its own hosted iframe, so
+// both need an explicit CSP allowance rather than the default same-origin-only
+// policy. 'unsafe-inline' stays in script/style-src because the app has a
+// small inline <script> in app/layout.tsx and relies on Next's own injected
+// styles — a nonce-based CSP would be stricter but is a bigger, riskier
+// change than what was asked for here. fonts.googleapis.com/fonts.gstatic.com
+// are allowlisted for the Google Fonts @import in app/globals.css.
+// www.youtube-nocookie.com is the host of the portfolio video player
+// (lib/youtube.ts youtubeEmbedUrl); without it every video opens to a black box.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com",
+  "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://www.youtube-nocookie.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'"
+].join("; ");
+
+const securityHeaders = [
+  { key: "Content-Security-Policy", value: contentSecurityPolicy },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }
+];
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  // The app is conventionally accessed at 127.0.0.1:3001 (see BACKEND.md/README),
+  // which Next's dev server otherwise treats as a different origin than "localhost"
+  // and silently refuses to serve JS assets to — breaking all client interactivity
+  // (forms, buttons) with no console error. This allowlists that origin explicitly.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  }
+};
+
+export default nextConfig;
