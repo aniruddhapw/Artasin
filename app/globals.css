@@ -6476,6 +6476,14 @@ textarea::placeholder {
   margin-top: 24px;
 }
 
+@media (max-width: 980px) {
+  /* The mobile nav adds a scrolling row of links under the bar, ending at
+     128px (see .request-page above). */
+  .walk-page {
+    padding-top: 128px;
+  }
+}
+
 @media (max-width: 720px) {
   .walk-topbar,
   .walk-bottombar {
@@ -6485,6 +6493,14 @@ textarea::placeholder {
 
   .walk-topbar {
     top: 12px;
+    gap: 6px;
+  }
+
+  .walk-topbar .walk-chip {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
   }
 
   .walk-bottombar {
@@ -6501,11 +6517,29 @@ textarea::placeholder {
 
   .walk-card {
     width: 100%;
-    padding: 18px;
+    padding: 14px 16px;
+  }
+
+  .walk-card .walk-eyebrow {
+    margin-bottom: 4px;
   }
 
   .walk-card h2 {
-    font-size: 22px;
+    margin-bottom: 2px;
+    font-size: 20px;
+  }
+
+  .walk-card p {
+    font-size: 14px;
+  }
+
+  .walk-card-actions {
+    margin-top: 10px;
+  }
+
+  .walk-card-actions .button {
+    min-height: 40px;
+    padding: 8px 18px;
   }
 
   .walk-help {

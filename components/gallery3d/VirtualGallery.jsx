@@ -12,6 +12,11 @@ import { buildGallery } from "./scene";
 export function VirtualGallery({ paintings }) {
   const mountRef = useRef(null);
   const apiRef = useRef(null);
+  const stageRef = useRef(null);
+  const topbarRef = useRef(null);
+  const bottombarRef = useRef(null);
+  // Latest overlay insets, kept so they can be applied once the scene exists.
+  const insetsRef = useRef({ top: 0, bottom: 0 });
   const [selected, setSelected] = useState(null);
   // The last painting visited, so Next/Previous carry on from it after its card closes.
   const lastRef = useRef(null);
@@ -41,6 +46,7 @@ export function VirtualGallery({ paintings }) {
           onMove: () => setShowHelp(false)
         });
         apiRef.current = api;
+        api.setInsets(insetsRef.current);
       })
       .catch(() => setFailed(true));
 
@@ -50,6 +56,33 @@ export function VirtualGallery({ paintings }) {
       apiRef.current = null;
     };
   }, [paintings]);
+
+  // Tell the scene how much of the view the bars and card cover, so a focused
+  // painting is framed in the clear space between them rather than behind them.
+  useEffect(() => {
+    const stage = stageRef.current;
+    const topbar = topbarRef.current;
+    const bottombar = bottombarRef.current;
+    function measure() {
+      const stageBox = stage.getBoundingClientRect();
+      const top = Math.max(0, topbar.getBoundingClientRect().bottom - stageBox.top);
+      // The card only blocks the painting when it spans the screen (phones);
+      // beside a centred painting on a wide screen, only the buttons count.
+      const card = bottombar.querySelector(".walk-card");
+      const spans = card && card.getBoundingClientRect().width > stageBox.width * 0.6;
+      const covering = spans ? bottombar : bottombar.querySelector(".walk-nav");
+      const bottom = Math.max(0, stageBox.bottom - covering.getBoundingClientRect().top);
+      const insets = { top: Math.round(top), bottom: Math.round(bottom) };
+      insetsRef.current = insets;
+      apiRef.current?.setInsets(insets);
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    observer.observe(topbar);
+    observer.observe(bottombar);
+    measure();
+    return () => observer.disconnect();
+  }, []);
 
   const focus = useCallback(
     (index) => {
@@ -92,7 +125,7 @@ export function VirtualGallery({ paintings }) {
   const loading = progress < paintings.length;
 
   return (
-    <div className="walk-stage">
+    <div className="walk-stage" ref={stageRef}>
       <div className="walk-canvas" ref={mountRef} />
 
       {failed ? (
@@ -104,7 +137,7 @@ export function VirtualGallery({ paintings }) {
         </div>
       ) : null}
 
-      <div className="walk-topbar">
+      <div className="walk-topbar" ref={topbarRef}>
         <Link className="walk-chip" href="/gallery">
           &larr; Collection
         </Link>
@@ -158,7 +191,7 @@ export function VirtualGallery({ paintings }) {
         </nav>
       ) : null}
 
-      <div className="walk-bottombar">
+      <div className="walk-bottombar" ref={bottombarRef}>
         {painting ? (
           <article aria-live="polite" className="walk-card">
             <p className="walk-eyebrow">
