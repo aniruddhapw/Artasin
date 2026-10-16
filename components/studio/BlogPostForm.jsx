@@ -18,8 +18,6 @@ const RichTextEditor = dynamic(
   { loading: () => <div className="rte rte-loading" />, ssr: false }
 );
 
-const MAX_BODY_LENGTH = 50000;
-
 /**
  * A pre-submit check only — whether the editor has any actual content
  * (visible text, or an image with nothing else). The real, security-relevant
