@@ -1,3 +1,5 @@
+import type { NextConfig } from "next";
+
 // Razorpay's checkout is loaded as a same-page <script src> (see
 // components/checkout/CheckoutForm.jsx) and opens its own hosted iframe, so
 // both need an explicit CSP allowance rather than the default same-origin-only
@@ -29,8 +31,7 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }
 ];
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: true,
   // The app is conventionally accessed at 127.0.0.1:3001 (see BACKEND.md/README),
   // which Next's dev server otherwise treats as a different origin than "localhost"

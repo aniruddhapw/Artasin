@@ -1,5 +1,5 @@
 import { jwtVerify } from "jose";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 const cookieName = "artisan_session";
 
@@ -11,7 +11,7 @@ function getJwtSecret() {
   return new TextEncoder().encode(secret);
 }
 
-export async function proxy(request) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get(cookieName)?.value;
   const { pathname } = request.nextUrl;
   const loginUrl = new URL("/login", request.url);
