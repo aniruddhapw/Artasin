@@ -83,7 +83,7 @@ export function orderConfirmedBuyerEmail(order: OrderTotals, itemTitle: string):
     subject: "Your order is confirmed",
     html: layout(
       "Order Confirmed",
-      `<p>Thank you for your purchase. Your order for <strong>${itemTitle}</strong> is confirmed at ${money(totalCents, order.currency)}.</p>
+      `<p>Thank you for your purchase. Your order for <strong>${safe(itemTitle)}</strong> is confirmed at ${money(totalCents, order.currency)}.</p>
        ${button("View Order", `${siteUrl}/orders/${order.id}`)}`
     )
   };
@@ -94,7 +94,7 @@ export function orderSoldArtistEmail(order: Pick<Order, "id" | "subtotalCents" |
     subject: "You made a sale",
     html: layout(
       "You Made a Sale",
-      `<p><strong>${buyerName}</strong> just purchased <strong>${itemTitle}</strong> for ${money(order.subtotalCents, order.currency)}.</p>
+      `<p><strong>${safe(buyerName)}</strong> just purchased <strong>${safe(itemTitle)}</strong> for ${money(order.subtotalCents, order.currency)}.</p>
        ${button("View Order", `${siteUrl}/orders/${order.id}`)}`
     )
   };
@@ -194,7 +194,7 @@ export function orderStatusChangedBuyerEmail(order: Pick<Order, "id" | "status">
     subject: `Your order has ${label}`,
     html: layout(
       `Order ${label.charAt(0).toUpperCase()}${label.slice(1)}`,
-      `<p>Your order for <strong>${itemTitle}</strong> has been marked as ${label}.</p>
+      `<p>Your order for <strong>${safe(itemTitle)}</strong> has been marked as ${label}.</p>
        ${button("View Order", `${siteUrl}/orders/${order.id}`)}`
     )
   };
@@ -205,7 +205,7 @@ export function orderRefundedBuyerEmail(order: Pick<Order, "id">, itemTitle: str
     subject: "Your order has been refunded",
     html: layout(
       "Order Refunded",
-      `<p>Your order for <strong>${itemTitle}</strong> has been refunded following a review of your reported issue.</p>
+      `<p>Your order for <strong>${safe(itemTitle)}</strong> has been refunded following a review of your reported issue.</p>
        ${button("View Order", `${siteUrl}/orders/${order.id}`)}`
     )
   };
@@ -227,7 +227,7 @@ export function newCommissionRequestArtistEmail(request: Pick<CommissionRequest,
     subject: "New commission request",
     html: layout(
       "New Commission Request",
-      `<p><strong>${buyerName}</strong> sent you a commission request: <strong>${request.title}</strong>.</p>
+      `<p><strong>${safe(buyerName)}</strong> sent you a commission request: <strong>${safe(request.title)}</strong>.</p>
        ${button("View Request", `${siteUrl}/studio/commissions/${request.id}`)}`
     )
   };
@@ -240,7 +240,7 @@ export function commissionQuotedBuyerEmail(
     subject: "You received a commission quote",
     html: layout(
       "Commission Quoted",
-      `<p>You've received a quote of ${money(request.quotedPriceCents, request.currency)} for <strong>${request.title}</strong>.</p>
+      `<p>You've received a quote of ${money(request.quotedPriceCents, request.currency)} for <strong>${safe(request.title)}</strong>.</p>
        ${button("View Request", `${siteUrl}/commissions/${request.id}`)}`
     )
   };
@@ -251,7 +251,7 @@ export function commissionRejectedBuyerEmail(request: Pick<CommissionRequest, "i
     subject: "Update on your commission request",
     html: layout(
       "Commission Request Declined",
-      `<p>The artist wasn't able to take on your request, <strong>${request.title}</strong>, at this time.</p>
+      `<p>The artist wasn't able to take on your request, <strong>${safe(request.title)}</strong>, at this time.</p>
        ${button("Browse Other Artists", `${siteUrl}/gallery`)}`
     )
   };

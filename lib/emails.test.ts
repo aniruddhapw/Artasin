@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { orderRequestAdminEmail, orderRequestedBuyerEmail } from "./emails";
+import {
+  commissionQuotedBuyerEmail,
+  commissionRejectedBuyerEmail,
+  newCommissionRequestArtistEmail,
+  orderConfirmedBuyerEmail,
+  orderRefundedBuyerEmail,
+  orderRequestAdminEmail,
+  orderRequestedBuyerEmail,
+  orderSoldArtistEmail,
+  orderStatusChangedBuyerEmail
+} from "./emails";
 
 const buyer = { firstName: "Mira", lastName: "Shah", email: "mira@example.org", phone: "+919876543210" };
 const address = {
@@ -62,5 +72,53 @@ describe("orderRequestedBuyerEmail", () => {
     assert.match(html, /will contact you shortly/);
     assert.match(html, /Nothing has been charged yet/);
     assert.ok(html.includes("+919876543210"));
+  });
+});
+
+describe("user-controlled text in transactional emails", () => {
+  const evil = "<b>x</b>";
+  const escaped = "&lt;b&gt;x&lt;/b&gt;";
+  const order = {
+    id: "ord_1",
+    status: "SHIPPED" as const,
+    currency: "INR",
+    subtotalCents: 750000,
+    shippingCents: 0,
+    taxCents: 0,
+    buyerServiceFeeCents: 0
+  };
+  const request = { id: "req_1", title: evil, quotedPriceCents: 500000, currency: "INR" };
+
+  const cases: Record<string, () => { html: string }> = {
+    orderConfirmedBuyerEmail: () => orderConfirmedBuyerEmail(order, evil),
+    orderSoldArtistEmail: () => orderSoldArtistEmail(order, evil, "Mira"),
+    orderSoldArtistEmail_buyerName: () => orderSoldArtistEmail(order, "Blue Birds", evil),
+    orderStatusChangedBuyerEmail: () => orderStatusChangedBuyerEmail(order, evil),
+    orderRefundedBuyerEmail: () => orderRefundedBuyerEmail(order, evil),
+    newCommissionRequestArtistEmail_title: () => newCommissionRequestArtistEmail(request, "Mira"),
+    newCommissionRequestArtistEmail_buyerName: () =>
+      newCommissionRequestArtistEmail({ ...request, title: "Portrait" }, evil),
+    commissionQuotedBuyerEmail: () => commissionQuotedBuyerEmail(request),
+    commissionRejectedBuyerEmail: () => commissionRejectedBuyerEmail(request)
+  };
+
+  for (const [name, build] of Object.entries(cases)) {
+    it(`${name} escapes HTML in the body`, () => {
+      const { html } = build();
+      assert.ok(!html.includes(evil), "raw markup reached the HTML");
+      assert.ok(html.includes(escaped), "escaped text is missing");
+    });
+  }
+
+  it("leaves ordinary text unchanged", () => {
+    const { html } = orderConfirmedBuyerEmail(order, "Blue Birds");
+    assert.ok(html.includes("<strong>Blue Birds</strong>"));
+    const quote = newCommissionRequestArtistEmail({ ...request, title: "Portrait of Mira" }, "Mira Shah");
+    assert.ok(quote.html.includes("<strong>Mira Shah</strong> sent you a commission request: <strong>Portrait of Mira</strong>."));
+  });
+
+  it("keeps subjects as plain text", () => {
+    const { subject } = orderConfirmedBuyerEmail(order, evil);
+    assert.equal(subject, "Your order is confirmed");
   });
 });

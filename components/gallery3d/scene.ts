@@ -1,18 +1,31 @@
 /**
  * The Three.js side of the virtual gallery (app/gallery/walk).
  *
- * Paintings hang down both walls of a long hall, alternating left and right so
- * that "next" always moves a few steps further in. The hall's length follows
- * the number of paintings. Everything here is plain imperative Three.js; the
- * React component only calls the returned { focus, dispose }.
+ * The floor is a grid of corridors around solid wall blocks (planned in
+ * lib/galleryLayout.ts), with paintings on both sides of every corridor, each
+ * lit by its own ceiling spotlight, and a reception with the custom-orders
+ * desk at the far end. Everything here is plain imperative Three.js; the
+ * React component only calls the returned GalleryApi.
  *
  * THREE is passed in rather than imported so the ~600 KB library is loaded
  * with a dynamic import() and stays out of every other page's bundle.
  */
 
 import type * as THREE_NS from "three";
+import {
+  CORRIDOR_WIDTH,
+  DESK_DEPTH,
+  DESK_FROM_FAR_WALL,
+  DESK_WIDTH,
+  collide,
+  pathLength,
+  planGallery,
+  route,
+  type Point,
+  type WallSlot
+} from "@/lib/galleryLayout";
 import type { GalleryApi, GalleryCallbacks, GalleryInsets, GalleryPainting } from "./types";
-import { createVisitors } from "./visitors";
+import { createVisitors, type ClearView } from "./visitors";
 
 /** The three module, passed in so it can be loaded on demand. */
 type Three = typeof THREE_NS;
@@ -26,13 +39,30 @@ interface Subject {
   normal: THREE_NS.Vector3;
   /** The camera yaw that faces the subject. */
   yaw: number;
+  /** How far back the camera can stand before it meets the wall behind. */
+  maxDistance: number;
+}
+
+/** A glide of the camera along a route through the corridors. */
+interface Tween {
+  from: THREE_NS.Vector3;
+  /** The points to pass through; the last is where the camera stops. */
+  path: THREE_NS.Vector3[];
+  total: number;
+  fromYaw: number;
+  /** The yaw to end on; undefined keeps facing the way of travel. */
+  toYaw: number | undefined;
+  fromPitch: number;
+  toPitch: number;
+  /** Turns to face along each leg, for routes that go round corners. */
+  follow: boolean;
+  followYaw: number;
+  elapsed: number;
+  duration: number;
 }
 
 
-const HALL_WIDTH = 12;
 const HALL_HEIGHT = 5.2;
-// Distance between neighbouring paintings on the same wall.
-const WALL_SPACING = 5;
 const EYE_HEIGHT = 1.65;
 const HANG_HEIGHT = 1.9;
 const MAX_WIDTH = 2.8;
@@ -40,13 +70,12 @@ const MAX_HEIGHT = 2.1;
 const FRAME_BORDER = 0.08;
 const WALK_SPEED = 3.2;
 const LOOK_SPEED = 0.0042;
-const ENTRANCE_Z = 4;
-const WALL_MARGIN = 0.8;
+/** How close the camera may come to a wall. */
+const WALL_MARGIN = 0.6;
+/** How far out from its wall each painting's ceiling spotlight hangs. */
+const SPOT_OUT = 1.5;
 
-const DESK_WIDTH = 2.8;
-const DESK_DEPTH = 0.75;
 const DESK_HEIGHT = 1.05;
-const DESK_FROM_END_WALL = 2.2;
 
 // components/BrandLogo.tsx shows the same file; its pixel size sets the aspect.
 const LOGO_URL = "/brand/artasin-lockup.png";
@@ -82,11 +111,12 @@ export function buildGallery(
   const camera = new THREE.PerspectiveCamera(62, 1, 0.05, 200);
   camera.rotation.order = "YXZ";
 
-  const lastZ = -(2 + Math.max(paintings.length - 1, 0) * (WALL_SPACING / 2));
-  // Room past the last painting for the custom-orders desk.
-  const endZ = lastZ - 6;
-  const hallLength = ENTRANCE_Z - endZ;
-  const centerZ = (ENTRANCE_Z + endZ) / 2;
+  const layout = planGallery(paintings.length);
+  const { bounds } = layout;
+  const floorWidth = bounds.maxX - bounds.minX;
+  const floorDepth = bounds.maxZ - bounds.minZ;
+  const centerX = (bounds.minX + bounds.maxX) / 2;
+  const centerZ = (bounds.minZ + bounds.maxZ) / 2;
 
   // ---------------------------------------------------------------- the room
   scene.add(new THREE.HemisphereLight(0xfffaf0, 0x9c8a74, 1.6));
@@ -98,66 +128,82 @@ export function buildGallery(
   const floorTexture = makePlankTexture(THREE);
   floorTexture.wrapS = THREE.RepeatWrapping;
   floorTexture.wrapT = THREE.RepeatWrapping;
-  floorTexture.repeat.set(HALL_WIDTH / 3, hallLength / 3);
+  floorTexture.repeat.set(floorWidth / 3, floorDepth / 3);
   floorTexture.anisotropy = maxAnisotropy;
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(HALL_WIDTH, hallLength),
+    new THREE.PlaneGeometry(floorWidth, floorDepth),
     new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.55, metalness: 0.05 })
   );
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, 0, centerZ);
+  floor.position.set(centerX, 0, centerZ);
   scene.add(floor);
 
   // Lit from below by the hemisphere's ground colour, a standard material reads
   // as murky grey; a little emissive keeps the ceiling gallery-white.
   const ceiling = new THREE.Mesh(
-    new THREE.PlaneGeometry(HALL_WIDTH, hallLength),
+    new THREE.PlaneGeometry(floorWidth, floorDepth),
     new THREE.MeshStandardMaterial({ color: 0xfbfaf7, emissive: 0xd9d5cc, roughness: 1 })
   );
   ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.set(0, HALL_HEIGHT, centerZ);
+  ceiling.position.set(centerX, HALL_HEIGHT, centerZ);
   scene.add(ceiling);
 
+  // Walls block clicks on whatever is behind them (see pickAt).
+  const occluders: THREE_NS.Object3D[] = [];
   const wallMaterial = new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.95 });
-  const sideGeometry = new THREE.PlaneGeometry(hallLength, HALL_HEIGHT);
-  const leftWall = new THREE.Mesh(sideGeometry, wallMaterial);
-  leftWall.rotation.y = Math.PI / 2;
-  leftWall.position.set(-HALL_WIDTH / 2, HALL_HEIGHT / 2, centerZ);
-  const rightWall = new THREE.Mesh(sideGeometry, wallMaterial);
-  rightWall.rotation.y = -Math.PI / 2;
-  rightWall.position.set(HALL_WIDTH / 2, HALL_HEIGHT / 2, centerZ);
-  const endGeometry = new THREE.PlaneGeometry(HALL_WIDTH, HALL_HEIGHT);
-  const endWall = new THREE.Mesh(endGeometry, wallMaterial);
-  endWall.position.set(0, HALL_HEIGHT / 2, endZ);
-  const entranceWall = new THREE.Mesh(endGeometry, wallMaterial);
-  entranceWall.rotation.y = Math.PI;
-  entranceWall.position.set(0, HALL_HEIGHT / 2, ENTRANCE_Z);
-  scene.add(leftWall, rightWall, endWall, entranceWall);
-
-  // Skirting boards ground the walls visually.
   const skirtMaterial = new THREE.MeshStandardMaterial({ color: 0x3a332c, roughness: 0.7 });
-  for (const side of [-1, 1]) {
-    const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, hallLength), skirtMaterial);
-    skirt.position.set(side * (HALL_WIDTH / 2 - 0.02), 0.07, centerZ);
-    scene.add(skirt);
+  const outerWalls: { width: number; x: number; z: number; rotation: number }[] = [
+    { width: floorDepth, x: bounds.minX, z: centerZ, rotation: Math.PI / 2 },
+    { width: floorDepth, x: bounds.maxX, z: centerZ, rotation: -Math.PI / 2 },
+    { width: floorWidth, x: centerX, z: bounds.minZ, rotation: 0 },
+    { width: floorWidth, x: centerX, z: bounds.maxZ, rotation: Math.PI }
+  ];
+  for (const wall of outerWalls) {
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(wall.width, HALL_HEIGHT), wallMaterial);
+    mesh.rotation.y = wall.rotation;
+    mesh.position.set(wall.x, HALL_HEIGHT / 2, wall.z);
+    // Skirting boards ground the walls visually.
+    const skirt = new THREE.Mesh(new THREE.BoxGeometry(wall.width, 0.14, 0.04), skirtMaterial);
+    skirt.rotation.y = wall.rotation;
+    skirt.position.set(wall.x, 0.07, wall.z);
+    scene.add(mesh, skirt);
+    occluders.push(mesh);
+  }
+  // The blocks the corridors run between, floor to ceiling.
+  for (const island of layout.islands) {
+    const width = island.maxX - island.minX;
+    const depth = island.maxZ - island.minZ;
+    const x = (island.minX + island.maxX) / 2;
+    const z = (island.minZ + island.maxZ) / 2;
+    const block = new THREE.Mesh(new THREE.BoxGeometry(width, HALL_HEIGHT, depth), wallMaterial);
+    block.position.set(x, HALL_HEIGHT / 2, z);
+    const skirt = new THREE.Mesh(new THREE.BoxGeometry(width + 0.04, 0.14, depth + 0.04), skirtMaterial);
+    skirt.position.set(x, 0.07, z);
+    scene.add(block, skirt);
+    occluders.push(block);
   }
 
-  // Ceiling light strips, which also read as the hall's direction of travel.
-  const stripMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  for (const x of [-2.4, 2.4]) {
-    const strip = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, hallLength - 1.5), stripMaterial);
-    strip.position.set(x, HALL_HEIGHT - 0.03, centerZ);
-    scene.add(strip);
+  // A soft ceiling panel over every corridor crossing.
+  const panelMaterial = new THREE.MeshBasicMaterial({ color: 0xfffaf0 });
+  const panelGeometry = new THREE.PlaneGeometry(1.6, 1.6);
+  for (const x of layout.xs) {
+    for (const z of layout.zs) {
+      const panel = new THREE.Mesh(panelGeometry, panelMaterial);
+      panel.rotation.x = Math.PI / 2;
+      panel.position.set(x, HALL_HEIGHT - 0.005, z);
+      scene.add(panel);
+    }
   }
 
-  // The end wall carries the real ARTASIN lockup (the brushstroke A and the
-  // wordmark, the same file as the nav logo), with a line about the room below.
+  // The far wall of the reception carries the real ARTASIN lockup (the
+  // brushstroke A and the wordmark, the same file as the nav logo), with a
+  // line about the collection below, above the custom-orders desk.
   const logoWidth = 3.4;
   const logoMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(logoWidth, logoWidth * (LOGO_HEIGHT / LOGO_WIDTH)),
     new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 0 })
   );
-  logoMesh.position.set(0, 3.2, endZ + 0.02);
+  logoMesh.position.set(layout.desk.x, 3.2, bounds.minZ + 0.02);
   scene.add(logoMesh);
   new THREE.TextureLoader().load(LOGO_URL, (texture) => {
     if (disposed) {
@@ -174,7 +220,7 @@ export function buildGallery(
     new THREE.PlaneGeometry(4.8, 0.3),
     new THREE.MeshBasicMaterial({ map: makeSignTexture(THREE, paintings.length), transparent: true, depthWrite: false })
   );
-  signMesh.position.set(0, 2.52, endZ + 0.02);
+  signMesh.position.set(layout.desk.x, 2.52, bounds.minZ + 0.02);
   scene.add(signMesh);
 
   // -------------------------------------------------------------- paintings
@@ -182,13 +228,15 @@ export function buildGallery(
   const frameGeometry = new THREE.BoxGeometry(1, 1, 0.06);
   const canvasGeometry = new THREE.PlaneGeometry(1, 1);
   const frameMaterial = new THREE.MeshStandardMaterial({ color: FRAME_COLOR, roughness: 0.45, metalness: 0.2 });
+  const spot = makeSpotlightParts(THREE);
   const pickables: THREE_NS.Object3D[] = [];
   const hung = paintings.map((painting, index) => {
-    const left = index % 2 === 0;
-    const z = -(2 + index * (WALL_SPACING / 2));
+    // planGallery makes a slot for every painting.
+    const slot: WallSlot = layout.slots[index] ?? { x: 0, z: 0, nx: 0, nz: 1 };
     const group = new THREE.Group();
-    group.position.set(left ? -HALL_WIDTH / 2 + 0.01 : HALL_WIDTH / 2 - 0.01, HANG_HEIGHT, z);
-    group.rotation.y = left ? Math.PI / 2 : -Math.PI / 2;
+    group.position.set(slot.x + slot.nx * 0.01, HANG_HEIGHT, slot.z + slot.nz * 0.01);
+    // The painting faces out along the wall's normal (planes face +Z).
+    group.rotation.y = Math.atan2(slot.nx, slot.nz);
 
     const glow = new THREE.Mesh(
       canvasGeometry,
@@ -222,7 +270,8 @@ export function buildGallery(
     group.add(glow, frame, art, plaque);
     scene.add(group);
 
-    const item = { group, glow, frame, art, plaque, width: 0, height: 0, normalX: left ? 1 : -1 };
+    const beam = addSpotlight(THREE, scene, spot, slot);
+    const item = { group, glow, frame, art, plaque, beam, width: 0, height: 0, normal: { x: slot.nx, z: slot.nz } };
     resize(item, 4 / 3);
     return item;
   });
@@ -242,15 +291,19 @@ export function buildGallery(
     item.frame.scale.set(width + FRAME_BORDER * 2, height + FRAME_BORDER * 2, 1);
     const glowSize = Math.max(width, height) * 2.1;
     item.glow.scale.set(glowSize, glowSize, 1);
-    item.plaque.position.x = width / 2 + FRAME_BORDER + 0.42;
+    item.plaque.position.x = width / 2 + FRAME_BORDER + 0.36;
     item.plaque.position.y = -height / 2 + 0.14;
+    // The spotlight's beam widens to take in the whole painting.
+    const spread = Math.max(width, height) * 0.62;
+    item.beam.scale.x = spread;
+    item.beam.scale.z = spread;
   }
 
   // ------------------------------------------------------- custom orders desk
-  // At the far end of the hall, under the ARTASIN sign: a desk staffed by a
+  // In the reception at the far end, under the ARTASIN sign: a desk staffed by a
   // representative, which opens the custom-order (commission) request.
   const DESK_INDEX = hung.length;
-  const desk = buildDesk(THREE, scene, endZ + DESK_FROM_END_WALL, glowTexture);
+  const desk = buildDesk(THREE, scene, layout.desk, glowTexture);
   for (const mesh of desk.meshes) {
     mesh.userData.index = DESK_INDEX;
     pickables.push(mesh);
@@ -260,12 +313,10 @@ export function buildGallery(
     hung,
     reducedMotion,
     glowTexture,
-    desk: { x: 0.35, z: desk.z - 0.75 },
-    bounds: {
-      minX: -HALL_WIDTH / 2 + 1.2,
-      maxX: HALL_WIDTH / 2 - 1.2,
-      minZ: desk.z + DESK_DEPTH / 2 + 0.9,
-      maxZ: ENTRANCE_Z - 1.5
+    desk: { x: layout.desk.x + 0.35, z: layout.desk.z - 0.75 },
+    walk: {
+      route: (from, to) => route(layout, from, to),
+      collide: (point, radius) => collide(layout, point, radius)
     }
   });
 
@@ -305,19 +356,10 @@ export function buildGallery(
   });
 
   // ---------------------------------------------------------------- controls
-  const position = new THREE.Vector3(0, EYE_HEIGHT, ENTRANCE_Z - 1.2);
+  const position = new THREE.Vector3(layout.start.x, EYE_HEIGHT, layout.start.z);
   let yaw = 0;
   let pitch = 0;
-  let tween: {
-    fromPosition: THREE_NS.Vector3;
-    toPosition: THREE_NS.Vector3;
-    fromYaw: number;
-    toYaw: number;
-    fromPitch: number;
-    toPitch: number;
-    elapsed: number;
-    duration: number;
-  } | null = null;
+  let tween: Tween | null = null;
   let selectedIndex: number | null = null;
   let selectedAnchor: THREE_NS.Vector3 | null = null;
   let movedOnce = false;
@@ -343,9 +385,13 @@ export function buildGallery(
     }
   }
 
+  // Glide to a point along the corridors, turning at the crossings.
   function startTween(toPosition: THREE_NS.Vector3, toYaw?: number, toPitch?: number) {
-    const distance = position.distanceTo(toPosition);
-    const duration = reducedMotion ? 0 : Math.min(Math.max(distance / 4, 0.6), 2.2);
+    const path = route(layout, flat(position), flat(toPosition)).map(
+      (point) => new THREE.Vector3(point.x, EYE_HEIGHT, point.z)
+    );
+    const total = pathLength(flat(position), path);
+    const duration = reducedMotion ? 0 : clamp(total / 3.5, 0.6, 4.5);
     if (!duration) {
       position.copy(toPosition);
       yaw = toYaw ?? yaw;
@@ -353,17 +399,43 @@ export function buildGallery(
       tween = null;
       return;
     }
+    const follow = path.length > 1;
     tween = {
-      fromPosition: position.clone(),
-      toPosition,
+      from: position.clone(),
+      path,
+      total,
       fromYaw: yaw,
       // Turn the short way round.
-      toYaw: toYaw === undefined ? yaw : yaw + wrapAngle(toYaw - yaw),
+      toYaw: toYaw === undefined ? (follow ? undefined : yaw) : yaw + wrapAngle(toYaw - yaw),
       fromPitch: pitch,
       toPitch: toPitch ?? pitch,
+      follow,
+      followYaw: yaw,
       elapsed: 0,
       duration
     };
+  }
+
+  // Moves an in-progress glide's destination, e.g. when the framing changes.
+  function retarget(active: Tween, target: THREE_NS.Vector3, faceYaw: number, facePitch: number) {
+    active.path[active.path.length - 1] = target;
+    active.total = pathLength(flat(active.from), active.path.map(flat));
+    active.toYaw = active.fromYaw + wrapAngle(faceYaw - active.fromYaw);
+    active.toPitch = facePitch;
+  }
+
+  // Where a glide is, a distance along its route.
+  function along(active: Tween, distance: number, out: THREE_NS.Vector3): THREE_NS.Vector3 {
+    let previous = active.from;
+    for (const point of active.path) {
+      const leg = previous.distanceTo(point);
+      if (distance <= leg) {
+        return out.lerpVectors(previous, point, leg ? distance / leg : 1);
+      }
+      distance -= leg;
+      previous = point;
+    }
+    return out.copy(previous);
   }
 
   // Screen space the overlay UI covers, in CSS pixels, so a focused painting
@@ -384,7 +456,9 @@ export function buildGallery(
         width: 5,
         height: 3.7,
         normal: new THREE.Vector3(0, 0, 1),
-        yaw: 0
+        yaw: 0,
+        // Back across the reception to the far side of the last corridor.
+        maxDistance: (layout.zs[layout.rows] ?? 0) + CORRIDOR_WIDTH / 2 - WALL_MARGIN - (desk.z - 0.3)
       };
     }
     const item = hung[index];
@@ -395,9 +469,10 @@ export function buildGallery(
       center: item.group.position,
       width: item.width + FRAME_BORDER * 2,
       height: item.height + FRAME_BORDER * 2,
-      normal: new THREE.Vector3(item.normalX, 0, 0),
-      // Facing the wall: the camera looks down -Z at yaw 0, so +X wall is -PI/2.
-      yaw: item.normalX > 0 ? Math.PI / 2 : -Math.PI / 2
+      normal: new THREE.Vector3(item.normal.x, 0, item.normal.z),
+      // Facing the wall: the camera looks along -normal, and at yaw 0 down -Z.
+      yaw: Math.atan2(item.normal.x, item.normal.z),
+      maxDistance: CORRIDOR_WIDTH - WALL_MARGIN
     };
   }
 
@@ -410,7 +485,7 @@ export function buildGallery(
     // full width too — on a phone held upright, usually the tighter one.
     const fitHeight = (subject.height * 1.12) / (2 * tanV * (clear / viewHeight));
     const fitWidth = (subject.width * 1.1) / (2 * tanH);
-    const distance = clamp(Math.max(fitHeight, fitWidth), 2.2, HALL_WIDTH - WALL_MARGIN * 2);
+    const distance = clamp(Math.max(fitHeight, fitWidth), 2.2, subject.maxDistance);
     const target = subject.center.clone().addScaledVector(subject.normal, distance).setY(EYE_HEIGHT);
     // Tilt so the subject's centre lands in the middle of the clear band.
     const bandCentre = 1 - (2 * (insets.top + clear / 2)) / viewHeight;
@@ -443,9 +518,7 @@ export function buildGallery(
     const { target, faceYaw, facePitch } = framing(subject);
     selectedAnchor = target;
     if (tween) {
-      tween.toPosition = target;
-      tween.toYaw = tween.fromYaw + wrapAngle(faceYaw - tween.fromYaw);
-      tween.toPitch = facePitch;
+      retarget(tween, target, faceYaw, facePitch);
     } else {
       startTween(target, faceYaw, facePitch);
     }
@@ -459,11 +532,22 @@ export function buildGallery(
     refit();
   }
 
-  function pick(clientX: number, clientY: number, objects: THREE_NS.Object3D[]): THREE_NS.Intersection | null {
+  // What is under the pointer: a painting or the desk (by index), a spot on
+  // the floor, or nothing. Walls in the way hide whatever is behind them.
+  const pickTargets: THREE_NS.Object3D[] = [...pickables, ...occluders, floor];
+  function pickAt(clientX: number, clientY: number): { index: number } | { floor: THREE_NS.Vector3 } | null {
     const rect = canvas.getBoundingClientRect();
     ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(ndc, camera);
-    return raycaster.intersectObjects(objects, false)[0] || null;
+    const hit = raycaster.intersectObjects(pickTargets, false)[0];
+    if (!hit) {
+      return null;
+    }
+    const index: unknown = hit.object.userData.index;
+    if (typeof index === "number") {
+      return { index };
+    }
+    return hit.object === floor ? { floor: hit.point } : null;
   }
 
   function onPointerDown(event: PointerEvent) {
@@ -506,15 +590,13 @@ export function buildGallery(
     if (pointer.dragged) {
       return;
     }
-    const hit = pick(event.clientX, event.clientY, pickables);
-    if (hit) {
-      focus(hit.object.userData.index);
-      return;
-    }
-    const ground = pick(event.clientX, event.clientY, [floor]);
-    if (ground) {
+    const hit = pickAt(event.clientX, event.clientY);
+    if (hit && "index" in hit) {
+      focus(hit.index);
+    } else if (hit) {
       noteMove();
-      startTween(clampToHall(new THREE.Vector3(ground.point.x, EYE_HEIGHT, ground.point.z)));
+      const spot = collide(layout, flat(hit.floor), WALL_MARGIN);
+      startTween(new THREE.Vector3(spot.x, EYE_HEIGHT, spot.z));
     }
   }
 
@@ -530,7 +612,7 @@ export function buildGallery(
     const step = clamp(-event.deltaY * 0.01, -1.5, 1.5);
     position.x -= Math.sin(yaw) * step;
     position.z -= Math.cos(yaw) * step;
-    clampToHall(position);
+    keepClear(position);
   }
 
   const movementKeys = new Set([
@@ -567,22 +649,22 @@ export function buildGallery(
   window.addEventListener("keyup", onKeyUp);
   window.addEventListener("blur", onBlur);
 
-  function clampToHall(vector: THREE_NS.Vector3): THREE_NS.Vector3 {
-    vector.x = clamp(vector.x, -HALL_WIDTH / 2 + WALL_MARGIN, HALL_WIDTH / 2 - WALL_MARGIN);
-    vector.z = clamp(vector.z, endZ + WALL_MARGIN, ENTRANCE_Z - WALL_MARGIN);
-    // The desk and the space behind it are off limits: step out of them by
-    // the shortest way, to either side or back in front.
-    const halfWidth = DESK_WIDTH / 2 + 0.5;
-    const front = desk.z + DESK_DEPTH / 2 + 0.9;
-    if (Math.abs(vector.x) < halfWidth && vector.z < front) {
-      const toSide = halfWidth - Math.abs(vector.x);
-      const toFront = front - vector.z;
-      if (toFront < toSide) {
-        vector.z = front;
-      } else {
-        vector.x = Math.sign(vector.x || 1) * halfWidth;
-      }
+  // The floor between the viewer and the painting they are looking at.
+  function clearViewFor(index: number | null): ClearView | null {
+    const item = index === null ? undefined : hung[index];
+    if (!item || !selectedAnchor) {
+      return null;
     }
+    const { x: nx, z: nz } = item.normal;
+    const depth = (selectedAnchor.x - item.group.position.x) * nx + (selectedAnchor.z - item.group.position.z) * nz;
+    return { x: item.group.position.x, z: item.group.position.z, nx, nz, halfWidth: item.width / 2, depth };
+  }
+
+  // Out of the walls, the blocks and the desk.
+  function keepClear(vector: THREE_NS.Vector3): THREE_NS.Vector3 {
+    const clear = collide(layout, flat(vector), WALL_MARGIN);
+    vector.x = clear.x;
+    vector.z = clear.z;
     return vector;
   }
 
@@ -598,6 +680,7 @@ export function buildGallery(
   resizeObserver.observe(mount);
 
   const clock = new THREE.Clock();
+  const scratch = new THREE.Vector3();
   let frame = 0;
   let hovering = false;
 
@@ -614,17 +697,31 @@ export function buildGallery(
       yaw += turn * 1.8 * dt;
       position.x += (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speed;
       position.z += (-Math.cos(yaw) * forward - Math.sin(yaw) * strafe) * speed;
-      clampToHall(position);
+      keepClear(position);
     }
 
     if (tween) {
       tween.elapsed += dt;
       const t = Math.min(tween.elapsed / tween.duration, 1);
       const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      position.lerpVectors(tween.fromPosition, tween.toPosition, eased);
-      yaw = tween.fromYaw + (tween.toYaw - tween.fromYaw) * eased;
+      const before = scratch.copy(position);
+      along(tween, eased * tween.total, position);
+      if (tween.follow) {
+        // Look the way of travel round the corners, then turn to the subject.
+        const dx = position.x - before.x;
+        const dz = position.z - before.z;
+        if (Math.hypot(dx, dz) > 1e-4) {
+          tween.followYaw += wrapAngle(Math.atan2(-dx, -dz) - tween.followYaw) * Math.min(dt * 5, 1);
+        }
+        const settle = tween.toYaw === undefined ? 0 : smoothstep(0.65, 1, t);
+        yaw = tween.followYaw + wrapAngle((tween.toYaw ?? tween.followYaw) - tween.followYaw) * settle;
+      } else {
+        yaw = tween.fromYaw + ((tween.toYaw ?? tween.fromYaw) - tween.fromYaw) * eased;
+      }
       pitch = tween.fromPitch + (tween.toPitch - tween.fromPitch) * eased;
       if (t >= 1) {
+        yaw = tween.toYaw ?? yaw;
+        pitch = tween.toPitch;
         tween = null;
       }
     }
@@ -636,14 +733,15 @@ export function buildGallery(
       onSelect(null);
     }
 
-    visitors.update(dt, position, selectedIndex);
+    visitors.update(dt, position, selectedIndex, clearViewFor(selectedIndex));
 
     camera.position.copy(position);
     camera.rotation.set(pitch, yaw, 0);
 
     if (hover.dirty && pointer.id === null) {
       hover.dirty = false;
-      const over = Boolean(pick(hover.x, hover.y, pickables));
+      const target = pickAt(hover.x, hover.y);
+      const over = Boolean(target && "index" in target);
       if (over !== hovering) {
         hovering = over;
         canvas.style.cursor = over ? "pointer" : "";
@@ -696,11 +794,11 @@ export function buildGallery(
 function buildDesk(
   THREE: Three,
   scene: THREE_NS.Scene,
-  z: number,
+  { x, z }: Point,
   glowTexture: THREE_NS.Texture
 ): { z: number; meshes: THREE_NS.Mesh[] } {
   const group = new THREE.Group();
-  group.position.set(0, 0, z);
+  group.position.set(x, 0, z);
   const meshes: THREE_NS.Mesh[] = [];
   const add = <T extends THREE_NS.Mesh>(mesh: T): T => {
     group.add(mesh);
@@ -776,7 +874,7 @@ function buildDesk(
       opacity: 0.5
     })
   );
-  glow.position.set(0, 2.4, -DESK_FROM_END_WALL + 0.01);
+  glow.position.set(0, 2.4, -DESK_FROM_FAR_WALL + 0.01);
   group.add(glow);
 
   scene.add(group);
@@ -802,6 +900,97 @@ function makeDeskTexture(THREE: Three): THREE_NS.CanvasTexture {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
+}
+
+/** The shared parts of every painting's ceiling spotlight. */
+interface SpotlightParts {
+  stem: THREE_NS.BufferGeometry;
+  can: THREE_NS.BufferGeometry;
+  lens: THREE_NS.BufferGeometry;
+  beam: THREE_NS.BufferGeometry;
+  body: THREE_NS.Material;
+  glass: THREE_NS.Material;
+  light: THREE_NS.Material;
+}
+
+function makeSpotlightParts(THREE: Three): SpotlightParts {
+  return {
+    stem: new THREE.CylinderGeometry(0.012, 0.012, 0.3, 8),
+    can: new THREE.CylinderGeometry(0.07, 0.085, 0.24, 18),
+    lens: new THREE.CircleGeometry(0.075, 18),
+    // A unit cone, apex up; each beam is scaled to its painting.
+    beam: new THREE.ConeGeometry(1, 1, 28, 1, true),
+    body: new THREE.MeshStandardMaterial({ color: 0x1d1a17, roughness: 0.4, metalness: 0.5 }),
+    glass: new THREE.MeshBasicMaterial({ color: 0xfff1d6 }),
+    light: new THREE.MeshBasicMaterial({
+      color: 0xffe9c4,
+      map: makeBeamTexture(THREE),
+      transparent: true,
+      opacity: 0.16,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
+    })
+  };
+}
+
+/**
+ * Hangs a track spotlight from the ceiling in front of a wall slot, aimed at
+ * the painting, with a faint beam down to it. Returns the beam so its width
+ * can follow the painting's size.
+ */
+function addSpotlight(THREE: Three, scene: THREE_NS.Scene, parts: SpotlightParts, slot: WallSlot): THREE_NS.Mesh {
+  const mount = new THREE.Vector3(slot.x + slot.nx * SPOT_OUT, HALL_HEIGHT, slot.z + slot.nz * SPOT_OUT);
+  const stem = new THREE.Mesh(parts.stem, parts.body);
+  stem.position.set(mount.x, HALL_HEIGHT - 0.15, mount.z);
+
+  const head = new THREE.Vector3(mount.x, HALL_HEIGHT - 0.34, mount.z);
+  const aim = new THREE.Vector3(slot.x + slot.nx * 0.06, HANG_HEIGHT + 0.15, slot.z + slot.nz * 0.06);
+  const direction = aim.clone().sub(head).normalize();
+  // The can's axis is +Y, lens end first.
+  const fixture = new THREE.Group();
+  fixture.position.copy(head);
+  fixture.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+  const can = new THREE.Mesh(parts.can, parts.body);
+  const lens = new THREE.Mesh(parts.lens, parts.glass);
+  lens.position.y = 0.121;
+  lens.rotation.x = -Math.PI / 2;
+  fixture.add(can, lens);
+
+  // The beam runs from the lens to the wall: apex at the light, widening out.
+  const lensPoint = head.clone().addScaledVector(direction, 0.12);
+  const length = lensPoint.distanceTo(aim);
+  const beam = new THREE.Mesh(parts.beam, parts.light);
+  beam.position.copy(lensPoint).addScaledVector(direction, length / 2);
+  beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().negate());
+  // y stretches the unit cone to the beam's length; resize() sets x and z.
+  beam.scale.set(1, length, 1);
+  scene.add(stem, fixture, beam);
+  return beam;
+}
+
+/** Fades a beam from the lamp (the top of the cone) to nothing at the wall. */
+function makeBeamTexture(THREE: Three): THREE_NS.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 4;
+  canvas.height = 256;
+  const ctx = context2d(canvas);
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.35, "rgba(255,255,255,0.35)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  return new THREE.CanvasTexture(canvas);
+}
+
+function flat(vector: { x: number; z: number }): Point {
+  return { x: vector.x, z: vector.z };
+}
+
+function smoothstep(edge0: number, edge1: number, value: number): number {
+  const t = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
 }
 
 function clamp(value: number, min: number, max: number): number {
