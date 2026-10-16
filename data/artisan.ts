@@ -73,13 +73,17 @@ function hasStyles(category: string | null | undefined): category is StyledCateg
   return typeof category === "string" && Object.hasOwn(artworkStyleGroups, category);
 }
 
+/** An <optgroup>: its heading (null for none) and the styles under it. */
+export type StyleGroup = readonly [label: TranslationKey | null, styles: readonly ArtworkStyle[]];
+
+/** The style groups for a category, or undefined if it has no styles. */
+export function styleGroupsFor(category: string | null | undefined): readonly StyleGroup[] | undefined {
+  return hasStyles(category) ? artworkStyleGroups[category] : undefined;
+}
+
 /** Every style that can go with this category, or [] if it has none. */
 export function stylesFor(category: string | null | undefined): readonly ArtworkStyle[] {
-  if (!hasStyles(category)) {
-    return [];
-  }
-  const groups: readonly (readonly [TranslationKey | null, readonly ArtworkStyle[]])[] = artworkStyleGroups[category];
-  return groups.flatMap(([, styles]) => styles);
+  return (styleGroupsFor(category) ?? []).flatMap(([, styles]) => styles);
 }
 
 /**

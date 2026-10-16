@@ -33,5 +33,5 @@ export default defineConfig([
       "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }]
     }
   },
-  globalIgnores([".next/**", "node_modules/**", "public/**", "next-env.d.ts"])
+  globalIgnores([".next/**", "node_modules/**", "public/**", "next-env.d.ts", ".claude/**"])
 ]);

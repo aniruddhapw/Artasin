@@ -8,6 +8,13 @@
  * is exactly the kind of breakage nobody notices. Grepping for the attribute
  * finds both ends.
  */
+export interface TourStep {
+  /** The `data-tour` attribute the step points at. */
+  anchor: string;
+  route: string;
+  placement: "top" | "bottom";
+}
+
 export const STUDIO_TOUR_STEPS = [
   { anchor: "studio-actions", route: "/studio", placement: "bottom" },
   { anchor: "studio-share", route: "/studio", placement: "bottom" },
@@ -18,7 +25,10 @@ export const STUDIO_TOUR_STEPS = [
   { anchor: "portfolio-media", route: "/studio/portfolio", placement: "bottom" },
   { anchor: "portfolio-upload", route: "/studio/portfolio", placement: "bottom" },
   { anchor: "portfolio-list", route: "/studio/portfolio", placement: "top" }
-];
+] as const satisfies readonly TourStep[];
+
+/** Typed from the list, so every anchor's `tour.<anchor>.title/body` keys are checked. */
+export type TourAnchor = (typeof STUDIO_TOUR_STEPS)[number]["anchor"];
 
 export const TOUR_STORAGE_KEY = "artasin.studio-tour.v1";
 

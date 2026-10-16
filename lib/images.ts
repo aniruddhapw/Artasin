@@ -1,3 +1,4 @@
+import type { NonEmptyArray } from "@/types/utils";
 const CLOUDINARY_MARKER = "/image/upload/";
 
 /**
@@ -75,17 +76,19 @@ export interface GalleryImage {
 export function galleryImages(
   media: readonly { url: string; alt?: string | null }[] | null | undefined,
   title: string
-): GalleryImage[] {
+): NonEmptyArray<GalleryImage> {
   const rows = Array.isArray(media) ? media : [];
-  if (!rows.length) {
-    return [{ src: ARTWORK_PLACEHOLDER, full: ARTWORK_PLACEHOLDER, thumb: ARTWORK_PLACEHOLDER, alt: `${title} artwork` }];
-  }
-  return rows.map((row, index) => ({
+  const [first, ...rest] = rows.map((row, index) => ({
     src: detailUrl(row.url),
     full: fullUrl(row.url),
     thumb: thumbUrl(row.url),
     alt: row.alt || `${title} artwork ${index + 1}`
   }));
+  // Always at least one image, so the gallery never has nothing to show.
+  if (!first) {
+    return [{ src: ARTWORK_PLACEHOLDER, full: ARTWORK_PLACEHOLDER, thumb: ARTWORK_PLACEHOLDER, alt: `${title} artwork` }];
+  }
+  return [first, ...rest];
 }
 
 /**
