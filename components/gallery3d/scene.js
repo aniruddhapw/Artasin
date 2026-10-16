@@ -207,6 +207,9 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
         item.art.material.color.set(0xffffff);
         item.art.material.needsUpdate = true;
         resize(item, aspect);
+        if (selectedIndex === index) {
+          refit();
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -233,6 +236,7 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
 
   function noteMove() {
     tween = null;
+    parked = false;
     if (!movedOnce) {
       movedOnce = true;
       onMove();
@@ -262,32 +266,68 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
     };
   }
 
+  // Screen space the overlay UI covers, in CSS pixels, so a focused painting
+  // is framed in the part of the view that is still clear (set by the React
+  // component as its bars and card change size).
+  let insets = { top: 0, bottom: 0 };
+  // True while the camera sits where focus() put it; any look or step by the
+  // visitor clears it, so re-framing never yanks the view back.
+  let parked = false;
+
+  function framing(item) {
+    const viewHeight = mount.clientHeight || 1;
+    const clear = Math.max(viewHeight - insets.top - insets.bottom, viewHeight * 0.3);
+    const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const tanH = tanV * camera.aspect;
+    // Back off until the framed work fits the clear band with a margin, and
+    // the full width too — on a phone held upright, usually the tighter one.
+    const fitHeight = ((item.height + FRAME_BORDER * 2) * 1.12) / (2 * tanV * (clear / viewHeight));
+    const fitWidth = ((item.width + FRAME_BORDER * 2) * 1.1) / (2 * tanH);
+    const distance = clamp(Math.max(fitHeight, fitWidth), 2.2, HALL_WIDTH - WALL_MARGIN * 2);
+    const target = new THREE.Vector3(item.group.position.x + item.normalX * distance, EYE_HEIGHT, item.group.position.z);
+    // Facing the wall: the camera looks down -Z at yaw 0, so +X wall is -PI/2.
+    const faceYaw = item.normalX > 0 ? Math.PI / 2 : -Math.PI / 2;
+    // Tilt so the painting's centre lands in the middle of the clear band.
+    const bandCentre = 1 - (2 * (insets.top + clear / 2)) / viewHeight;
+    const facePitch = Math.atan2(HANG_HEIGHT - EYE_HEIGHT, distance) - Math.atan(bandCentre * tanV);
+    return { target, faceYaw, facePitch };
+  }
+
   function focus(index) {
     const item = hung[index];
     if (!item) {
       return;
     }
-    // Back off far enough that the framed work fits the screen with a margin
-    // either way, which on a phone held upright means fitting its width.
-    const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
-    const halfH = Math.atan(Math.tan(halfV) * camera.aspect);
-    const fitHeight = (item.height * 1.45) / (2 * Math.tan(halfV));
-    const fitWidth = (item.width * 1.25) / (2 * Math.tan(halfH));
-    const distance = clamp(Math.max(fitHeight, fitWidth), 2.2, HALL_WIDTH - WALL_MARGIN * 2);
-    const target = new THREE.Vector3(
-      item.group.position.x + item.normalX * distance,
-      EYE_HEIGHT,
-      item.group.position.z
-    );
-    // Facing the wall: the camera looks down -Z at yaw 0, so +X wall is -PI/2.
-    const faceYaw = item.normalX > 0 ? Math.PI / 2 : -Math.PI / 2;
-    // Sit the painting a little above centre so the info card does not cover
-    // it — well above on a portrait screen, where the card is full width.
-    const raise = (camera.aspect < 1 ? 0.16 : 0.05) * 2 * Math.tan(halfV);
-    startTween(target, faceYaw, Math.atan2(HANG_HEIGHT - EYE_HEIGHT, distance) - Math.atan(raise));
+    const { target, faceYaw, facePitch } = framing(item);
+    startTween(target, faceYaw, facePitch);
     selectedIndex = index;
     selectedAnchor = target;
+    parked = true;
     onSelect(index);
+  }
+
+  // Re-frame the focused painting after the clear area or its size changes.
+  function refit() {
+    if (selectedIndex === null || !parked) {
+      return;
+    }
+    const { target, faceYaw, facePitch } = framing(hung[selectedIndex]);
+    selectedAnchor = target;
+    if (tween) {
+      tween.toPosition = target;
+      tween.toYaw = tween.fromYaw + wrapAngle(faceYaw - tween.fromYaw);
+      tween.toPitch = facePitch;
+    } else {
+      startTween(target, faceYaw, facePitch);
+    }
+  }
+
+  function setInsets(next) {
+    if (next.top === insets.top && next.bottom === insets.bottom) {
+      return;
+    }
+    insets = next;
+    refit();
   }
 
   function pick(clientX, clientY, objects) {
@@ -411,6 +451,7 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
     renderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    refit();
   });
   resizeObserver.observe(mount);
 
@@ -471,6 +512,7 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
 
   return {
     focus,
+    setInsets,
     dispose() {
       disposed = true;
       cancelAnimationFrame(frame);
