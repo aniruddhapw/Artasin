@@ -337,7 +337,7 @@ export function PortfolioManager({ pieces: initialPieces }) {
         throw new Error("reorder failed");
       }
       router.refresh();
-    } catch (moveError) {
+    } catch {
       setPieces(pieces);
       setError(t("error.reorderFailed"));
     } finally {

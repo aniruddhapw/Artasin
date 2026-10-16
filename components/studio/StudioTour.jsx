@@ -120,6 +120,7 @@ export function StudioTourProvider({ autoStart, children }) {
       const url = new URL(window.location.href);
       url.searchParams.delete("tour");
       window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the tour is requested through the URL, which only exists in the browser
       setStepIndex(0);
       return;
     }
