@@ -10,6 +10,8 @@
  * with a dynamic import() and stays out of every other page's bundle.
  */
 
+import { createVisitors } from "./visitors";
+
 const HALL_WIDTH = 12;
 const HALL_HEIGHT = 5.2;
 // Distance between neighbouring paintings on the same wall.
@@ -23,6 +25,11 @@ const WALK_SPEED = 3.2;
 const LOOK_SPEED = 0.0042;
 const ENTRANCE_Z = 4;
 const WALL_MARGIN = 0.8;
+
+const DESK_WIDTH = 2.8;
+const DESK_DEPTH = 0.75;
+const DESK_HEIGHT = 1.05;
+const DESK_FROM_END_WALL = 2.2;
 
 const WALL_COLOR = 0xf4f1ea;
 const FRAME_COLOR = 0x1d1a17;
@@ -49,7 +56,8 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
   camera.rotation.order = "YXZ";
 
   const lastZ = -(2 + Math.max(paintings.length - 1, 0) * (WALL_SPACING / 2));
-  const endZ = lastZ - 4.5;
+  // Room past the last painting for the custom-orders desk.
+  const endZ = lastZ - 6;
   const hallLength = ENTRANCE_Z - endZ;
   const centerZ = (ENTRANCE_Z + endZ) / 2;
 
@@ -118,9 +126,9 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
   const sign = makeSignTexture(THREE, paintings.length);
   const signMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(4.8, 1.2),
-    new THREE.MeshBasicMaterial({ map: sign, transparent: true })
+    new THREE.MeshBasicMaterial({ map: sign, transparent: true, depthWrite: false })
   );
-  signMesh.position.set(0, 2.4, endZ + 0.02);
+  signMesh.position.set(0, 3.05, endZ + 0.02);
   scene.add(signMesh);
 
   // -------------------------------------------------------------- paintings
@@ -188,6 +196,34 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
     item.glow.scale.set(glowSize, glowSize, 1);
     item.plaque.position.x = width / 2 + FRAME_BORDER + 0.42;
     item.plaque.position.y = -height / 2 + 0.14;
+  }
+
+  // ------------------------------------------------------- custom orders desk
+  // At the far end of the hall, under the ARTASIN sign: a desk staffed by a
+  // representative, which opens the custom-order (commission) request.
+  const DESK_INDEX = hung.length;
+  const desk = buildDesk(THREE, scene, endZ + DESK_FROM_END_WALL, glowTexture);
+  for (const mesh of desk.meshes) {
+    mesh.userData.index = DESK_INDEX;
+    pickables.push(mesh);
+  }
+
+  const visitors = createVisitors(THREE, scene, {
+    hung,
+    reducedMotion,
+    glowTexture,
+    desk: { x: 0.35, z: desk.z - 0.75 },
+    bounds: {
+      minX: -HALL_WIDTH / 2 + 1.2,
+      maxX: HALL_WIDTH / 2 - 1.2,
+      minZ: desk.z + DESK_DEPTH / 2 + 0.9,
+      maxZ: ENTRANCE_Z - 1.5
+    }
+  });
+
+  for (const mesh of visitors.representativeMeshes) {
+    mesh.userData.index = DESK_INDEX;
+    pickables.push(mesh);
   }
 
   let loaded = 0;
@@ -274,31 +310,56 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
   // visitor clears it, so re-framing never yanks the view back.
   let parked = false;
 
-  function framing(item) {
+  // What the camera frames for a selection: a painting on its wall, or the
+  // desk with its representative. normal points from the subject to the viewer.
+  function subjectFor(index) {
+    if (index === DESK_INDEX) {
+      // The desk, the representative and the ARTASIN sign above them.
+      return {
+        center: new THREE.Vector3(0, 1.85, desk.z - 0.3),
+        width: 5,
+        height: 3.7,
+        normal: new THREE.Vector3(0, 0, 1),
+        yaw: 0
+      };
+    }
+    const item = hung[index];
+    if (!item) {
+      return null;
+    }
+    return {
+      center: item.group.position,
+      width: item.width + FRAME_BORDER * 2,
+      height: item.height + FRAME_BORDER * 2,
+      normal: new THREE.Vector3(item.normalX, 0, 0),
+      // Facing the wall: the camera looks down -Z at yaw 0, so +X wall is -PI/2.
+      yaw: item.normalX > 0 ? Math.PI / 2 : -Math.PI / 2
+    };
+  }
+
+  function framing(subject) {
     const viewHeight = mount.clientHeight || 1;
     const clear = Math.max(viewHeight - insets.top - insets.bottom, viewHeight * 0.3);
     const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const tanH = tanV * camera.aspect;
-    // Back off until the framed work fits the clear band with a margin, and
-    // the full width too — on a phone held upright, usually the tighter one.
-    const fitHeight = ((item.height + FRAME_BORDER * 2) * 1.12) / (2 * tanV * (clear / viewHeight));
-    const fitWidth = ((item.width + FRAME_BORDER * 2) * 1.1) / (2 * tanH);
+    // Back off until the subject fits the clear band with a margin, and the
+    // full width too — on a phone held upright, usually the tighter one.
+    const fitHeight = (subject.height * 1.12) / (2 * tanV * (clear / viewHeight));
+    const fitWidth = (subject.width * 1.1) / (2 * tanH);
     const distance = clamp(Math.max(fitHeight, fitWidth), 2.2, HALL_WIDTH - WALL_MARGIN * 2);
-    const target = new THREE.Vector3(item.group.position.x + item.normalX * distance, EYE_HEIGHT, item.group.position.z);
-    // Facing the wall: the camera looks down -Z at yaw 0, so +X wall is -PI/2.
-    const faceYaw = item.normalX > 0 ? Math.PI / 2 : -Math.PI / 2;
-    // Tilt so the painting's centre lands in the middle of the clear band.
+    const target = subject.center.clone().addScaledVector(subject.normal, distance).setY(EYE_HEIGHT);
+    // Tilt so the subject's centre lands in the middle of the clear band.
     const bandCentre = 1 - (2 * (insets.top + clear / 2)) / viewHeight;
-    const facePitch = Math.atan2(HANG_HEIGHT - EYE_HEIGHT, distance) - Math.atan(bandCentre * tanV);
-    return { target, faceYaw, facePitch };
+    const facePitch = Math.atan2(subject.center.y - EYE_HEIGHT, distance) - Math.atan(bandCentre * tanV);
+    return { target, faceYaw: subject.yaw, facePitch };
   }
 
   function focus(index) {
-    const item = hung[index];
-    if (!item) {
+    const subject = subjectFor(index);
+    if (!subject) {
       return;
     }
-    const { target, faceYaw, facePitch } = framing(item);
+    const { target, faceYaw, facePitch } = framing(subject);
     startTween(target, faceYaw, facePitch);
     selectedIndex = index;
     selectedAnchor = target;
@@ -306,12 +367,12 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
     onSelect(index);
   }
 
-  // Re-frame the focused painting after the clear area or its size changes.
+  // Re-frame the selection after the clear area or a painting's size changes.
   function refit() {
     if (selectedIndex === null || !parked) {
       return;
     }
-    const { target, faceYaw, facePitch } = framing(hung[selectedIndex]);
+    const { target, faceYaw, facePitch } = framing(subjectFor(selectedIndex));
     selectedAnchor = target;
     if (tween) {
       tween.toPosition = target;
@@ -441,6 +502,19 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
   function clampToHall(vector) {
     vector.x = clamp(vector.x, -HALL_WIDTH / 2 + WALL_MARGIN, HALL_WIDTH / 2 - WALL_MARGIN);
     vector.z = clamp(vector.z, endZ + WALL_MARGIN, ENTRANCE_Z - WALL_MARGIN);
+    // The desk and the space behind it are off limits: step out of them by
+    // the shortest way, to either side or back in front.
+    const halfWidth = DESK_WIDTH / 2 + 0.5;
+    const front = desk.z + DESK_DEPTH / 2 + 0.9;
+    if (Math.abs(vector.x) < halfWidth && vector.z < front) {
+      const toSide = halfWidth - Math.abs(vector.x);
+      const toFront = front - vector.z;
+      if (toFront < toSide) {
+        vector.z = front;
+      } else {
+        vector.x = Math.sign(vector.x || 1) * halfWidth;
+      }
+    }
     return vector;
   }
 
@@ -494,6 +568,8 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
       onSelect(null);
     }
 
+    visitors.update(dt, position, selectedIndex);
+
     camera.position.copy(position);
     camera.rotation.set(pitch, yaw, 0);
 
@@ -513,6 +589,7 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
   return {
     focus,
     setInsets,
+    setVisitorsVisible: visitors.setVisible,
     dispose() {
       disposed = true;
       cancelAnimationFrame(frame);
@@ -540,6 +617,112 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
       canvas.remove();
     }
   };
+}
+
+function buildDesk(THREE, scene, z, glowTexture) {
+  const group = new THREE.Group();
+  group.position.set(0, 0, z);
+  const meshes = [];
+  const add = (mesh) => {
+    group.add(mesh);
+    meshes.push(mesh);
+    return mesh;
+  };
+
+  const base = add(
+    new THREE.Mesh(
+      new THREE.BoxGeometry(DESK_WIDTH, DESK_HEIGHT - 0.05, DESK_DEPTH),
+      new THREE.MeshStandardMaterial({ color: 0x1d1a17, roughness: 0.6 })
+    )
+  );
+  base.position.y = (DESK_HEIGHT - 0.05) / 2;
+
+  const top = add(
+    new THREE.Mesh(
+      new THREE.BoxGeometry(DESK_WIDTH + 0.08, 0.05, DESK_DEPTH + 0.08),
+      new THREE.MeshStandardMaterial({ color: 0xa0784f, roughness: 0.45 })
+    )
+  );
+  top.position.y = DESK_HEIGHT - 0.025;
+
+  const front = add(
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(DESK_WIDTH - 0.2, 0.62),
+      new THREE.MeshBasicMaterial({ map: makeDeskTexture(THREE), transparent: true, depthWrite: false })
+    )
+  );
+  front.position.set(0, 0.58, DESK_DEPTH / 2 + 0.003);
+
+  // A few things on the desk: brochures, a card stand and a vase.
+  const brochureMaterials = [0xf4f1ea, 0xa65a3f, 0xe9e2d3].map(
+    (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.8 })
+  );
+  const brochureGeometry = new THREE.BoxGeometry(0.3, 0.018, 0.22);
+  brochureMaterials.forEach((material, index) => {
+    const brochure = add(new THREE.Mesh(brochureGeometry, material));
+    brochure.position.set(0.75 + index * 0.02, DESK_HEIGHT + 0.01 + index * 0.018, 0.12);
+    brochure.rotation.y = 0.15 - index * 0.12;
+  });
+  const stand = add(
+    new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.01), new THREE.MeshStandardMaterial({ color: 0xf4f1ea }))
+  );
+  stand.position.set(0.25, DESK_HEIGHT + 0.07, 0.2);
+  stand.rotation.x = -0.25;
+  const vase = add(
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.08, 0.28, 18),
+      new THREE.MeshStandardMaterial({ color: 0xe9e2d3, roughness: 0.3 })
+    )
+  );
+  vase.position.set(-0.95, DESK_HEIGHT + 0.14, 0.05);
+  const stemMaterial = new THREE.MeshStandardMaterial({ color: 0x5d6b4f, roughness: 0.8 });
+  const bloomMaterial = new THREE.MeshStandardMaterial({ color: 0xa65a3f, roughness: 0.7 });
+  [-0.3, 0, 0.32].forEach((lean, index) => {
+    const stem = add(new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.36, 6), stemMaterial));
+    stem.position.set(-0.95 + lean * 0.12, DESK_HEIGHT + 0.42, 0.05);
+    stem.rotation.z = lean;
+    const bloom = add(new THREE.Mesh(new THREE.SphereGeometry(0.035 + index * 0.006, 10, 8), bloomMaterial));
+    bloom.position.set(-0.95 - Math.sin(lean) * 0.18 + lean * 0.12, DESK_HEIGHT + 0.6, 0.05);
+  });
+
+  // A pool of warm light on the end wall behind the desk.
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(6, 6),
+    new THREE.MeshBasicMaterial({
+      map: glowTexture,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      color: 0xffe2b8,
+      opacity: 0.5
+    })
+  );
+  glow.position.set(0, 2.4, -DESK_FROM_END_WALL + 0.01);
+  group.add(glow);
+
+  scene.add(group);
+  return { z, meshes };
+}
+
+function makeDeskTexture(THREE) {
+  const width = 1024;
+  const height = 224;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#f4f1ea";
+  ctx.font = '600 64px Inter, "Helvetica Neue", Arial, sans-serif';
+  ctx.letterSpacing = "12px";
+  ctx.fillText("CUSTOM ORDERS", width / 2, 104);
+  ctx.letterSpacing = "0px";
+  ctx.fillStyle = "#c9b79c";
+  ctx.font = 'italic 40px "Playfair Display", Georgia, serif';
+  ctx.fillText("Commission an original piece", width / 2, 172);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 function clamp(value, min, max) {

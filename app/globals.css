@@ -6317,6 +6317,12 @@ textarea::placeholder {
   border-color: var(--primary);
 }
 
+.walk-chip.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
 .walk-nav {
   display: flex;
   gap: 8px;
@@ -6383,7 +6389,7 @@ textarea::placeholder {
 
 .walk-help {
   position: absolute;
-  top: 76px;
+  top: calc(var(--walk-top, 60px) + 16px);
   left: 24px;
   max-width: 320px;
   padding: 20px 24px;
@@ -6406,7 +6412,7 @@ textarea::placeholder {
 
 .walk-list {
   position: absolute;
-  top: 76px;
+  top: calc(var(--walk-top, 60px) + 16px);
   right: 24px;
   bottom: 88px;
   width: min(340px, calc(100% - 48px));
@@ -6434,6 +6440,12 @@ textarea::placeholder {
 .walk-list button span {
   font-family: "Playfair Display", Georgia, serif;
   font-size: 18px;
+}
+
+.walk-list-desk {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
 }
 
 .walk-list button small {
@@ -6543,14 +6555,14 @@ textarea::placeholder {
   }
 
   .walk-help {
-    top: 64px;
+    top: calc(var(--walk-top, 52px) + 8px);
     left: 12px;
     right: 12px;
     max-width: none;
   }
 
   .walk-list {
-    top: 64px;
+    top: calc(var(--walk-top, 52px) + 8px);
     left: 12px;
     right: 12px;
     bottom: 72px;
