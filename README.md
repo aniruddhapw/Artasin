@@ -109,6 +109,10 @@ Every order stores `platformCommissionCents` and `artistPayoutCents`, computed f
 
 Every listing is a unique original, so a cart line is a `CartItem` pointing at one artwork with no quantity. `lib/cart.js` re-checks availability on every read and reports sold, unpublished, or archived pieces separately, so `/cart` can say what happened instead of silently dropping a row or quoting a price for something that's gone. `POST /api/orders/cart` turns the still-available items into orders; a single artwork can also be bought directly from `/artwork/[slug]` via `POST /api/orders`.
 
+### Virtual gallery
+
+`/gallery/walk` hangs every published painting (category `Painting`) in a walk-through 3D hall built with Three.js (`components/gallery3d/`). Visitors drag to look, walk with WASD/arrow keys, the scroll wheel or by tapping the floor, and click a painting (or use Next/Previous and the works list) to glide up to it and see its details with a link to the artwork page. The hall grows with the number of paintings, alternating left and right walls. Three.js is loaded with a dynamic `import()` so it only ships on this page, and browsers without WebGL get a link back to `/gallery`. Textures come from `textureUrl` in `lib/images.js` (1280px Cloudinary variant); Cloudinary sends CORS headers, which WebGL needs to use the image.
+
 ### Search
 
 `components/NavSearch.jsx` puts a search box in the nav on every page; it pushes to `/gallery?q=…`, which matches against artwork title, description, and artist display name. The `/api/artworks` list endpoint takes the same `q` parameter.

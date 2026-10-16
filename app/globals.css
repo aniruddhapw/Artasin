@@ -6238,3 +6238,288 @@ textarea::placeholder {
 .order-contact-note {
   margin-top: 16px;
 }
+
+/* ---------------------------------------------------------------------------
+   Virtual gallery — the 3D walk-through at /gallery/walk
+   --------------------------------------------------------------------------- */
+
+.walk-page {
+  height: 100vh;
+  height: 100dvh;
+  padding-top: 80px;
+}
+
+.walk-stage {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: #e9e5dc;
+}
+
+.walk-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.walk-canvas canvas {
+  display: block;
+  touch-action: none;
+  outline: none;
+}
+
+.walk-topbar,
+.walk-bottombar {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.walk-topbar {
+  top: 20px;
+  flex-wrap: wrap;
+}
+
+.walk-bottombar {
+  bottom: 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.walk-topbar > *,
+.walk-bottombar > *,
+.walk-help,
+.walk-list {
+  pointer-events: auto;
+}
+
+.walk-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  background: rgba(249, 249, 247, 0.9);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: border-color 180ms ease;
+}
+
+.walk-chip:hover {
+  border-color: var(--primary);
+}
+
+.walk-nav {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.walk-eyebrow {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.walk-card,
+.walk-help,
+.walk-list {
+  border: 1px solid var(--line);
+  background: rgba(249, 249, 247, 0.94);
+  backdrop-filter: blur(16px);
+}
+
+.walk-card {
+  width: min(380px, 100%);
+  padding: 24px;
+}
+
+.walk-card h2 {
+  margin-bottom: 6px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.walk-card p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.walk-card a:not(.button) {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.walk-meta {
+  font-size: 14px;
+}
+
+.walk-card-actions {
+  display: flex;
+  margin-top: 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.walk-card-actions .button {
+  min-height: 44px;
+  padding: 10px 22px;
+}
+
+.walk-help {
+  position: absolute;
+  top: 76px;
+  left: 24px;
+  max-width: 320px;
+  padding: 20px 24px;
+}
+
+.walk-help ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.walk-help strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.walk-list {
+  position: absolute;
+  top: 76px;
+  right: 24px;
+  bottom: 88px;
+  width: min(340px, calc(100% - 48px));
+  overflow-y: auto;
+}
+
+.walk-list ol {
+  padding: 8px 0;
+  list-style: none;
+}
+
+.walk-list button {
+  display: grid;
+  width: 100%;
+  gap: 2px;
+  padding: 12px 20px;
+  text-align: left;
+}
+
+.walk-list button:hover,
+.walk-list button.is-active {
+  background: var(--surface-container);
+}
+
+.walk-list button span {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 18px;
+}
+
+.walk-list button small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.walk-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 12px 20px;
+  background: rgba(249, 249, 247, 0.9);
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.walk-empty {
+  display: grid;
+  height: 100%;
+  padding: 0 var(--mobile-margin);
+  place-content: center;
+  justify-items: center;
+  gap: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.walk-overlay-full {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--surface);
+}
+
+.gallery-walk-link {
+  margin-top: 24px;
+}
+
+@media (max-width: 720px) {
+  .walk-topbar,
+  .walk-bottombar {
+    left: 12px;
+    right: 12px;
+  }
+
+  .walk-topbar {
+    top: 12px;
+  }
+
+  .walk-bottombar {
+    bottom: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .walk-nav .walk-chip {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .walk-card {
+    width: 100%;
+    padding: 18px;
+  }
+
+  .walk-card h2 {
+    font-size: 22px;
+  }
+
+  .walk-help {
+    top: 64px;
+    left: 12px;
+    right: 12px;
+    max-width: none;
+  }
+
+  .walk-list {
+    top: 64px;
+    left: 12px;
+    right: 12px;
+    bottom: 72px;
+    width: auto;
+  }
+}
