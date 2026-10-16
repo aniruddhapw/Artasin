@@ -14,7 +14,7 @@ export const metadata = {
 const settledStatuses = ["PAID", "IN_PROGRESS", "SHIPPED", "DELIVERED", "COMPLETED"];
 
 export default async function AdminDashboardPage() {
-  const [settledOrders, disputedCount, artistCount, buyerCount, openCommissionCount, recentOrders, pendingPostCount] = await Promise.all([
+  const [settledOrders, disputedCount, artistCount, buyerCount, openCommissionCount, recentOrders, pendingPostCount, openOrderCount] = await Promise.all([
     prisma.order.findMany({
       where: { status: { in: settledStatuses } },
       select: { subtotalCents: true, shippingCents: true, taxCents: true, platformCommissionCents: true }
@@ -34,7 +34,8 @@ export default async function AdminDashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 8
     }),
-    prisma.blogPost.count({ where: { status: "PENDING_REVIEW" } })
+    prisma.blogPost.count({ where: { status: "PENDING_REVIEW" } }),
+    prisma.order.count({ where: { status: "PENDING_PAYMENT" } })
   ]);
   // Only offered where it can work: without Resend nobody could unsubscribe.
   const neverAskedCount = newsletterEnabled() ? await countNeverAsked() : 0;
@@ -58,6 +59,9 @@ export default async function AdminDashboardPage() {
             <p>Platform-wide gross merchandise value, commission revenue, and marketplace health.</p>
           </div>
           <div className="studio-header-actions">
+            <Link className="button button-secondary" href="/admin/orders">
+              {openOrderCount ? `Order Requests (${openOrderCount})` : "Order Requests"}
+            </Link>
             <Link className="button button-secondary" href="/admin/buyers">
               Collectors
             </Link>

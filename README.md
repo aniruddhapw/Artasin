@@ -107,6 +107,10 @@ Every order stores `platformCommissionCents` and `artistPayoutCents`, computed f
 
 Every listing is a unique original, so a cart line is a `CartItem` pointing at one artwork with no quantity. `lib/cart.js` re-checks availability on every read and reports sold, unpublished, or archived pieces separately, so `/cart` can say what happened instead of silently dropping a row or quoting a price for something that's gone. `POST /api/orders/cart` turns the still-available items into orders; a single artwork can also be bought directly from `/artwork/[slug]` via `POST /api/orders`.
 
+### Virtual gallery
+
+`/gallery/walk` hangs every published painting (category `Painting`) in a walk-through 3D hall built with Three.js (`components/gallery3d/`). Visitors drag to look, walk with WASD/arrow keys, the scroll wheel or by tapping the floor, and click a painting (or use Next/Previous and the works list) to glide up to it and see its details with a link to the artwork page. The hall grows with the number of paintings, alternating left and right walls. Faceless, mannequin-style visitors (`components/gallery3d/visitors.js`, built from simple shapes with no model downloads) wander between paintings, stop to look, step aside from the painting you walk up to, and can be hidden with the Visitors button; there is about one per three paintings, 3 to 12 in all, and they stand still under `prefers-reduced-motion`. Three.js is loaded with a dynamic `import()` so it only ships on this page, and browsers without WebGL get a link back to `/gallery`. Textures come from `textureUrl` in `lib/images.js` (1280px Cloudinary variant); Cloudinary sends CORS headers, which WebGL needs to use the image.
+
 ### Search
 
 `components/NavSearch.jsx` puts a search box in the nav on every page; it pushes to `/gallery?q=…`, which matches against artwork title, description, and artist display name. The `/api/artworks` list endpoint takes the same `q` parameter.
@@ -239,6 +243,7 @@ npm run dev                 # start the dev server
 npm run build               # production build
 npm run start               # run the production build
 npm test                    # Node's built-in test runner
+npm run lint                # ESLint (Next.js core-web-vitals rules plus ESLint recommended)
 npm run db:generate         # regenerate the Prisma client
 npm run db:migrate          # create/run a migration (local dev)
 npm run db:migrate:deploy   # apply existing migrations without prompting (production)
@@ -285,7 +290,7 @@ This targets **Vercel** (frontend + API routes) and a managed **Postgres** host 
 ## Known Follow-ups
 
 - `.env.example` is empty; it should list the variables above so `cp .env.example .env` gives you a real starting point.
-- There are no automated tests. `npm test` is wired to Node's test runner and waiting for its first file.
+- Automated tests cover the pure logic in `lib/` and `data/` (`*.test.js`, run by Node's built-in runner). There are no API, integration or end-to-end tests yet, and no CI runs `npm test` or `npm run lint` on pull requests.
 - Images render via plain `<img>` tags (through `components/LazyImage.jsx`) rather than `next/image`; swapping in `next/image` would add automatic resizing/optimization but requires reworking several CSS-driven aspect-ratio containers.
 - Artist payouts are still recorded manually by an admin (`Payout` model) rather than settled automatically. Razorpay Route can split a payment between the platform and the artist at capture time; that's the upgrade path once volume justifies applying for it.
 - There is no dedicated `Dispute` model; disputes reuse the `DISPUTED`/`REFUNDED` `OrderStatus` values (see `/admin/disputes` and `POST /api/orders/:id/dispute`), which is enough for a single order-level dispute but has no room for a reason, evidence, or a history of multiple back-and-forth resolutions.

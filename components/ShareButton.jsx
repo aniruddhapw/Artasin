@@ -17,6 +17,7 @@ function useShareUrl(path) {
 
   useEffect(() => {
     if (!configured || configured.includes("localhost")) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only value read after mount; reading it during render would mismatch the server HTML
       setOrigin(window.location.origin);
     }
   }, [configured]);
@@ -36,6 +37,7 @@ export function ShareButton({ path, title, text, label, className = "button butt
   // navigator.share only exists on secure origins and mostly on mobile, so the
   // check has to happen after mount rather than during render.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only capability, read after mount to avoid a hydration mismatch
     setCanUseNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
   }, []);
 

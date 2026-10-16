@@ -13,7 +13,7 @@ export default function NotFound() {
       <main className="page request-page">
         <header className="request-header">
           <h1>Page Not Found</h1>
-          <p>The page you're looking for doesn't exist or may have moved.</p>
+          <p>The page you&apos;re looking for doesn&apos;t exist or may have moved.</p>
         </header>
         <div className="stack-actions" style={{ maxWidth: 320 }}>
           <Link className="button button-primary" href="/gallery">

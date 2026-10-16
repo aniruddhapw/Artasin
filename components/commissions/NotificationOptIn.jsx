@@ -16,6 +16,7 @@ export function NotificationOptIn() {
     if (typeof Notification === "undefined") {
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only permission state, read after mount to avoid a hydration mismatch
     setPermission(Notification.permission);
     if (Notification.permission === "granted") {
       subscribeToPush().catch(() => {});

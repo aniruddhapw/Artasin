@@ -21,6 +21,7 @@ export function PhoneVerification({ phone, verified: initiallyVerified, onVerifi
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets local state when the account's number or status changes; a `key` on the parent would be the alternative
     setVerified(initiallyVerified);
     setRequest(null);
   }, [initiallyVerified, phone]);
