@@ -10,6 +10,8 @@
  * with a dynamic import() and stays out of every other page's bundle.
  */
 
+import { createVisitors } from "./visitors";
+
 const HALL_WIDTH = 12;
 const HALL_HEIGHT = 5.2;
 // Distance between neighbouring paintings on the same wall.
@@ -189,6 +191,18 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
     item.plaque.position.x = width / 2 + FRAME_BORDER + 0.42;
     item.plaque.position.y = -height / 2 + 0.14;
   }
+
+  const visitors = createVisitors(THREE, scene, {
+    hung,
+    reducedMotion,
+    glowTexture,
+    bounds: {
+      minX: -HALL_WIDTH / 2 + 1.2,
+      maxX: HALL_WIDTH / 2 - 1.2,
+      minZ: endZ + 1.2,
+      maxZ: ENTRANCE_Z - 1.5
+    }
+  });
 
   let loaded = 0;
   let disposed = false;
@@ -494,6 +508,8 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
       onSelect(null);
     }
 
+    visitors.update(dt, position, selectedIndex);
+
     camera.position.copy(position);
     camera.rotation.set(pitch, yaw, 0);
 
@@ -513,6 +529,7 @@ export function buildGallery(THREE, mount, paintings, { onSelect, onProgress, on
   return {
     focus,
     setInsets,
+    setVisitorsVisible: visitors.setVisible,
     dispose() {
       disposed = true;
       cancelAnimationFrame(frame);

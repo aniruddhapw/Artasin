@@ -24,6 +24,8 @@ export function VirtualGallery({ paintings }) {
   const [failed, setFailed] = useState(false);
   const [showHelp, setShowHelp] = useState(true);
   const [showList, setShowList] = useState(false);
+  const [showVisitors, setShowVisitors] = useState(true);
+  const showVisitorsRef = useRef(true);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -47,6 +49,7 @@ export function VirtualGallery({ paintings }) {
         });
         apiRef.current = api;
         api.setInsets(insetsRef.current);
+        api.setVisitorsVisible(showVisitorsRef.current);
       })
       .catch(() => setFailed(true));
 
@@ -74,6 +77,9 @@ export function VirtualGallery({ paintings }) {
       const bottom = Math.max(0, stageBox.bottom - covering.getBoundingClientRect().top);
       const insets = { top: Math.round(top), bottom: Math.round(bottom) };
       insetsRef.current = insets;
+      // The help and works panels open just below the buttons, however many
+      // rows those wrap onto.
+      stage.style.setProperty("--walk-top", `${insets.top}px`);
       apiRef.current?.setInsets(insets);
     }
     const observer = new ResizeObserver(measure);
@@ -83,6 +89,11 @@ export function VirtualGallery({ paintings }) {
     measure();
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    showVisitorsRef.current = showVisitors;
+    apiRef.current?.setVisitorsVisible(showVisitors);
+  }, [showVisitors]);
 
   const focus = useCallback(
     (index) => {
@@ -143,6 +154,14 @@ export function VirtualGallery({ paintings }) {
         </Link>
         <button className="walk-chip" onClick={() => setShowList((open) => !open)} type="button">
           {showList ? "Close list" : `All works (${paintings.length})`}
+        </button>
+        <button
+          aria-pressed={showVisitors}
+          className={showVisitors ? "walk-chip is-active" : "walk-chip"}
+          onClick={() => setShowVisitors((on) => !on)}
+          type="button"
+        >
+          Visitors
         </button>
         <button className="walk-chip" onClick={() => setShowHelp((open) => !open)} type="button">
           {showHelp ? "Hide help" : "Help"}
