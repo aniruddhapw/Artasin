@@ -1,0 +1,136 @@
+/**
+ * Turns an API error response into something a person can act on.
+ *
+ * Routes return Zod's `flatten()` output in `details`, but forms were only
+ * reading `payload.error` — which is always the generic "Validation failed".
+ * That left artists staring at a message that named neither the field nor the
+ * problem, on fields that may be scrolled off-screen.
+ *
+ * Validation runs on the server and its messages are written in English, so
+ * they arrive here as English prose. Rather than restructure every route to
+ * emit codes, the known messages are mapped to dictionary keys on the way out.
+ * Anything unrecognised falls through as-is: English is a worse experience than
+ * Marathi for these artists, but it is still readable, whereas a raw key is not.
+ */
+
+import type { TranslationKey } from "@/lib/i18n/dictionaries";
+import { english, type Translate } from "@/lib/i18n/shared";
+import type { ApiErrorBody, ValidationErrorDetails } from "@/types/api";
+
+// Typed so every value is checked against the dictionary at compile time.
+const FIELD_KEYS: Partial<Record<string, TranslationKey>> = {
+  title: "field.title",
+  slug: "field.slug",
+  description: "field.description",
+  category: "field.category",
+  medium: "field.medium",
+  style: "field.style",
+  dimensions: "field.dimensions",
+  year: "field.year",
+  price: "field.price",
+  shipsFrom: "field.shipsFrom",
+  authenticity: "field.authenticity",
+  edition: "field.edition",
+  status: "field.status",
+  media: "field.media",
+  imageUrl: "field.imageUrl",
+  email: "field.email",
+  password: "field.password",
+  firstName: "field.firstName",
+  lastName: "field.lastName",
+  phone: "field.phone",
+  displayName: "field.displayName",
+  requirements: "field.requirements",
+  artworkType: "field.artworkType",
+  rating: "field.rating"
+};
+
+const MESSAGE_KEYS: Partial<Record<string, TranslationKey>> = {
+  "is required": "error.required",
+  Required: "error.required",
+  "must be at least 3 characters": "error.min3",
+  "must be at least 8 characters": "error.min8",
+  "must be a valid phone number": "error.invalidPhone",
+  "Choose one from the list": "error.chooseFromList",
+  "An account with this email already exists. Sign in instead, or reset your password if you've forgotten it.":
+    "error.emailTaken",
+  'This email is already registered with Google. Use "Continue with Google" to sign in.': "error.emailTakenGoogle",
+  "Add a phone number first": "error.addPhoneFirst",
+  "Phone verification isn't available yet": "error.verificationUnavailable",
+  "Tick the box to let us use your photo": "error.promoConsent",
+  "must be greater than zero": "error.greaterThanZero",
+  "must be a real year": "error.realYear",
+  "cannot be in the future": "error.futureYear",
+  "can only use lowercase letters, numbers, and hyphens": "error.slugChars",
+  "Must be an absolute URL or a site-relative path": "error.absoluteUrl",
+  "is already taken": "error.alreadyTaken",
+  "Invalid email": "error.invalidEmail",
+  "Validation failed": "error.validationFailed",
+  "Internal server error": "error.serverError",
+  "Authentication required": "error.authRequired",
+  "You can attach up to 5 images": "error.maxImages",
+  "Add at least one photo": "error.noImages",
+  "Unsupported file type": "error.unsupportedFile",
+  "File exceeds the 8MB limit": "error.fileTooLarge",
+  "Upload failed": "error.uploadFailed",
+  "This reset link isn't recognised. Check that you opened the whole link from the email.": "error.resetLink.invalid",
+  "This reset link can't be used any more. If you've already set a new password, sign in with it. If not, use the link in your most recent reset email.":
+    "error.resetLink.used",
+  "This reset link has expired. Request a new one; it works for an hour.": "error.resetLink.expired",
+  "This unsubscribe link isn't valid. You can change email preferences from your account.": "unsubscribe.invalid"
+};
+
+function translateField(field: string, t: Translate): string {
+  const key = FIELD_KEYS[field];
+  return key ? t(key) : field;
+}
+
+function translateMessage(message: string, t: Translate): string {
+  const key = MESSAGE_KEYS[message];
+  return key ? t(key) : message;
+}
+
+/**
+ * @param payload   the parsed JSON error body
+ * @param fallback  already-translated text to show when nothing better exists
+ * @param t         translator from useT(); omit for English
+ */
+export function formatApiError(
+  payload: ApiErrorBody | null | undefined,
+  fallback = "Something went wrong",
+  t: Translate = english
+): string {
+  if (!payload) {
+    return fallback;
+  }
+
+  const details = validationDetails(payload.details);
+  const fieldErrors = details?.fieldErrors;
+  if (fieldErrors) {
+    const messages = Object.entries(fieldErrors)
+      .filter(([, errors]) => errors?.length)
+      .map(([field, errors]) => `${translateField(field, t)}: ${translateMessage(errors?.[0] ?? "", t)}`);
+    if (messages.length) {
+      return messages.join(". ");
+    }
+  }
+
+  const formErrors = details?.formErrors;
+  if (formErrors?.length) {
+    return formErrors.map((message) => translateMessage(message, t)).join(". ");
+  }
+
+  return payload.error ? translateMessage(payload.error, t) : fallback;
+}
+
+/** The Zod-flatten shape, when that is what `details` holds. */
+function validationDetails(details: unknown): Partial<ValidationErrorDetails> | null {
+  if (typeof details !== "object" || details === null) {
+    return null;
+  }
+  const { fieldErrors, formErrors } = details as Partial<ValidationErrorDetails>;
+  return {
+    fieldErrors: typeof fieldErrors === "object" && fieldErrors !== null ? fieldErrors : undefined,
+    formErrors: Array.isArray(formErrors) ? formErrors : undefined
+  };
+}

@@ -1,0 +1,64 @@
+"use client";
+
+import { useState } from "react";
+import { formatApiError } from "@/lib/formErrors";
+import { errorMessage } from "@/lib/errorMessage";
+
+/**
+ * Sends one of the admin reminder emails. `endpoint` is an admin route whose
+ * POST sends it and returns { sent, skipped }; `pending` is how many it will
+ * reach, shown on the button so nobody emails a crowd by accident.
+ */
+export function ReminderButton({ endpoint, pending }: { endpoint: string; pending: number }) {
+  const [confirming, setConfirming] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [result, setResult] = useState("");
+  const [error, setError] = useState("");
+
+  async function send() {
+    setIsSending(true);
+    setError("");
+    try {
+      const response = await fetch(endpoint, { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(formatApiError(payload, "Could not send the reminder"));
+      }
+      const skippedNote = payload.skipped
+        ? ` ${payload.skipped} demo ${payload.skipped === 1 ? "account was" : "accounts were"} skipped — their addresses can't receive mail.`
+        : "";
+      setResult(
+        `Reminder sent to ${payload.sent} ${payload.sent === 1 ? "person" : "people"}.${skippedNote}`
+      );
+    } catch (sendError) {
+      setError(errorMessage(sendError));
+    } finally {
+      setIsSending(false);
+      setConfirming(false);
+    }
+  }
+
+  if (result) {
+    return <p className="account-success" role="status">{result}</p>;
+  }
+
+  return (
+    <div className="artwork-status-actions">
+      {confirming ? (
+        <>
+          <button className="small-outline" disabled={isSending} onClick={send} type="button">
+            {isSending ? "Sending…" : `Confirm — email ${pending}`}
+          </button>
+          <button className="small-outline" disabled={isSending} onClick={() => setConfirming(false)} type="button">
+            Cancel
+          </button>
+        </>
+      ) : (
+        <button className="small-outline" onClick={() => setConfirming(true)} type="button">
+          Send reminder to {pending}
+        </button>
+      )}
+      {error ? <p className="auth-error" role="alert">{error}</p> : null}
+    </div>
+  );
+}

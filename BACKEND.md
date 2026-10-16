@@ -58,15 +58,15 @@ npm run dev
 
 ## Integration Notes
 
-Payments are modeled through `Order` and `Transaction`, created via the provider abstraction in `lib/payments.js` (see `README.md`). The current default provider (`manual`) settles immediately on checkout confirmation. Stripe can be added by implementing the `stripe` provider's `createIntent`/`confirmIntent` and setting `PAYMENT_PROVIDER=stripe` — no route or UI changes required.
+Payments are modeled through `Order` and `Transaction`, created via the provider abstraction in `lib/payments.ts` (see `README.md`). The current default provider (`manual`) settles immediately on checkout confirmation. Stripe can be added by implementing the `stripe` provider's `createIntent`/`confirmIntent` and setting `PAYMENT_PROVIDER=stripe` — no route or UI changes required.
 
-File uploads go through the storage abstraction in `lib/storage.js` (see `README.md`), defaulting to local disk under `public/uploads/`.
+File uploads go through the storage abstraction in `lib/storage.ts` (see `README.md`), defaulting to local disk under `public/uploads/`.
 
 Meetings are modeled through `Meeting`. The current provider label is `manual`; Google Meet, Zoom, or Calendar integration can be added behind the same route.
 
 ### Phone verification over WhatsApp
 
-People prove their phone number is theirs by sending a code *to* Artasin on WhatsApp (`lib/whatsapp.js`, `lib/phoneVerification.js`). Receiving messages, and replying within 24 hours, is free on Meta's WhatsApp Cloud API, so verifications cost nothing; an SMS code would cost money on every send.
+People prove their phone number is theirs by sending a code *to* Artasin on WhatsApp (`lib/whatsapp.ts`, `lib/phoneVerification.ts`). Receiving messages, and replying within 24 hours, is free on Meta's WhatsApp Cloud API, so verifications cost nothing; an SMS code would cost money on every send.
 
 It's switched off until `WHATSAPP_BUSINESS_NUMBER` is set. While off, the verify page, the account-page button and the studio banner all stay hidden.
 
@@ -97,7 +97,7 @@ Its settings in Vercel are Preview-scoped to the `dev` branch:
 - `JWT_SECRET`: its own, so production sessions don't work there and vice versa.
 - `EMAIL_PROVIDER=console`: email is logged, never sent, so nobody gets mail from dev.
 - `NEXT_PUBLIC_SITE_URL`: the dev URL above.
-- `MIGRATE_ON_DEPLOY=true`: runs pending migrations against the dev database on each deploy (scripts/migrate-on-deploy.js).
+- `MIGRATE_ON_DEPLOY=true`: runs pending migrations against the dev database on each deploy (scripts/migrate-on-deploy.ts).
 
 Image uploads need the Cloudinary variables added to Preview (dev) as well. They're stored as sensitive in Vercel, so they have to be re-entered rather than copied. Google sign-in, push notifications and WhatsApp aren't set up there.
 
@@ -105,7 +105,7 @@ To try a change on dev, merge it into `dev` and push. To refresh the data from p
 
 ### Taking payment directly (offline orders)
 
-Until Razorpay is set up, the live site takes orders as **requests** and payment is arranged with the buyer outside the site (`PAYMENT_PROVIDER=offline`, see `lib/paymentMode.js`). On production, `manual` (or an unset `PAYMENT_PROVIDER`) is treated as `offline`, because `manual` confirms any order without taking money. Setting `PAYMENT_PROVIDER=razorpay` with its keys switches it off.
+Until Razorpay is set up, the live site takes orders as **requests** and payment is arranged with the buyer outside the site (`PAYMENT_PROVIDER=offline`, see `lib/paymentMode.ts`). On production, `manual` (or an unset `PAYMENT_PROVIDER`) is treated as `offline`, because `manual` confirms any order without taking money. Setting `PAYMENT_PROVIDER=razorpay` with its keys switches it off.
 
 1. The buyer checks out. The order is created as **Awaiting Payment**; nothing is marked paid or sold, and the piece stays listed.
 2. The team gets an email with the buyer's name, email and phone, the shipping address, each piece with its artist's contact details and the commission split, and a warning if another order is open for the same piece. The buyer gets "We've received your order. We'll contact you shortly."
