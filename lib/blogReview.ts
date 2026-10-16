@@ -1,4 +1,11 @@
-import type { BlogPostStatus, Prisma } from "@prisma/client";
+import type { BlogPostStatus } from "@prisma/client";
+
+/** Plain values, so they spread into a create or an update alike. */
+export interface StatusTimestamps {
+  submittedAt?: Date;
+  reviewNote?: null;
+  publishedAt?: Date;
+}
 
 /**
  * Journal posts are read by collectors as Artasin's own voice, so an admin
@@ -69,8 +76,8 @@ export function statusTimestamps({
   next: BlogPostStatus;
   publishedAt?: Date | null;
   now?: Date;
-}): Pick<Prisma.BlogPostUpdateInput, "submittedAt" | "reviewNote" | "publishedAt"> {
-  const data: Pick<Prisma.BlogPostUpdateInput, "submittedAt" | "reviewNote" | "publishedAt"> = {};
+}): StatusTimestamps {
+  const data: StatusTimestamps = {};
   if (next === "PENDING_REVIEW" && current !== "PENDING_REVIEW") {
     data.submittedAt = now;
     // A fresh submission answers the last review; the note has served its purpose.

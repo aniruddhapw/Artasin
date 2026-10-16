@@ -9,6 +9,15 @@ export const mediaUrlSchema = z
     message: "Must be an absolute URL or a site-relative path"
   });
 
+/**
+ * What a route's guard helper returns: an error response to send back as-is,
+ * or the values it loaded. After `if (error) return error;` the values are
+ * fully typed, even when destructured.
+ */
+export type Guarded<T> =
+  | ({ error: NextResponse<ApiErrorBody> } & { [K in keyof T]?: undefined })
+  | ({ error?: undefined } & T);
+
 export function ok<T>(data: T, init: ResponseInit = {}) {
   return NextResponse.json(data, init);
 }
