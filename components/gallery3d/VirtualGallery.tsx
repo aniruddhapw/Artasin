@@ -105,7 +105,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
     apiRef.current?.setVisitorsVisible(showVisitors);
   }, [showVisitors]);
 
-  // Stops in the hall: every painting, then the custom-orders desk at the end.
+  // Stops on the tour: every painting, then the custom-orders desk at the end.
   const deskIndex = paintings.length;
   const stops = paintings.length + 1;
 
@@ -203,7 +203,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
               <strong>Visit a painting</strong> — click it, or use Next / Previous
             </li>
             <li>
-              <strong>Custom orders</strong> — visit the desk at the end of the hall
+              <strong>Custom orders</strong> — visit the desk in the reception at the far end
             </li>
           </ul>
         </div>

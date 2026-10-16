@@ -1,13 +1,14 @@
 /**
  * Other visitors for the virtual gallery: faceless, mannequin-like figures
- * built from simple shapes, who wander between the paintings, stop to look
- * for a while, sometimes in twos, and keep out of the visitor's way.
+ * built from simple shapes, who wander the corridors between the paintings,
+ * stop to look for a while, sometimes in twos, and keep out of the visitor's way.
  *
  * Everything is generated in code (no model downloads). Geometries and
  * materials are shared between figures; scene.ts disposes them with the scene.
  */
 
 import type * as THREE_NS from "three";
+import type { Point } from "@/lib/galleryLayout";
 import type { NonEmptyArray } from "@/types/utils";
 
 type Three = typeof THREE_NS;
@@ -15,14 +16,19 @@ type Three = typeof THREE_NS;
 /** A painting on the wall, as far as visitors care: where it is and which way it faces. */
 interface PaintingSpot {
   group: THREE_NS.Object3D;
-  /** +1 on the left wall (facing +X), -1 on the right. */
-  normalX: number;
+  /** The wall's normal, out into the corridor. */
+  normal: Point;
 }
 
 export interface VisitorOptions {
   hung: readonly PaintingSpot[];
-  /** The floor area visitors keep to. */
-  bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+  /** How to get about the floor plan (lib/galleryLayout.ts). */
+  walk: {
+    /** The points to pass through from one place to another, ending at `to`. */
+    route(from: Point, to: Point): Point[];
+    /** The nearest place at least `radius` clear of walls and the desk. */
+    collide(point: Point, radius: number): Point;
+  };
   reducedMotion: boolean;
   /** A soft radial texture, reused for the shadow under each figure. */
   glowTexture: THREE_NS.Texture;
@@ -30,8 +36,25 @@ export interface VisitorOptions {
   desk?: { x: number; z: number };
 }
 
+/**
+ * The floor between a painting and the viewer looking at it, which passers-by
+ * keep out of: from the wall out to just past the viewer, as wide as the
+ * painting plus a margin.
+ */
+export interface ClearView {
+  /** The painting's centre on the wall. */
+  x: number;
+  z: number;
+  /** The wall's normal, towards the viewer. */
+  nx: number;
+  nz: number;
+  halfWidth: number;
+  /** How far out from the wall the viewer stands. */
+  depth: number;
+}
+
 export interface Visitors {
-  update(dt: number, viewer: { x: number; z: number }, focusedIndex: number | null): void;
+  update(dt: number, viewer: { x: number; z: number }, focusedIndex: number | null, clearView: ClearView | null): void;
   setVisible(visible: boolean): void;
   count: number;
   /** The representative's meshes, so clicking them opens the desk. */
@@ -74,6 +97,8 @@ interface Visitor extends Figure {
   timer: number;
   painting: number;
   target: THREE_NS.Vector3;
+  /** Corridor waypoints still to walk through, ending at target. */
+  path: Point[];
   /** 0 standing still, 1 walking; eases between the two. */
   blend: number;
   /** Already stepped aside for the viewer at this painting. */
@@ -100,6 +125,8 @@ const WALK_SPEED: Range = [0.75, 1.15];
 const LOOK_TIME: Range = [5, 15];
 const PERSONAL_SPACE = 0.75;
 const VIEWER_SPACE = 1.3;
+/** How close a visitor's middle comes to a wall. */
+const BODY_RADIUS = 0.35;
 
 /** A [min, max] range to pick a random value from. */
 type Range = readonly [number, number];
@@ -107,7 +134,7 @@ type Range = readonly [number, number];
 export function createVisitors(
   THREE: Three,
   scene: THREE_NS.Scene,
-  { hung, bounds, reducedMotion, glowTexture, desk }: VisitorOptions
+  { hung, walk, reducedMotion, glowTexture, desk }: VisitorOptions
 ): Visitors {
   const count = hung.length ? Math.min(Math.max(Math.round(hung.length / 3), 3), 12) : 0;
 
@@ -301,10 +328,12 @@ export function createVisitors(
       timer: between(LOOK_TIME) * random(),
       painting: index % hung.length,
       target: new THREE.Vector3(),
+      path: [],
       blend: 0
     };
     chooseSpot(visitor, visitor.painting);
     root.position.copy(visitor.target);
+    visitor.path = [];
     visitor.heading = visitor.faceHeading;
     return visitor;
   }
@@ -319,19 +348,21 @@ export function createVisitors(
     const company = visitors.filter((other) => other !== visitor && other.painting === paintingIndex).length;
     const along = (company ? (company % 2 ? 1 : -1) * (0.55 + 0.25 * company) : 0) + (random() - 0.5) * 0.5;
     const back = between([1.5, 2.4]);
+    const { x: nx, z: nz } = item.normal;
     visitor.painting = paintingIndex;
-    visitor.target.set(
-      item.group.position.x + item.normalX * back,
-      0,
-      item.group.position.z + along
+    // Out from the wall along its normal, and sideways along the wall.
+    const spot = walk.collide(
+      { x: item.group.position.x + nx * back - nz * along, z: item.group.position.z + nz * back + nx * along },
+      BODY_RADIUS
     );
-    clamp(visitor.target);
+    visitor.target.set(spot.x, 0, spot.z);
+    visitor.path = walk.route({ x: visitor.root.position.x, z: visitor.root.position.z }, spot);
     // Face the wall the painting hangs on (figures are built facing +Z).
-    visitor.faceHeading = Math.atan2(-item.normalX, 0);
+    visitor.faceHeading = Math.atan2(-nx, -nz);
   }
 
   function nextPainting(visitor: Visitor): number {
-    // Mostly the neighbours, sometimes somewhere further down the hall.
+    // Mostly the neighbours, sometimes somewhere further off.
     const near = random() < 0.75;
     let next = near
       ? visitor.painting + (random() < 0.5 ? -1 : 1) * (1 + Math.floor(random() * 3))
@@ -344,14 +375,8 @@ export function createVisitors(
     return next;
   }
 
-  function clamp(vector: THREE_NS.Vector3): THREE_NS.Vector3 {
-    vector.x = Math.min(Math.max(vector.x, bounds.minX), bounds.maxX);
-    vector.z = Math.min(Math.max(vector.z, bounds.minZ), bounds.maxZ);
-    return vector;
-  }
-
   // The ARTASIN representative behind the custom-orders desk: dressed in the
-  // house black with a terracotta scarf and a name badge, facing the hall.
+  // house black with a terracotta scarf and a name badge, facing the reception.
   const representative = desk ? buildRepresentative(desk) : null;
 
   function buildRepresentative({ x, z }: { x: number; z: number }): Representative {
@@ -411,7 +436,7 @@ export function createVisitors(
   const push = new THREE.Vector3();
   const offset = new THREE.Vector3();
 
-  function update(dt: number, viewer: { x: number; z: number }, focusedIndex: number | null) {
+  function update(dt: number, viewer: { x: number; z: number }, focusedIndex: number | null, clearView: ClearView | null) {
     focused = focusedIndex;
     if (representative) {
       updateRepresentative(representative, dt, viewer);
@@ -438,9 +463,15 @@ export function createVisitors(
 
       let moving = false;
       if (visitor.state === "walk" && !reducedMotion) {
-        desired.subVectors(visitor.target, root.position).setY(0);
+        // Head for the next corridor waypoint; the last one is the spot.
+        let waypoint = visitor.path[0];
+        while (waypoint && Math.hypot(waypoint.x - root.position.x, waypoint.z - root.position.z) < 0.1) {
+          visitor.path.shift();
+          waypoint = visitor.path[0];
+        }
+        desired.set((waypoint?.x ?? root.position.x) - root.position.x, 0, (waypoint?.z ?? root.position.z) - root.position.z);
         const distance = desired.length();
-        if (distance < 0.08) {
+        if (!waypoint) {
           visitor.state = "look";
           visitor.timer = between(LOOK_TIME);
         } else {
@@ -462,10 +493,24 @@ export function createVisitors(
           if (viewerGap > 0.001 && viewerGap < VIEWER_SPACE) {
             push.addScaledVector(offset, (2 * (VIEWER_SPACE - viewerGap)) / (viewerGap * VIEWER_SPACE));
           }
+          // Passing someone looking at a painting, go round behind them
+          // rather than between them and it.
+          if (clearView) {
+            const rx = root.position.x - clearView.x;
+            const rz = root.position.z - clearView.z;
+            const out = rx * clearView.nx + rz * clearView.nz;
+            const across = rx * -clearView.nz + rz * clearView.nx;
+            if (Math.abs(across) < clearView.halfWidth + 0.9 && out > -0.2 && out < clearView.depth + 0.5) {
+              push.x += clearView.nx * 3;
+              push.z += clearView.nz * 3;
+            }
+          }
           desired.add(push).normalize();
           const step = Math.min(visitor.speed * dt, distance);
           root.position.addScaledVector(desired, step);
-          clamp(root.position);
+          const clear = walk.collide({ x: root.position.x, z: root.position.z }, BODY_RADIUS);
+          root.position.x = clear.x;
+          root.position.z = clear.z;
           visitor.heading += wrapAngle(Math.atan2(desired.x, desired.z) - visitor.heading) * Math.min(dt * 6, 1);
           moving = true;
         }
