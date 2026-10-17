@@ -88,8 +88,10 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
       const insets = { top: Math.round(top), bottom: Math.round(bottom) };
       insetsRef.current = insets;
       // The help and works panels open just below the buttons, however many
-      // rows those wrap onto.
+      // rows those wrap onto, and on phones the works list stops above the
+      // card and Previous / Next.
       stage.style.setProperty("--walk-top", `${insets.top}px`);
+      stage.style.setProperty("--walk-bottom", `${insets.bottom}px`);
       apiRef.current?.setInsets(insets);
     }
     const observer = new ResizeObserver(measure);
