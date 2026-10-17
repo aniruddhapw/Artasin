@@ -53,3 +53,41 @@ export async function sendBroadcast({ name, subject, html }: { name: string } & 
   }
   return { sent: true, id: data?.id };
 }
+
+export interface SentBroadcast {
+  id: string;
+  status: string;
+  sentAt: string | null;
+}
+
+/**
+ * The broadcast with this name, if one has already gone out or is on its way.
+ * Resend's own record is the authority, so a one-off announcement cannot be
+ * sent twice even from two admin tabs or after a redeploy. Drafts don't count.
+ */
+export async function findSentBroadcast(name: string): Promise<SentBroadcast | null> {
+  const config = enabledNewsletterConfig();
+  if (!config) {
+    return null;
+  }
+  const resend = new Resend(config.apiKey);
+  const wanted = broadcastName(name);
+  let after: string | undefined;
+  // Newest first; an announcement this check guards is recent, so a few pages is plenty.
+  for (let page = 0; page < 10; page += 1) {
+    const { data, error } = await resend.broadcasts.list(after ? { limit: 100, after } : { limit: 100 });
+    if (error) {
+      throw new Error(error.message || "Could not list broadcasts");
+    }
+    const match = data?.data.find((broadcast) => broadcast.name === wanted && broadcast.status !== "draft");
+    if (match) {
+      return { id: match.id, status: match.status, sentAt: match.sent_at ?? null };
+    }
+    const last = data?.data.at(-1);
+    if (!data?.has_more || !last) {
+      return null;
+    }
+    after = last.id;
+  }
+  return null;
+}

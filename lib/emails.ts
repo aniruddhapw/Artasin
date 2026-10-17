@@ -301,6 +301,28 @@ export function newBlogPostEmail(post: Pick<BlogPost, "title" | "slug" | "excerp
 }
 
 /**
+ * Announces the walk-through 3D gallery (/gallery/walk) to newsletter
+ * subscribers, as a Broadcast; see lib/announcements.ts.
+ */
+export function galleryLaunchEmail(): EmailContent {
+  return {
+    subject: "Step inside: the Artasin 3D gallery is open",
+    html: layout(
+      "Walk Through Our Gallery",
+      `<p>Hello {{{contact.first_name|there}}},</p>
+       <p>You can now explore the Artasin collection as if you were there. Our new 3D gallery hangs every painting
+       on the walls of a virtual gallery. Wander its corridors, stop in front of any work to see it up close, and
+       find the artist, details and price with one click.</p>
+       <p>Other visitors stroll the rooms with you. At the far end, our custom-orders desk is ready if you'd like a
+       piece made just for you.</p>
+       <p>It works on your phone or computer, with no download needed.</p>
+       ${button("Enter the gallery", `${siteUrl}/gallery/walk`)}`,
+      { unsubscribe: true }
+    )
+  };
+}
+
+/**
  * Sent once to someone subscribed by default rather than by ticking a box,
  * so they hear about it from us before the first update arrives, with a way
  * out that takes one click.

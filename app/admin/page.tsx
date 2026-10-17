@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { GalleryAnnouncementPanel } from "@/components/admin/GalleryAnnouncementPanel";
 import { NewsletterNoticePanel } from "@/components/admin/NewsletterNoticePanel";
 import { newsletterEnabled } from "@/lib/newsletter";
 import { countNeverAsked } from "@/lib/newsletterNotice";
@@ -82,6 +83,8 @@ export default async function AdminDashboardPage() {
         </header>
 
         {neverAskedCount ? <NewsletterNoticePanel count={neverAskedCount} /> : null}
+
+        <GalleryAnnouncementPanel />
 
         <div className="kpi-grid admin-kpi-grid">
           <Kpi caption={`${settledOrders.length} settled orders`} title="Gross Merchandise Value" value={serializeMoney(gmvCents).formatted} />

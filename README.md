@@ -202,6 +202,11 @@ message to Resend and lets the subscriber list decide who receives it. `topicId`
 and mandatory here — omit it and Resend mails every subscribed contact in the segment without consulting topic
 preferences at all, which is the behaviour this whole arrangement exists to stop.
 
+One-off announcements go out the same way, from a panel on `/admin` (`lib/announcements.ts`,
+`app/api/admin/announcements/`). The first is the 3D gallery launch: an admin can preview it, send themselves a
+test, and then send it to the list. Each announcement has a fixed Broadcast name and `findSentBroadcast` checks
+Resend for it before sending, so it cannot go out twice, even from two tabs or after a redeploy.
+
 Two consequences worth knowing:
 
 - **With the three settings absent, publishing a post announces nothing.** There is no fallback to mailing the
