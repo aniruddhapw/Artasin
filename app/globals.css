@@ -1770,6 +1770,17 @@ textarea::placeholder {
   color: var(--muted);
 }
 
+.footer-icons a {
+  display: inline-flex;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.footer-icons a:hover,
+.footer-icons a:focus-visible {
+  color: var(--text);
+}
+
 .footer--simple .footer-brand {
   grid-column: span 4;
 }
@@ -1785,8 +1796,11 @@ textarea::placeholder {
   margin: 0;
   padding: 0;
   border: 0;
+  /* Icons above the copyright line, both against the right edge. */
+  flex-direction: column-reverse;
   justify-content: end;
   align-items: end;
+  gap: 16px;
 }
 
 .auth-page {
@@ -2488,6 +2502,11 @@ textarea::placeholder {
 
   .footer-links {
     justify-content: start;
+  }
+
+  /* Stacked under the links, so line up with them on the left. */
+  .footer--simple .footer-bottom {
+    align-items: start;
   }
 }
 
