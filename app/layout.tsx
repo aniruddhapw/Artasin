@@ -4,6 +4,7 @@ import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { RouteProgress } from "@/components/RouteProgress";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { getTranslations } from "@/lib/i18n";
+import { SOCIAL_LINKS } from "@/lib/socialLinks";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 const siteDescription =
@@ -47,18 +48,30 @@ export const viewport = {
   colorScheme: "light"
 };
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "ARTASIN",
-  url: siteUrl,
-  description: siteDescription,
-  potentialAction: {
-    "@type": "SearchAction",
-    target: `${siteUrl}/gallery?q={search_term_string}`,
-    "query-input": "required name=search_term_string"
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "ARTASIN",
+    url: siteUrl,
+    description: siteDescription,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${siteUrl}/gallery?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "ARTASIN",
+    url: siteUrl,
+    logo: `${siteUrl}/brand/artasin-lockup.png`,
+    email: "support@artasin.in",
+    // Tells search engines these profiles belong to the site.
+    sameAs: SOCIAL_LINKS.map((link) => link.href)
   }
-};
+];
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const { locale, messages } = await getTranslations();
