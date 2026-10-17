@@ -6569,3 +6569,18 @@ textarea::placeholder {
     width: auto;
   }
 }
+
+/* /admin: preview of the 3D gallery announcement email */
+.announcement-preview {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.announcement-preview iframe {
+  width: 100%;
+  max-width: 640px;
+  height: 560px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
