@@ -6628,6 +6628,14 @@ textarea::placeholder {
   font-size: 18px;
 }
 
+.walk-helper-back,
+.walk-card-ask {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
 .walk-helper-back {
   color: var(--muted);
   font-size: 13px;
@@ -6754,12 +6762,42 @@ textarea::placeholder {
 }
 
 @media (max-width: 720px) {
+  /* A sheet across the bottom of the screen, in place of the painting card
+     and the Previous/Next buttons, with the painting framed above it. */
   .walk-helper {
-    top: calc(var(--walk-top, 52px) + 8px);
-    left: 12px;
-    right: 12px;
-    bottom: 72px;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
     width: auto;
+    max-height: min(62%, calc(100% - var(--walk-top, 52px) - 96px));
+    border-width: 1px 0 0;
+    box-shadow: 0 -12px 32px rgba(26, 28, 28, 0.12);
+  }
+
+  .walk-stage.is-helper-open .walk-bottombar {
+    display: none;
+  }
+
+  .walk-helper-head {
+    padding: 12px 16px;
+  }
+
+  .walk-helper-body {
+    gap: 10px;
+    padding: 14px 16px 20px;
+  }
+
+  .walk-helper-say {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .walk-helper-choices button,
+  .walk-helper-choices a {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
   }
 
   .walk-card-ask {

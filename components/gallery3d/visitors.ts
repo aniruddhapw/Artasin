@@ -143,6 +143,8 @@ const WALK_SPEED: Range = [0.75, 1.15];
 const LOOK_TIME: Range = [5, 15];
 const PERSONAL_SPACE = 0.75;
 const VIEWER_SPACE = 1.3;
+/** Closer to the camera than this, a visitor is hidden rather than drawn as a blur. */
+const NEAR_VIEWER = 1;
 /** How close a visitor's middle comes to a wall. */
 const BODY_RADIUS = 0.35;
 
@@ -640,6 +642,9 @@ export function createVisitors(
         visitor.heading += wrapAngle(visitor.faceHeading - visitor.heading) * Math.min(dt * 3, 1);
       }
       root.rotation.y = visitor.heading;
+      // Someone passing within arm's reach of the camera would fill the
+      // screen as a blur, so they step out of sight until they are by.
+      root.visible = shown && Math.hypot(root.position.x - viewer.x, root.position.z - viewer.z) > NEAR_VIEWER;
 
       // Blend between the walk cycle and standing still.
       visitor.blend += ((moving ? 1 : 0) - visitor.blend) * Math.min(dt * 5, 1);
@@ -661,7 +666,9 @@ export function createVisitors(
     }
   }
 
+  let shown = true;
   function setVisible(visible: boolean) {
+    shown = visible;
     for (const visitor of visitors) {
       visitor.root.visible = visible;
     }
