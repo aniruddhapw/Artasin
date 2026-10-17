@@ -89,7 +89,7 @@ export function buildGallery(
   THREE: Three,
   mount: HTMLElement,
   paintings: readonly GalleryPainting[],
-  { onSelect, onProgress, onMove }: GalleryCallbacks
+  { onSelect, onProgress, onMove, onHelper }: GalleryCallbacks
 ): GalleryApi {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -314,6 +314,8 @@ export function buildGallery(
     reducedMotion,
     glowTexture,
     desk: { x: layout.desk.x + 0.35, z: layout.desk.z - 0.75 },
+    // A few steps in from the entrance, to one side of the way in.
+    helper: { x: layout.start.x + 2, z: layout.start.z - 5 },
     walk: {
       route: (from, to) => route(layout, from, to),
       collide: (point, radius) => collide(layout, point, radius)
@@ -323,6 +325,10 @@ export function buildGallery(
   for (const mesh of visitors.representativeMeshes) {
     mesh.userData.index = DESK_INDEX;
     pickables.push(mesh);
+  }
+  for (const object of visitors.helperObjects) {
+    object.userData.helper = true;
+    pickables.push(object);
   }
 
   let loaded = 0;
@@ -535,7 +541,10 @@ export function buildGallery(
   // What is under the pointer: a painting or the desk (by index), a spot on
   // the floor, or nothing. Walls in the way hide whatever is behind them.
   const pickTargets: THREE_NS.Object3D[] = [...pickables, ...occluders, floor];
-  function pickAt(clientX: number, clientY: number): { index: number } | { floor: THREE_NS.Vector3 } | null {
+  function pickAt(
+    clientX: number,
+    clientY: number
+  ): { index: number } | { helper: true } | { floor: THREE_NS.Vector3 } | null {
     const rect = canvas.getBoundingClientRect();
     ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(ndc, camera);
@@ -546,6 +555,9 @@ export function buildGallery(
     const index: unknown = hit.object.userData.index;
     if (typeof index === "number") {
       return { index };
+    }
+    if (hit.object.userData.helper === true) {
+      return { helper: true };
     }
     return hit.object === floor ? { floor: hit.point } : null;
   }
@@ -593,6 +605,8 @@ export function buildGallery(
     const hit = pickAt(event.clientX, event.clientY);
     if (hit && "index" in hit) {
       focus(hit.index);
+    } else if (hit && "helper" in hit) {
+      onHelper();
     } else if (hit) {
       noteMove();
       const spot = collide(layout, flat(hit.floor), WALL_MARGIN);
@@ -741,7 +755,7 @@ export function buildGallery(
     if (hover.dirty && pointer.id === null) {
       hover.dirty = false;
       const target = pickAt(hover.x, hover.y);
-      const over = Boolean(target && "index" in target);
+      const over = Boolean(target && ("index" in target || "helper" in target));
       if (over !== hovering) {
         hovering = over;
         canvas.style.cursor = over ? "pointer" : "";
