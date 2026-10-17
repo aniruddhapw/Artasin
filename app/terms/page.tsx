@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { DELIVERY_DAYS, RETURN_DAYS } from "@/lib/policies";
 
 export const metadata = {
   title: "Terms of Service",
@@ -9,7 +10,7 @@ export const metadata = {
   alternates: { canonical: "/terms" }
 };
 
-const LAST_UPDATED = "8 September 2026";
+const LAST_UPDATED = "18 October 2026";
 
 export default function TermsPage() {
   return (
@@ -93,10 +94,15 @@ export default function TermsPage() {
 
             <h3>Fulfilment</h3>
             <p>
-              When an order is paid, you are responsible for packing the work securely and shipping it within a
-              reasonable time, and for keeping the order status current in your Studio (Start Fulfilment → Mark
-              Shipped → Mark Delivered). Persistent failure to fulfil orders may result in refunds to buyers,
-              removal of listings, or account termination.
+              When an order is paid, you are responsible for packing the work securely and shipping it promptly, so
+              that orders within India reach the buyer within {DELIVERY_DAYS} days (see{" "}
+              <Link href="#delivery-returns">Delivery and returns</Link>), and for keeping the order status current
+              in your Studio (Start Fulfilment → Mark Shipped → Mark Delivered). Persistent failure to fulfil orders
+              may result in refunds to buyers, removal of listings, or account termination.
+            </p>
+            <p>
+              Buyers may return a listed work within {RETURN_DAYS} days of delivery. When a return is accepted, the
+              work is sent back to you, the buyer is refunded, and no commission or payout applies to that sale.
             </p>
 
             <h3>Fees and payouts</h3>
@@ -133,15 +139,33 @@ export default function TermsPage() {
               </li>
               <li>
                 Artwork is unique. Once an order is paid and the artist has begun fulfilment, it cannot generally
-                be cancelled — but see the dispute process in section 8.
-              </li>
-              <li>
-                Delivery times depend on the artist and destination. Order status updates and email notifications
-                will keep you informed.
+                be cancelled — but you can return it after delivery (below), and see the dispute process in
+                section 8.
               </li>
               <li>
                 Buying a physical work does <strong>not</strong> transfer its copyright. You may not reproduce,
                 publish, or commercially exploit the work without the artist&rsquo;s separate written permission.
+              </li>
+            </ul>
+
+            <h3 id="delivery-returns">Delivery and returns</h3>
+            <p>
+              Orders within India are delivered within <strong>{DELIVERY_DAYS} days</strong> of the order being
+              confirmed. Delivery times for international orders depend on the artist and destination. Order
+              status updates and email notifications will keep you informed.
+            </p>
+            <p>
+              You can return any artwork bought from a listing within <strong>{RETURN_DAYS} days</strong> of
+              delivery. To start a return, use <strong>Report an Issue</strong> on the order page or email{" "}
+              <a href="mailto:support@artasin.in">support@artasin.in</a> within that time, and we will confirm how
+              to send the work back.
+            </p>
+            <ul>
+              <li>The work must come back in the condition it arrived in, in its original packing where possible.</li>
+              <li>We refund the full price once the artwork has been received back and checked.</li>
+              <li>
+                Commissioned work is made specifically for you, so it is covered by section 7 rather than by this
+                return policy.
               </li>
             </ul>
           </section>

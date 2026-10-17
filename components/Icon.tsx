@@ -84,6 +84,20 @@ const paths = {
       <path d="M4 12h16" />
       <path d="M4 17h16" />
     </>
+  ),
+  truck: (
+    <>
+      <path d="M3 6h11v10H3z" />
+      <path d="M14 10h4l3 3v3h-7" />
+      <circle cx="7" cy="18" r="1.8" />
+      <circle cx="17" cy="18" r="1.8" />
+    </>
+  ),
+  returns: (
+    <>
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+    </>
   )
 };
 

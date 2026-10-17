@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArtworkGallery } from "@/components/artwork/ArtworkGallery";
 import { Footer } from "@/components/Footer";
+import { Icon } from "@/components/Icon";
 import { ShareButton } from "@/components/ShareButton";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { LazyImage } from "@/components/LazyImage";
@@ -12,6 +13,7 @@ import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 import { createTranslator, translateOr } from "@/lib/i18n";
 import { galleryImages, ogUrl, thumbUrl } from "@/lib/images";
+import { DELIVERY_DAYS, RETURN_DAYS } from "@/lib/policies";
 
 // The rest of this page is in English, so the style label is too.
 const t = createTranslator("en");
@@ -213,6 +215,27 @@ export default async function ArtworkDetailPage({ params }: PageProps<"/artwork/
                 title={artwork.title}
               />
             </div>
+            {isAvailable ? (
+              <ul className="buyer-promises">
+                <li>
+                  <Icon name="truck" />
+                  <div>
+                    <strong>Delivered within {DELIVERY_DAYS} days</strong>
+                    <span>Packed and shipped by the artist, anywhere in India.</span>
+                  </div>
+                </li>
+                <li>
+                  <Icon name="returns" />
+                  <div>
+                    <strong>Easy {RETURN_DAYS}-day returns</strong>
+                    <span>
+                      Not quite right? Return it within {RETURN_DAYS} days of delivery for a full refund.{" "}
+                      <Link href="/terms#delivery-returns">Details</Link>
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            ) : null}
             {artwork.description ? (
               <div className="artist-note">
                 <h2>Description</h2>
