@@ -25,6 +25,7 @@ import {
   type WallSlot
 } from "@/lib/galleryLayout";
 import type { GalleryApi, GalleryCallbacks, GalleryInsets, GalleryPainting } from "./types";
+import { loadVisitorModels, visitorModelBudget } from "./crowd";
 import { loadStaffModels, shouldLoadStaffModels } from "./staff";
 import { createVisitors, type ClearView } from "./visitors";
 
@@ -334,8 +335,9 @@ export function buildGallery(
   }
 
   // The staff's realistic models (~1.5 MB) come after the paintings, so they
-  // never hold up the gallery; until then, or without them, the simple
-  // figures stand in.
+  // never hold up the gallery, and the other visitors' avatars (up to
+  // ~0.85 MB, less on small devices) after those; until then, or without
+  // them, the simple figures stand in.
   let staffRequested = false;
   function requestStaffModels() {
     if (staffRequested || !shouldLoadStaffModels()) {
@@ -346,6 +348,13 @@ export function buildGallery(
       .then((models) => {
         if (!disposed) {
           visitors.useStaffModels(models);
+        }
+      })
+      .catch(() => {})
+      .then(() => (disposed || !visitors.count ? [] : loadVisitorModels(THREE, visitorModelBudget())))
+      .then((models) => {
+        if (!disposed) {
+          visitors.useVisitorModels(models);
         }
       })
       .catch(() => {});
