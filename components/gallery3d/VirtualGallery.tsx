@@ -29,6 +29,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
   const [showVisitors, setShowVisitors] = useState(true);
   const showVisitorsRef = useRef(true);
   const [helperStep, setHelperStep] = useState<HelperStep | null>(null);
+  const helperOpen = helperStep !== null;
   // Paintings the helper is walking the visitor through, and where they are in them.
   const [tour, setTour] = useState<{ indices: number[]; position: number } | null>(null);
   const selectedRef = useRef<number | null>(null);
@@ -98,11 +99,14 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
       }
       const stageBox = stage.getBoundingClientRect();
       const top = Math.max(0, topbar.getBoundingClientRect().bottom - stageBox.top);
+      const wide = (element: Element | null) => Boolean(element && element.getBoundingClientRect().width > stageBox.width * 0.6);
+      // On a phone the helper is a sheet across the bottom in place of the
+      // card, so the painting is framed above it.
+      const helper = stage.querySelector(".walk-helper");
       // The card only blocks the painting when it spans the screen (phones);
       // beside a centred painting on a wide screen, only the buttons count.
       const card = bottombar.querySelector(".walk-card");
-      const spans = card && card.getBoundingClientRect().width > stageBox.width * 0.6;
-      const covering = spans ? bottombar : bottombar.querySelector(".walk-nav");
+      const covering = wide(helper) ? helper : wide(card) ? bottombar : bottombar.querySelector(".walk-nav");
       const bottom = covering ? Math.max(0, stageBox.bottom - covering.getBoundingClientRect().top) : 0;
       const insets = { top: Math.round(top), bottom: Math.round(bottom) };
       insetsRef.current = insets;
@@ -115,9 +119,13 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
     observer.observe(stage);
     observer.observe(topbar);
     observer.observe(bottombar);
+    const helper = stage.querySelector(".walk-helper");
+    if (helper) {
+      observer.observe(helper);
+    }
     measure();
     return () => observer.disconnect();
-  }, []);
+  }, [helperOpen]);
 
   useEffect(() => {
     showVisitorsRef.current = showVisitors;
@@ -197,7 +205,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
   const loading = progress < paintings.length;
 
   return (
-    <div className="walk-stage" ref={stageRef}>
+    <div className={helperOpen ? "walk-stage is-helper-open" : "walk-stage"} ref={stageRef}>
       <div className="walk-canvas" ref={mountRef} />
 
       {failed ? (
