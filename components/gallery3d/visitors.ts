@@ -34,6 +34,8 @@ export interface VisitorOptions {
   glowTexture: THREE_NS.Texture;
   /** Where the representative stands behind the custom-orders desk. */
   desk?: { x: number; z: number };
+  /** Where the Artasin helper waits for the visitor to arrive. */
+  helper?: { x: number; z: number };
 }
 
 /**
@@ -59,6 +61,8 @@ export interface Visitors {
   count: number;
   /** The representative's meshes, so clicking them opens the desk. */
   representativeMeshes: THREE_NS.Mesh[];
+  /** The helper's meshes and name tag, so clicking them opens the helper. */
+  helperObjects: THREE_NS.Object3D[];
 }
 
 /** How a figure is dressed. Colours are hex numbers. */
@@ -105,6 +109,20 @@ interface Visitor extends Figure {
   madeRoom?: boolean;
 }
 
+interface Helper extends Figure {
+  tag: THREE_NS.Sprite;
+  heading: number;
+  faceHeading: number;
+  phase: number;
+  blend: number;
+  sway: number;
+  path: Point[];
+  /** Where it is headed, to tell when the plan needs redoing. */
+  goal: Point | null;
+  /** Seconds until the plan may be redone. */
+  replan: number;
+}
+
 interface Representative extends Figure {
   meshes: THREE_NS.Mesh[];
   sway: number;
@@ -125,6 +143,8 @@ const WALK_SPEED: Range = [0.75, 1.15];
 const LOOK_TIME: Range = [5, 15];
 const PERSONAL_SPACE = 0.75;
 const VIEWER_SPACE = 1.3;
+/** Closer to the camera than this, a visitor is hidden rather than drawn as a blur. */
+const NEAR_VIEWER = 1;
 /** How close a visitor's middle comes to a wall. */
 const BODY_RADIUS = 0.35;
 
@@ -134,7 +154,7 @@ type Range = readonly [number, number];
 export function createVisitors(
   THREE: Three,
   scene: THREE_NS.Scene,
-  { hung, walk, reducedMotion, glowTexture, desk }: VisitorOptions
+  { hung, walk, reducedMotion, glowTexture, desk, helper: helperStart }: VisitorOptions
 ): Visitors {
   const count = hung.length ? Math.min(Math.max(Math.round(hung.length / 3), 3), 12) : 0;
 
@@ -431,6 +451,105 @@ export function createVisitors(
     arm.rotation.x = -raise * 0.25;
   }
 
+  // The Artasin helper: in a terracotta top with a cream scarf and an
+  // "Ask me" tag above their head, so visitors know who to click.
+  const helper = helperStart ? buildHelper(helperStart) : null;
+
+  function buildHelper({ x, z }: { x: number; z: number }): Helper {
+    const figure = buildFigure({
+      scale: 1,
+      clothes: 0xa65a3f,
+      trousers: 0x1d1d1f,
+      skin: SKIN[1],
+      shoes: 0x161616,
+      coat: false,
+      hair: HAIR[1],
+      scarf: 0xf4f1ea
+    });
+    const badge = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.01), material(0xf4f1ea));
+    badge.position.set(0.09, 1.33, 0.125);
+    figure.body.add(badge);
+    const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeTagTexture(THREE), transparent: true, depthWrite: false }));
+    tag.scale.set(0.62, 0.22, 1);
+    tag.position.y = 2.12;
+    figure.root.add(tag);
+    figure.root.position.set(x, 0, z);
+    // Facing in from the entrance side, towards an arriving visitor.
+    return { ...figure, tag, heading: 0, faceHeading: 0, phase: 0, blend: 0, sway: 0, path: [], goal: null, replan: 0 };
+  }
+
+  /**
+   * Keeps the helper near the visitor without crowding them: beside them,
+   * a step nearer the wall, while they look at a painting; otherwise it
+   * catches up when the visitor wanders more than a few rooms away.
+   */
+  function updateHelper(guide: Helper, dt: number, viewer: { x: number; z: number }, clearView: ClearView | null) {
+    const { root } = guide;
+    guide.replan = Math.max(guide.replan - dt, 0);
+    let goal: Point | null = null;
+    let faceAt: Point = viewer;
+    if (clearView) {
+      // Just past the painting's edge on the side away from its label (which
+      // hangs on the painting's own +x, i.e. -tangent here), and well out in
+      // front of the viewer, so they show at the edge of the view without
+      // covering the work.
+      const tx = -clearView.nz;
+      const tz = clearView.nx;
+      const out = clamp(clearView.depth * 0.3, 1, Math.max(clearView.depth - 1, 1));
+      const across = clearView.halfWidth + 0.55;
+      goal = walk.collide(
+        { x: clearView.x + clearView.nx * out + tx * across, z: clearView.z + clearView.nz * out + tz * across },
+        BODY_RADIUS
+      );
+      faceAt = { x: clearView.x, z: clearView.z };
+    } else if (Math.hypot(viewer.x - root.position.x, viewer.z - root.position.z) > 9) {
+      const dx = root.position.x - viewer.x;
+      const dz = root.position.z - viewer.z;
+      const gap = Math.hypot(dx, dz) || 1;
+      goal = walk.collide({ x: viewer.x + (dx / gap) * 2.2, z: viewer.z + (dz / gap) * 2.2 }, BODY_RADIUS);
+    }
+    const moved = goal && (!guide.goal || Math.hypot(goal.x - guide.goal.x, goal.z - guide.goal.z) > 1);
+    if (goal && moved && !guide.replan && !reducedMotion) {
+      guide.goal = goal;
+      guide.path = walk.route({ x: root.position.x, z: root.position.z }, goal);
+      guide.replan = 1.5;
+    }
+
+    let moving = false;
+    let waypoint = guide.path[0];
+    while (waypoint && Math.hypot(waypoint.x - root.position.x, waypoint.z - root.position.z) < 0.1) {
+      guide.path.shift();
+      waypoint = guide.path[0];
+    }
+    if (waypoint && !reducedMotion) {
+      desired.set(waypoint.x - root.position.x, 0, waypoint.z - root.position.z);
+      const distance = desired.length();
+      desired.divideScalar(distance);
+      root.position.addScaledVector(desired, Math.min(1.4 * dt, distance));
+      const clear = walk.collide({ x: root.position.x, z: root.position.z }, BODY_RADIUS);
+      root.position.x = clear.x;
+      root.position.z = clear.z;
+      guide.heading += wrapAngle(Math.atan2(desired.x, desired.z) - guide.heading) * Math.min(dt * 6, 1);
+      moving = true;
+    } else {
+      guide.faceHeading = Math.atan2(faceAt.x - root.position.x, faceAt.z - root.position.z);
+      guide.heading += wrapAngle(guide.faceHeading - guide.heading) * Math.min(dt * 3, 1);
+    }
+    root.rotation.y = guide.heading;
+
+    guide.blend += ((moving ? 1 : 0) - guide.blend) * Math.min(dt * 5, 1);
+    guide.phase += dt * 1.4 * 5.2;
+    const swing = Math.sin(guide.phase) * 0.5 * guide.blend;
+    guide.legs[0].rotation.x = swing;
+    guide.legs[1].rotation.x = -swing;
+    guide.arms[0].rotation.x = -swing * 0.75;
+    guide.arms[1].rotation.x = swing * 0.75;
+    guide.body.position.y = Math.abs(Math.cos(guide.phase)) * 0.03 * guide.blend;
+    guide.sway += dt * (reducedMotion ? 0 : 1.6);
+    // The tag bobs gently so it catches the eye.
+    guide.tag.position.y = 2.12 + Math.sin(guide.sway) * 0.03;
+  }
+
   let focused: number | null = null;
   const desired = new THREE.Vector3();
   const push = new THREE.Vector3();
@@ -440,6 +559,9 @@ export function createVisitors(
     focused = focusedIndex;
     if (representative) {
       updateRepresentative(representative, dt, viewer);
+    }
+    if (helper) {
+      updateHelper(helper, dt, viewer, clearView);
     }
     for (const visitor of visitors) {
       const { root } = visitor;
@@ -520,6 +642,9 @@ export function createVisitors(
         visitor.heading += wrapAngle(visitor.faceHeading - visitor.heading) * Math.min(dt * 3, 1);
       }
       root.rotation.y = visitor.heading;
+      // Someone passing within arm's reach of the camera would fill the
+      // screen as a blur, so they step out of sight until they are by.
+      root.visible = shown && Math.hypot(root.position.x - viewer.x, root.position.z - viewer.z) > NEAR_VIEWER;
 
       // Blend between the walk cycle and standing still.
       visitor.blend += ((moving ? 1 : 0) - visitor.blend) * Math.min(dt * 5, 1);
@@ -541,13 +666,48 @@ export function createVisitors(
     }
   }
 
+  let shown = true;
   function setVisible(visible: boolean) {
+    shown = visible;
     for (const visitor of visitors) {
       visitor.root.visible = visible;
     }
   }
 
-  return { update, setVisible, count, representativeMeshes: representative?.meshes ?? [] };
+  const helperObjects: THREE_NS.Object3D[] = [];
+  helper?.root.traverse((object) => {
+    if ((object instanceof THREE.Mesh && object.material !== shadowMaterial) || object instanceof THREE.Sprite) {
+      helperObjects.push(object);
+    }
+  });
+
+  return { update, setVisible, count, representativeMeshes: representative?.meshes ?? [], helperObjects };
+}
+
+/** The helper's "Ask me" name tag: a dark pill with cream lettering. */
+function makeTagTexture(THREE: Three): THREE_NS.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 90;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "rgba(29, 26, 23, 0.92)";
+    ctx.beginPath();
+    ctx.roundRect(4, 4, 248, 82, 41);
+    ctx.fill();
+    ctx.fillStyle = "#f4f1ea";
+    ctx.font = '600 38px Inter, "Helvetica Neue", Arial, sans-serif';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Ask me", 128, 47);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 function clampAngle(angle: number, limit: number): number {

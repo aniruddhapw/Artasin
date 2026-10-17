@@ -6634,3 +6634,223 @@ textarea::placeholder {
   border: 1px solid var(--line);
   background: #ffffff;
 }
+
+/* ---------------------------------------------------------------------------
+   Virtual gallery — the Artasin helper's panel
+   --------------------------------------------------------------------------- */
+
+.walk-helper {
+  position: absolute;
+  top: calc(var(--walk-top, 60px) + 16px);
+  right: 24px;
+  bottom: 88px;
+  display: flex;
+  width: min(380px, calc(100% - 48px));
+  flex-direction: column;
+  border: 1px solid var(--line);
+  background: rgba(249, 249, 247, 0.96);
+  backdrop-filter: blur(16px);
+  pointer-events: auto;
+}
+
+.walk-helper-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.walk-helper-head .walk-eyebrow {
+  margin-bottom: 2px;
+}
+
+.walk-helper-avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: #a65a3f;
+  color: #f4f1ea;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 18px;
+}
+
+.walk-helper-back,
+.walk-card-ask {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.walk-helper-back {
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.walk-helper-close {
+  margin-left: auto;
+  padding: 4px 8px;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.walk-helper-body {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.walk-helper-say {
+  padding: 12px 14px;
+  background: var(--surface-container);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.walk-helper-quote {
+  border-left: 3px solid #a65a3f;
+  background: transparent;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.walk-helper-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.walk-helper-choices button,
+.walk-helper-choices a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--primary);
+  background: var(--surface-lowest);
+  color: var(--text);
+  font-size: 14px;
+  transition: background 160ms ease;
+}
+
+.walk-helper-choices button:hover,
+.walk-helper-choices a:hover {
+  background: var(--surface-container);
+}
+
+.walk-helper-choices .is-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.walk-helper-choices small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.walk-helper-results {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.walk-helper-results li {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.walk-helper-results img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  background: var(--surface-container);
+}
+
+.walk-helper-results strong {
+  display: block;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.walk-helper-results small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.walk-helper-results button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.walk-card-ask {
+  margin-top: 12px;
+  color: var(--text);
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  /* A sheet across the bottom of the screen, in place of the painting card
+     and the Previous/Next buttons, with the painting framed above it. */
+  .walk-helper {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: min(62%, calc(100% - var(--walk-top, 52px) - 96px));
+    border-width: 1px 0 0;
+    box-shadow: 0 -12px 32px rgba(26, 28, 28, 0.12);
+  }
+
+  .walk-stage.is-helper-open .walk-bottombar {
+    display: none;
+  }
+
+  .walk-helper-head {
+    padding: 12px 16px;
+  }
+
+  .walk-helper-body {
+    gap: 10px;
+    padding: 14px 16px 20px;
+  }
+
+  .walk-helper-say {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .walk-helper-choices button,
+  .walk-helper-choices a {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .walk-card-ask {
+    margin-top: 8px;
+  }
+}

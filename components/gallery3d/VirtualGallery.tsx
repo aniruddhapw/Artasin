@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { HelperPanel, type HelperStep } from "./HelperPanel";
 import { buildGallery } from "./scene";
 import type { GalleryApi, GalleryInsets, GalleryPainting } from "./types";
 
@@ -27,6 +28,22 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
   const [showList, setShowList] = useState(false);
   const [showVisitors, setShowVisitors] = useState(true);
   const showVisitorsRef = useRef(true);
+  const [helperStep, setHelperStep] = useState<HelperStep | null>(null);
+  const helperOpen = helperStep !== null;
+  // Paintings the helper is walking the visitor through, and where they are in them.
+  const [tour, setTour] = useState<{ indices: number[]; position: number } | null>(null);
+  const selectedRef = useRef<number | null>(null);
+
+  const openHelper = useCallback(
+    (step?: HelperStep) => {
+      const current = selectedRef.current;
+      const onPainting = current !== null && current < paintings.length;
+      setHelperStep(step ?? (onPainting ? { kind: "about", index: current } : { kind: "home" }));
+      setShowList(false);
+      setShowHelp(false);
+    },
+    [paintings.length]
+  );
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -46,8 +63,11 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
             if (index !== null) {
               lastRef.current = index;
             }
+            selectedRef.current = index;
             setSelected(index);
           },
+          // Clicking the helper asks about the painting in front of you, if there is one.
+          onHelper: () => openHelper(),
           onProgress: (loaded) => setProgress(loaded),
           onMove: () => setShowHelp(false)
         });
@@ -62,7 +82,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
       api?.dispose();
       apiRef.current = null;
     };
-  }, [paintings]);
+  }, [paintings, openHelper]);
 
   // Tell the scene how much of the view the bars and card cover, so a focused
   // painting is framed in the clear space between them rather than behind them.
@@ -79,11 +99,14 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
       }
       const stageBox = stage.getBoundingClientRect();
       const top = Math.max(0, topbar.getBoundingClientRect().bottom - stageBox.top);
+      const wide = (element: Element | null) => Boolean(element && element.getBoundingClientRect().width > stageBox.width * 0.6);
+      // On a phone the helper is a sheet across the bottom in place of the
+      // card, so the painting is framed above it.
+      const helper = stage.querySelector(".walk-helper");
       // The card only blocks the painting when it spans the screen (phones);
       // beside a centred painting on a wide screen, only the buttons count.
       const card = bottombar.querySelector(".walk-card");
-      const spans = card && card.getBoundingClientRect().width > stageBox.width * 0.6;
-      const covering = spans ? bottombar : bottombar.querySelector(".walk-nav");
+      const covering = wide(helper) ? helper : wide(card) ? bottombar : bottombar.querySelector(".walk-nav");
       const bottom = covering ? Math.max(0, stageBox.bottom - covering.getBoundingClientRect().top) : 0;
       const insets = { top: Math.round(top), bottom: Math.round(bottom) };
       insetsRef.current = insets;
@@ -96,14 +119,19 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
     observer.observe(stage);
     observer.observe(topbar);
     observer.observe(bottombar);
+    const helper = stage.querySelector(".walk-helper");
+    if (helper) {
+      observer.observe(helper);
+    }
     measure();
     return () => observer.disconnect();
-  }, []);
+  }, [helperOpen]);
 
   useEffect(() => {
     showVisitorsRef.current = showVisitors;
     apiRef.current?.setVisitorsVisible(showVisitors);
   }, [showVisitors]);
+
 
   // Stops on the tour: every painting, then the custom-orders desk at the end.
   const deskIndex = paintings.length;
@@ -135,6 +163,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
       }
       if (event.key === "Escape") {
         setShowList(false);
+        setHelperStep(null);
         setSelected(null);
       } else if (event.key === "]" || event.key === "PageDown") {
         step(1);
@@ -146,12 +175,37 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
     return () => window.removeEventListener("keydown", onKey);
   }, [step]);
 
+  // The helper's suggestions: go to the first and keep the rest for "Next suggestion".
+  function goToSuggestions(indices: number[]) {
+    const [first] = indices;
+    if (first === undefined) {
+      return;
+    }
+    setTour(indices.length > 1 ? { indices, position: 0 } : null);
+    setHelperStep(null);
+    focus(first);
+  }
+
+  function nextSuggestion() {
+    if (!tour) {
+      return;
+    }
+    const position = tour.position + 1;
+    const index = tour.indices[position];
+    if (index === undefined) {
+      setTour(null);
+      return;
+    }
+    setTour(position + 1 < tour.indices.length ? { ...tour, position } : null);
+    focus(index);
+  }
+
   const painting = selected === null ? null : paintings[selected];
   const atDesk = selected === deskIndex;
   const loading = progress < paintings.length;
 
   return (
-    <div className="walk-stage" ref={stageRef}>
+    <div className={helperOpen ? "walk-stage is-helper-open" : "walk-stage"} ref={stageRef}>
       <div className="walk-canvas" ref={mountRef} />
 
       {failed ? (
@@ -167,7 +221,22 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
         <Link className="walk-chip" href="/gallery">
           &larr; Collection
         </Link>
-        <button className="walk-chip" onClick={() => setShowList((open) => !open)} type="button">
+        <button
+          aria-pressed={helperStep !== null}
+          className={helperStep ? "walk-chip is-active" : "walk-chip"}
+          onClick={() => (helperStep ? setHelperStep(null) : openHelper())}
+          type="button"
+        >
+          Helper
+        </button>
+        <button
+          className="walk-chip"
+          onClick={() => {
+            setHelperStep(null);
+            setShowList((open) => !open);
+          }}
+          type="button"
+        >
           {showList ? "Close list" : `All works (${paintings.length})`}
         </button>
         <button
@@ -201,6 +270,9 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
             </li>
             <li>
               <strong>Visit a painting</strong> — click it, or use Next / Previous
+            </li>
+            <li>
+              <strong>Need ideas?</strong> — ask the helper with the &ldquo;Ask me&rdquo; tag
             </li>
             <li>
               <strong>Custom orders</strong> — visit the desk in the reception at the far end
@@ -238,6 +310,21 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
         </nav>
       ) : null}
 
+      {helperStep ? (
+        <HelperPanel
+          current={selected !== null && selected < paintings.length ? selected : null}
+          onClose={() => setHelperStep(null)}
+          onDesk={() => {
+            setHelperStep(null);
+            focus(deskIndex);
+          }}
+          onGo={goToSuggestions}
+          onStep={setHelperStep}
+          paintings={paintings}
+          step={helperStep}
+        />
+      ) : null}
+
       <div className="walk-bottombar" ref={bottombarRef}>
         {painting ? (
           <article aria-live="polite" className="walk-card">
@@ -258,6 +345,13 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
                 View artwork
               </Link>
             </div>
+            <button
+              className="walk-card-ask"
+              onClick={() => openHelper({ kind: "about", index: selected ?? 0 })}
+              type="button"
+            >
+              Ask the helper about this painting
+            </button>
           </article>
         ) : null}
         {atDesk ? (
@@ -276,6 +370,11 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
           </article>
         ) : null}
         <div className="walk-nav">
+          {tour ? (
+            <button className="walk-chip is-active" onClick={nextSuggestion} type="button">
+              Next suggestion ({tour.position + 2} of {tour.indices.length}) &rarr;
+            </button>
+          ) : null}
           <button
             aria-label="Previous painting"
             className="walk-chip"
