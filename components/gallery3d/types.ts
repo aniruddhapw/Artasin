@@ -1,15 +1,13 @@
-/** A painting in the 3D gallery, as app/gallery/walk builds it. */
-export interface GalleryPainting {
+import type { HelperPainting } from "@/lib/galleryHelper";
+
+/**
+ * A painting in the 3D gallery, as app/gallery/walk builds it. The fields
+ * from HelperPainting (title, artist, style, price, description, the
+ * artist's bio...) are what the helper finds and describes paintings by.
+ */
+export interface GalleryPainting extends HelperPainting {
   id: string;
   slug: string;
-  title: string;
-  artistName: string;
-  artistSlug: string;
-  year: number | null;
-  medium: string;
-  dimensions: string;
-  /** Already formatted, e.g. "₹7,500". */
-  price: string;
   imageUrl: string;
 }
 
@@ -20,6 +18,8 @@ export interface GalleryInsets {
 }
 
 export interface GalleryCallbacks {
+  /** The visitor clicked the Artasin helper. */
+  onHelper: () => void;
   /** The painting now in focus, or null when the visitor walks away. */
   onSelect: (index: number | null) => void;
   /** How many paintings' images have finished loading. */
