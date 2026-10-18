@@ -1770,6 +1770,17 @@ textarea::placeholder {
   color: var(--muted);
 }
 
+.footer-icons a {
+  display: inline-flex;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.footer-icons a:hover,
+.footer-icons a:focus-visible {
+  color: var(--text);
+}
+
 .footer--simple .footer-brand {
   grid-column: span 4;
 }
@@ -1785,8 +1796,11 @@ textarea::placeholder {
   margin: 0;
   padding: 0;
   border: 0;
+  /* Icons above the copyright line, both against the right edge. */
+  flex-direction: column-reverse;
   justify-content: end;
   align-items: end;
+  gap: 16px;
 }
 
 .auth-page {
@@ -2488,6 +2502,11 @@ textarea::placeholder {
 
   .footer-links {
     justify-content: start;
+  }
+
+  /* Stacked under the links, so line up with them on the left. */
+  .footer--simple .footer-bottom {
+    align-items: start;
   }
 }
 
@@ -5092,6 +5111,45 @@ textarea::placeholder {
   color: var(--muted);
 }
 
+/* "Walk the gallery": a silent loop of the 3D gallery beside its pitch. */
+.home-walk {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: calc(var(--home-gap) * 2);
+  align-items: center;
+}
+
+.home-walk-media {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: #e9e5dc;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+.home-walk-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-walk-copy {
+  display: grid;
+  align-content: center;
+  gap: 22px;
+}
+
+.home-walk-copy h2 {
+  font-size: clamp(36px, 4.4vw, 60px);
+  line-height: 1.05;
+}
+
+.home-walk-copy > p {
+  max-width: 44ch;
+  color: var(--muted);
+}
+
 .home-spec {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -5305,6 +5363,7 @@ textarea::placeholder {
 
   .home-hero,
   .home-spotlight,
+  .home-walk,
   .home-paths {
     grid-template-columns: 1fr;
   }
@@ -6804,11 +6863,42 @@ textarea::placeholder {
 }
 
 .walk-card-ask {
-  margin-top: 12px;
   color: var(--text);
   font-size: 14px;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* "Ask the helper" and "Share" side by side under the card's details. */
+.walk-card-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 12px;
+}
+
+.walk-card-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* The card sits at the bottom of the screen, so the share menu opens upwards. */
+.walk-card .share-sheet {
+  top: auto;
+  right: 0;
+  bottom: calc(100% + 8px);
+  left: auto;
 }
 
 @media (max-width: 720px) {
@@ -6850,7 +6940,7 @@ textarea::placeholder {
     font-size: 13px;
   }
 
-  .walk-card-ask {
+  .walk-card-links {
     margin-top: 8px;
   }
 }

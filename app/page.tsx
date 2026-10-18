@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
+import { GalleryWalkVideo } from "@/components/home/GalleryWalkVideo";
 import { JustListed } from "@/components/home/JustListed";
 import { WorkStrip } from "@/components/home/WorkStrip";
 import { LazyImage } from "@/components/LazyImage";
@@ -188,6 +189,24 @@ export default async function HomePage() {
             </div>
           </section>
         ) : null}
+
+        <section className="home-section home-wrap">
+          <div className="home-walk">
+            <Link aria-label={t("home.walk.cta")} className="home-walk-media" href="/gallery/walk">
+              <GalleryWalkVideo label={t("home.walk.videoLabel")} />
+            </Link>
+            <div className="home-walk-copy">
+              <span className="home-eyebrow">{t("home.walk.eyebrow")}</span>
+              <h2>{t("home.walk.title")}</h2>
+              <p>{t("home.walk.body")}</p>
+              <div className="home-actions">
+                <Link className="button button-primary" href="/gallery/walk">
+                  {t("home.walk.cta")}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {justListed.length ? (
           <section className="home-section home-wrap">

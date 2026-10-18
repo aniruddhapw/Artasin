@@ -35,7 +35,8 @@ export async function Nav({ active }: { active?: NavItem["key"] }) {
           ))}
         </div>
         <div className="nav-actions">
-          {user?.role !== "BUYER" ? <LanguageToggle /> : null}
+          {/* Marathi is for artists using their studio, so only they see the switch. */}
+          {user?.role === "ARTIST" ? <LanguageToggle /> : null}
           {!user ? (
             <Link className="sign-in" href="/login">
               {t("nav.signIn")}

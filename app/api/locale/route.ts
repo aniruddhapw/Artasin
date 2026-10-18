@@ -1,5 +1,5 @@
 import { fail, handleApiError, ok } from "@/lib/api";
-import { LOCALE_COOKIE, isLocale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, viewerIsArtist } from "@/lib/i18n";
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
@@ -8,6 +8,10 @@ export async function POST(request: Request) {
     const { locale } = await request.json();
     if (!isLocale(locale)) {
       return fail("Unsupported language", 422);
+    }
+    // Anyone may go back to English; other languages are for artists only.
+    if (locale !== DEFAULT_LOCALE && !(await viewerIsArtist())) {
+      return fail("Languages other than English are available to artists only", 403);
     }
 
     const response = ok({ locale });

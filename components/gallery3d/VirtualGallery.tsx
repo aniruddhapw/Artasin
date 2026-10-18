@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ShareButton } from "@/components/ShareButton";
 import { HelperPanel, type HelperStep } from "./HelperPanel";
 import { buildGallery } from "./scene";
 import type { GalleryApi, GalleryInsets, GalleryPainting } from "./types";
@@ -10,8 +11,13 @@ import type { GalleryApi, GalleryInsets, GalleryPainting } from "./types";
  * A walk-through room for the collection's paintings. The Three.js scene lives
  * in ./scene.js; this component owns the overlay UI (info card, works list,
  * help) and talks to the scene through the small API buildGallery returns.
+ *
+ * `startAt` (a painting's slug, from /gallery/walk?at=...) opens the gallery
+ * standing in front of that painting, so a link can point at one work. While
+ * a painting is in view the address bar carries its ?at=, so copying the URL
+ * shares it too.
  */
-export function VirtualGallery({ paintings }: { paintings: readonly GalleryPainting[] }) {
+export function VirtualGallery({ paintings, startAt }: { paintings: readonly GalleryPainting[]; startAt?: string }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<GalleryApi | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -74,6 +80,11 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
         apiRef.current = api;
         api.setInsets(insetsRef.current);
         api.setVisitorsVisible(showVisitorsRef.current);
+        const startIndex = startAt ? paintings.findIndex((item) => item.slug === startAt) : -1;
+        if (startIndex >= 0) {
+          api.focus(startIndex, { instant: true });
+          setShowHelp(false);
+        }
       })
       .catch(() => setFailed(true));
 
@@ -82,7 +93,7 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
       api?.dispose();
       apiRef.current = null;
     };
-  }, [paintings, openHelper]);
+  }, [paintings, openHelper, startAt]);
 
   // Tell the scene how much of the view the bars and card cover, so a focused
   // painting is framed in the clear space between them rather than behind them.
@@ -126,6 +137,21 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
     measure();
     return () => observer.disconnect();
   }, [helperOpen]);
+
+  // Keep ?at= in the address bar in step with the painting in view, without
+  // adding history entries for every painting visited.
+  useEffect(() => {
+    const slug = selected !== null ? paintings[selected]?.slug : undefined;
+    const url = new URL(window.location.href);
+    if (slug) {
+      url.searchParams.set("at", slug);
+    } else {
+      url.searchParams.delete("at");
+    }
+    if (url.href !== window.location.href) {
+      window.history.replaceState(window.history.state, "", url);
+    }
+  }, [selected, paintings]);
 
   useEffect(() => {
     showVisitorsRef.current = showVisitors;
@@ -345,13 +371,22 @@ export function VirtualGallery({ paintings }: { paintings: readonly GalleryPaint
                 View artwork
               </Link>
             </div>
-            <button
-              className="walk-card-ask"
-              onClick={() => openHelper({ kind: "about", index: selected ?? 0 })}
-              type="button"
-            >
-              Ask the helper about this painting
-            </button>
+            <div className="walk-card-links">
+              <button
+                className="walk-card-ask"
+                onClick={() => openHelper({ kind: "about", index: selected ?? 0 })}
+                type="button"
+              >
+                Ask the helper about this painting
+              </button>
+              <ShareButton
+                className="walk-card-share"
+                label="Share"
+                path={`/gallery/walk?at=${encodeURIComponent(painting.slug)}`}
+                text={`Walk up to "${painting.title}" by ${painting.artistName} in the ARTASIN 3D gallery`}
+                title={`${painting.title} in the ARTASIN 3D gallery`}
+              />
+            </div>
           </article>
         ) : null}
         {atDesk ? (
