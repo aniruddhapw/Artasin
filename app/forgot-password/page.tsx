@@ -4,7 +4,9 @@ import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 
 export const metadata = {
   title: "Reset Password",
-  alternates: { canonical: "/forgot-password" }
+  alternates: { canonical: "/forgot-password" },
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 export default async function ForgotPasswordPage() {

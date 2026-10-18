@@ -5,13 +5,14 @@ import { prisma } from "@/lib/db";
 import { ogUrl, textureUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 import { createTranslator, translateOr } from "@/lib/i18n";
+import { JsonLd } from "@/components/JsonLd";
+import { SITE_NAME, absoluteUrl, breadcrumbList, pageMetadata } from "@/lib/seo";
 
 // The rest of this page is in English, so its labels are too.
 const t = createTranslator("en");
 
-const GALLERY_DESCRIPTION = "Walk through every painting in the ARTASIN collection in an interactive 3D gallery.";
-// A view down the hall, 1200x630, for links to the gallery as a whole.
-const GALLERY_PREVIEW = { url: "/og/gallery-walk.jpg", width: 1200, height: 630 };
+const GALLERY_DESCRIPTION =
+  "Explore original paintings by Indian artists in ARTASIN's 3D virtual art gallery. Walk up to any work to see the artist, size and price, then buy it or commission your own.";
 
 /** The painting a /gallery/walk?at=<slug> link points at, if it is hanging. */
 function startSlug(value: string | string[] | undefined): string | undefined {
@@ -35,19 +36,19 @@ export async function generateMetadata({ searchParams }: PageProps<"/gallery/wal
       })
     : null;
   const imageUrl = painting?.media[0]?.url;
-  const title = painting ? `${painting.title} by ${painting.artist.displayName} — 3D gallery` : "Virtual Gallery";
-  const description = painting
-    ? `Walk up to "${painting.title}" by ${painting.artist.displayName} in the ARTASIN 3D gallery, then explore the whole collection.`
-    : GALLERY_DESCRIPTION;
-  const image = imageUrl ? { url: ogUrl(imageUrl), width: 1200, height: 630 } : GALLERY_PREVIEW;
-  return {
-    title,
-    description,
-    // Every ?at= view is the same page; search engines index it once.
-    alternates: { canonical: "/gallery/walk" },
-    openGraph: { title, description, images: [image] },
-    twitter: { card: "summary_large_image", title, description, images: [image.url] }
-  };
+  // Every ?at= view is the same page, so all share /gallery/walk as canonical;
+  // only the preview card names the painting.
+  return pageMetadata({
+    title: painting
+      ? `${painting.title} by ${painting.artist.displayName} — 3D gallery | ${SITE_NAME}`
+      : `Virtual Art Gallery – Explore Original Art in 3D | ${SITE_NAME}`,
+    absoluteTitle: true,
+    description: painting
+      ? `Walk up to "${painting.title}" by ${painting.artist.displayName} in the ARTASIN 3D gallery, then explore the whole collection.`
+      : GALLERY_DESCRIPTION,
+    path: "/gallery/walk",
+    image: imageUrl ? { url: ogUrl(imageUrl), width: 1200, height: 630 } : undefined
+  });
 }
 
 export default async function VirtualGalleryPage({ searchParams }: PageProps<"/gallery/walk">) {
@@ -85,17 +86,84 @@ export default async function VirtualGalleryPage({ searchParams }: PageProps<"/g
     <>
       <Nav active="exhibitions" />
       <main className="walk-page">
-        <h1 className="visually-hidden">Virtual Gallery</h1>
-        {paintings.length ? (
-          <VirtualGallery paintings={paintings} startAt={startAt} />
-        ) : (
-          <div className="walk-empty">
-            <p>No paintings are hanging yet. Check back soon as artists list new work.</p>
-            <Link className="button button-secondary" href="/gallery">
-              Browse the collection
-            </Link>
+        <div className="walk-frame">
+          {paintings.length ? (
+            <VirtualGallery paintings={paintings} startAt={startAt} />
+          ) : (
+            <div className="walk-empty">
+              <p>No paintings are hanging yet. Check back soon as artists list new work.</p>
+              <Link className="button button-secondary" href="/gallery">
+                Browse the collection
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Below the 3D view: what the gallery is, in plain HTML that search
+            engines and screen readers get without running the scene, and a
+            link to every painting hanging in it. */}
+        <section aria-labelledby="walk-intro-title" className="walk-intro" id="walk-intro">
+          <div className="walk-intro-copy">
+            <p className="home-eyebrow">ARTASIN virtual art gallery</p>
+            <h1 id="walk-intro-title">Step Inside Our Virtual Art Gallery</h1>
+            <p>
+              Explore original paintings by Indian artists in an immersive 3D gallery. Walk the corridors on
+              your phone or computer, go up to any painting to see the artist, medium, size and price, and
+              buy it straight from the artist. At the far end, the custom-orders desk is where to commission a
+              piece of your own.
+            </p>
+            <p>Discover original art, and experience it in 3D.</p>
+            <div className="home-actions">
+              <Link className="button button-secondary" href="/gallery">
+                Browse the full collection
+              </Link>
+              <Link className="button button-secondary" href="/artists">
+                Meet the artists
+              </Link>
+              <Link className="button button-secondary" href="/requests">
+                Commission a piece
+              </Link>
+            </div>
           </div>
-        )}
+          {paintings.length ? (
+            <div className="walk-intro-works">
+              <h2>
+                {paintings.length} {paintings.length === 1 ? "painting" : "paintings"} in the gallery
+              </h2>
+              <ul>
+                {paintings.map((item) => (
+                  <li key={item.id}>
+                    <Link href={`/artwork/${item.slug}`}>{item.title}</Link>
+                    <span>
+                      by <Link href={`/artist/${item.artistSlug}`}>{item.artistName}</Link> · {item.price}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+        <JsonLd
+          data={[
+            breadcrumbList([
+              { name: "Home", path: "/" },
+              { name: "Collection", path: "/gallery" },
+              { name: "Virtual Art Gallery", path: "/gallery/walk" }
+            ]),
+            {
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              name: "Paintings in the ARTASIN virtual art gallery",
+              numberOfItems: paintings.length,
+              itemListElement: paintings.map((item, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: item.title,
+                url: absoluteUrl(`/artwork/${item.slug}`)
+              }))
+            }
+          ]}
+        />
       </main>
     </>
   );

@@ -12,7 +12,9 @@ import { isOfflinePayments } from "@/lib/paymentMode";
 import type { Money } from "@/types/api";
 
 export const metadata = {
-  title: "Checkout"
+  title: "Checkout",
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 export default async function CheckoutPage({ searchParams }: PageProps<"/checkout">) {

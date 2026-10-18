@@ -5,7 +5,9 @@ import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
 export const metadata = {
   title: "Set a New Password",
-  alternates: { canonical: "/reset-password" }
+  alternates: { canonical: "/reset-password" },
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 export default async function ResetPasswordPage() {

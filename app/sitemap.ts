@@ -1,16 +1,19 @@
+import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
+import { absoluteUrl, SITE_URL } from "@/lib/seo";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
+const siteUrl = SITE_URL;
 
 // Built statically by default, which left the sitemap advertising artist and
 // artwork URLs that had since been renamed or unpublished until the next deploy.
 export const revalidate = 3600;
 
-export default async function sitemap() {
-  const [artworks, artists, posts] = await Promise.all([
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [artworks, artists, posts, categories] = await Promise.all([
     prisma.artwork.findMany({
       where: { status: "PUBLISHED" },
-      select: { slug: true, updatedAt: true }
+      // The first photo, so search engines find the artwork images too.
+      select: { slug: true, updatedAt: true, media: { take: 1, orderBy: { sortOrder: "asc" }, select: { url: true } } }
     }),
     prisma.artistProfile.findMany({
       where: { verificationStatus: "APPROVED" },
@@ -19,10 +22,13 @@ export default async function sitemap() {
     prisma.blogPost.findMany({
       where: { status: "PUBLISHED" },
       select: { slug: true, updatedAt: true }
-    })
+    }),
+    // Categories with work for sale: each is an indexable collection page
+    // (app/gallery/page.tsx). Empty ones would be thin pages, so they're left out.
+    prisma.artwork.groupBy({ by: ["category"], where: { status: "PUBLISHED" }, _max: { updatedAt: true } })
   ]);
 
-  const staticRoutes = [
+  const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${siteUrl}/`, changeFrequency: "daily", priority: 1 },
     { url: `${siteUrl}/gallery`, changeFrequency: "daily", priority: 0.9 },
     { url: `${siteUrl}/gallery/walk`, changeFrequency: "daily", priority: 0.7 },
@@ -34,26 +40,34 @@ export default async function sitemap() {
     { url: `${siteUrl}/terms`, changeFrequency: "yearly", priority: 0.3 }
   ];
 
-  const artworkRoutes = artworks.map((artwork) => ({
-    url: `${siteUrl}/artwork/${artwork.slug}`,
-    lastModified: artwork.updatedAt,
-    changeFrequency: "weekly",
+  const categoryRoutes: MetadataRoute.Sitemap = categories.map((row) => ({
+    url: `${siteUrl}/gallery?category=${encodeURIComponent(row.category)}`,
+    lastModified: row._max.updatedAt ?? undefined,
+    changeFrequency: "daily",
     priority: 0.8
   }));
 
-  const artistRoutes = artists.map((artist) => ({
+  const artworkRoutes: MetadataRoute.Sitemap = artworks.map((artwork) => ({
+    url: `${siteUrl}/artwork/${artwork.slug}`,
+    lastModified: artwork.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.8,
+    images: artwork.media[0] ? [absoluteUrl(artwork.media[0].url)] : undefined
+  }));
+
+  const artistRoutes: MetadataRoute.Sitemap = artists.map((artist) => ({
     url: `${siteUrl}/artist/${artist.slug}`,
     lastModified: artist.updatedAt,
     changeFrequency: "weekly",
     priority: 0.7
   }));
 
-  const blogRoutes = posts.map((post) => ({
+  const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${siteUrl}/blog/${post.slug}`,
     lastModified: post.updatedAt,
     changeFrequency: "monthly",
     priority: 0.5
   }));
 
-  return [...staticRoutes, ...artworkRoutes, ...artistRoutes, ...blogRoutes];
+  return [...staticRoutes, ...categoryRoutes, ...artworkRoutes, ...artistRoutes, ...blogRoutes];
 }

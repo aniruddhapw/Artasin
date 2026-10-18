@@ -10,14 +10,15 @@ import { ARTWORK_PLACEHOLDER, thumbUrl } from "@/lib/images";
 import type { Translate } from "@/lib/i18n";
 import { isPresent } from "@/types/utils";
 import type { Prisma } from "@prisma/client";
+import { pageMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
   const { t } = await getTranslations();
-  return {
-    title: t("artists.title"),
+  return pageMetadata({
+    title: "Indian Artists Selling Original Art",
     description: t("artists.description"),
-    alternates: { canonical: "/artists" }
-  };
+    path: "/artists"
+  });
 }
 
 function text(value: unknown): string | undefined {

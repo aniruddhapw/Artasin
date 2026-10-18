@@ -5,17 +5,53 @@ import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
-import { artworkCategories as categories, stylesFor } from "@/data/artisan";
+import { artworkCategories as categories, isArtworkCategory, stylesFor, type ArtworkCategory } from "@/data/artisan";
+import { pageMetadata } from "@/lib/seo";
 import { createTranslator, translateOr } from "@/lib/i18n";
 
 // The rest of this page is in English, so its labels are too.
 const t = createTranslator("en");
 
-export const metadata = {
-  title: "Collection",
-  description: "Browse the full ARTASIN collection of original art across every medium.",
-  alternates: { canonical: "/gallery" }
+/** How each category reads as a collection, e.g. "Original Paintings". */
+const COLLECTION_NAMES: Record<ArtworkCategory, string> = {
+  Painting: "Paintings",
+  Sculpture: "Sculptures",
+  "Digital Art": "Digital Art",
+  Photography: "Photography",
+  Textile: "Textile Art",
+  Fashion: "Fashion",
+  Illustration: "Illustrations",
+  Printmaking: "Prints",
+  Ceramics: "Ceramics",
+  "Mixed Media": "Mixed Media Art"
 };
+
+/**
+ * Each category is its own indexable collection page
+ * (/gallery?category=Painting). A style within it points search engines to the
+ * category, and searches (?q=) stay out of the index, so filter combinations
+ * never become endless near-duplicate pages.
+ */
+export async function generateMetadata({ searchParams }: PageProps<"/gallery">) {
+  const params = await searchParams;
+  const category = isArtworkCategory(params?.category) ? params.category : undefined;
+  const searching = typeof params?.q === "string" && params.q.trim() !== "";
+  if (category && !searching) {
+    const name = COLLECTION_NAMES[category];
+    return pageMetadata({
+      title: `Original ${name} by Indian Artists`,
+      description: `Buy original ${name.toLowerCase()} by Indian artists on ARTASIN, straight from the artist. Every piece is one of a kind, and you can commission your own.`,
+      path: `/gallery?category=${encodeURIComponent(category)}`
+    });
+  }
+  return pageMetadata({
+    title: "The Collection: Original Art by Indian Artists",
+    description:
+      "Browse original paintings, sculpture, photography and more by Indian artists, every piece one of a kind and bought straight from the artist.",
+    path: "/gallery",
+    noIndex: searching
+  });
+}
 
 export default async function GalleryPage({ searchParams }: PageProps<"/gallery">) {
   const params = await searchParams;
@@ -59,7 +95,7 @@ export default async function GalleryPage({ searchParams }: PageProps<"/gallery"
       <Nav active="exhibitions" />
       <main className="page request-page">
         <header className="request-header">
-          <h1>The Collection</h1>
+          <h1>{isArtworkCategory(category) ? `Original ${COLLECTION_NAMES[category]}` : "The Collection"}</h1>
           <p>
             {artworks.length} original {artworks.length === 1 ? "work" : "works"} available
             {category ? ` in ${style ? `${t(`style.${style}`)} ` : ""}${category}` : ""}

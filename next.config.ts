@@ -49,6 +49,18 @@ const nextConfig: NextConfig = {
   // and silently refuses to serve JS assets to — breaking all client interactivity
   // (forms, buttons) with no console error. This allowlists that origin explicitly.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  // www.artasin.in served the whole site as a second copy; one host keeps
+  // search engines from splitting the site's links between two addresses.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.artasin.in" }],
+        destination: "https://artasin.in/:path*",
+        permanent: true
+      }
+    ];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders(contentSecurityPolicy()) },

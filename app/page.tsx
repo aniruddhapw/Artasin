@@ -8,6 +8,7 @@ import { Nav } from "@/components/Nav";
 import { serializeMoney } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, translateOr } from "@/lib/i18n";
 import { ARTWORK_PLACEHOLDER, detailUrl, stripUrl, thumbUrl } from "@/lib/images";
 import type { Prisma } from "@prisma/client";
@@ -27,9 +28,13 @@ const JUST_LISTED_LIMIT = 8;
 const MEDIUM_LIMIT = 7;
 const SPOTLIGHT_EXCERPT = 220;
 
-export const metadata = {
-  alternates: { canonical: "/" }
-};
+export const metadata = pageMetadata({
+  title: "Online Art Gallery to Discover Original Indian Art | ARTASIN",
+  absoluteTitle: true,
+  description:
+    "Discover and buy original paintings and artwork by Indian artists. Commission a custom piece or walk through our 3D virtual art gallery.",
+  path: "/"
+});
 
 const withImage = {
   status: "PUBLISHED",

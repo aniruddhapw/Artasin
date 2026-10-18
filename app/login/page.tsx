@@ -5,7 +5,9 @@ import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata = {
   title: "Sign In",
-  alternates: { canonical: "/login" }
+  alternates: { canonical: "/login" },
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 export default async function LoginPage() {

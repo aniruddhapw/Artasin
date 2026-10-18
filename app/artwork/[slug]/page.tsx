@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArtworkGallery } from "@/components/artwork/ArtworkGallery";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Footer } from "@/components/Footer";
+import { JsonLd } from "@/components/JsonLd";
 import { Icon } from "@/components/Icon";
 import { ShareButton } from "@/components/ShareButton";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
@@ -14,19 +16,22 @@ import { serializeMoney } from "@/lib/api";
 import { createTranslator, translateOr } from "@/lib/i18n";
 import { galleryImages, ogUrl, thumbUrl } from "@/lib/images";
 import { DELIVERY_DAYS, RETURN_DAYS } from "@/lib/policies";
+import { absoluteUrl, metaDescription, pageMetadata } from "@/lib/seo";
 
 // The rest of this page is in English, so the style label is too.
 const t = createTranslator("en");
 
-// A hard slice(0, 160) can land mid-word, which reads as broken in a search
-// snippet — back up to the last full word instead.
-function truncate(text: string, maxLength = 160): string {
-  if (text.length <= maxLength) {
-    return text;
+type ArtworkWithArtist = NonNullable<Awaited<ReturnType<typeof getArtwork>>>;
+
+/** The page's description, or a plain one from the listing's facts when it has none. */
+function describe(artwork: ArtworkWithArtist): string {
+  if (artwork.description.trim()) {
+    // metaDescription flattens newlines too: Next.js drops the description
+    // tags entirely if the text contains one.
+    return metaDescription(artwork.description);
   }
-  const clipped = text.slice(0, maxLength);
-  const lastSpace = clipped.lastIndexOf(" ");
-  return `${clipped.slice(0, lastSpace > 0 ? lastSpace : maxLength)}…`;
+  const facts = [artwork.medium, artwork.dimensions].filter(Boolean).join(", ");
+  return `Original ${artwork.category.toLowerCase()} by ${artwork.artist.displayName}${facts ? `: ${facts}` : ""}. Buy it straight from the artist on ARTASIN.`;
 }
 
 async function getArtwork(slug: string) {
@@ -55,26 +60,50 @@ export async function generateMetadata({ params }: PageProps<"/artwork/[slug]">)
   if (!artwork || artwork.status === "DRAFT" || artwork.status === "ARCHIVED") {
     return { title: "Artwork Not Found" };
   }
-  // Next.js silently drops the description meta tags entirely if the string
-  // contains a raw newline, which a multi-paragraph description always has.
-  const description = truncate(artwork.description.replace(/\s+/g, " ").trim());
   const previewSource = artwork.media[0]?.url;
+  return pageMetadata({
+    title: `${artwork.title} by ${artwork.artist.displayName} – Original ${artwork.category}`,
+    description: describe(artwork),
+    path: `/artwork/${artwork.slug}`,
+    image: previewSource ? { url: ogUrl(previewSource), width: 1200, height: 630 } : undefined
+  });
+}
 
+/**
+ * schema.org Product for the listing, from what the page shows: its photos,
+ * price, whether it is still for sale, the artist selling it, the 7-day
+ * return window, and the rating only when buyers have actually left reviews.
+ */
+function productData(artwork: ArtworkWithArtist, rating: { average: number; count: number }) {
+  const path = `/artwork/${artwork.slug}`;
   return {
-    title: `${artwork.title}`,
-    description,
-    alternates: { canonical: `/artwork/${artwork.slug}` },
-    openGraph: {
-      title: `${artwork.title} by ${artwork.artist.displayName}`,
-      description,
-      images: previewSource ? [{ url: ogUrl(previewSource), width: 1200, height: 630 }] : undefined
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: artwork.title,
+    description: metaDescription(artwork.description || describe(artwork), 500),
+    image: artwork.media.slice(0, 4).map((media) => absoluteUrl(media.url)),
+    url: absoluteUrl(path),
+    sku: artwork.id,
+    category: artwork.category,
+    ...(artwork.medium ? { material: artwork.medium } : {}),
+    offers: {
+      "@type": "Offer",
+      url: absoluteUrl(path),
+      price: (artwork.priceCents / 100).toFixed(2),
+      priceCurrency: artwork.currency,
+      availability: artwork.status === "PUBLISHED" ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@type": "Person", name: artwork.artist.displayName, url: absoluteUrl(`/artist/${artwork.artist.slug}`) },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "IN",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: RETURN_DAYS
+      }
     },
-    twitter: {
-      card: previewSource ? "summary_large_image" : "summary",
-      title: `${artwork.title} by ${artwork.artist.displayName}`,
-      description,
-      images: previewSource ? [ogUrl(previewSource)] : undefined
-    }
+    ...(rating.count
+      ? { aggregateRating: { "@type": "AggregateRating", ratingValue: rating.average.toFixed(1), reviewCount: rating.count } }
+      : {})
   };
 }
 
@@ -128,6 +157,14 @@ export default async function ArtworkDetailPage({ params }: PageProps<"/artwork/
     <>
       <Nav active="exhibitions" />
       <main className="page artwork-page">
+        <Breadcrumbs
+          items={[
+            { name: "Collection", path: "/gallery" },
+            { name: artwork.category, path: `/gallery?category=${encodeURIComponent(artwork.category)}` },
+            { name: artwork.title, path: `/artwork/${artwork.slug}` }
+          ]}
+        />
+        <JsonLd data={productData(artwork, { average: reviewAggregate._avg.rating ?? 0, count: reviewAggregate._count })} />
         <section className="artwork-layout">
           <ArtworkGallery images={images} title={artwork.title} />
           <aside className="artwork-panel">
