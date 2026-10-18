@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Icon } from "@/components/Icon";
 import {
   aboutPainting,
   budgetChoices,
@@ -39,6 +40,10 @@ interface HelperPanelProps {
  */
 export function HelperPanel({ paintings, current, step, onStep, onGo, onDesk, onClose }: HelperPanelProps) {
   const [surprised, setSurprised] = useState(0);
+  // A few to suggest, from different artists, picked once per visit so they
+  // don't reshuffle every time the panel opens.
+  const [suggestionPool] = useState(() => pickSuggestions(paintings, 4));
+  const suggestions = suggestionPool.filter((index) => index !== current).slice(0, 3);
 
   function surprise() {
     // Anything but the painting already in front of them.
@@ -66,7 +71,9 @@ export function HelperPanel({ paintings, current, step, onStep, onGo, onDesk, on
             <button className="walk-helper-back" onClick={() => onStep({ kind: "home" })} type="button">
               &larr; Start again
             </button>
-          ) : null}
+          ) : (
+            <p className="walk-helper-name">Aarav, your virtual curator</p>
+          )}
         </div>
         <button aria-label="Close the helper" className="walk-helper-close" onClick={onClose} type="button">
           &times;
@@ -76,11 +83,16 @@ export function HelperPanel({ paintings, current, step, onStep, onGo, onDesk, on
       <div aria-live="polite" className="walk-helper-body">
         {step.kind === "home" ? (
           <>
-            <p className="walk-helper-say">
-              {surprised
-                ? "Shall I find you another?"
-                : "Hello! I can help you find a painting you'll love, or tell you more about the one in front of you."}
-            </p>
+            <div className="walk-helper-hero">
+              <h2>{surprised ? "Shall I find you another?" : "Discover art you love"}</h2>
+              <p>I can guide you around, tell you about any painting, or take you straight to it.</p>
+              {paintings.length > 1 ? (
+                <button className="walk-helper-tour" onClick={() => onGo(paintings.map((_, index) => index))} type="button">
+                  Take me on a tour of all {paintings.length}
+                  <Icon name="arrowRight" size={16} />
+                </button>
+              ) : null}
+            </div>
             <div className="walk-helper-choices">
               <button onClick={() => onStep({ kind: "style" })} type="button">
                 Help me find a painting
@@ -97,6 +109,17 @@ export function HelperPanel({ paintings, current, step, onStep, onGo, onDesk, on
                 I&apos;d like something made for me
               </button>
             </div>
+            {suggestions.length ? (
+              <>
+                <h3 className="walk-helper-section">Suggested for you</h3>
+                <ul className="walk-helper-results">
+                  {suggestions.map((index) => {
+                    const painting = paintings[index];
+                    return painting ? <PaintingCard key={painting.id} onGo={() => onGo([index])} painting={painting} /> : null;
+                  })}
+                </ul>
+              </>
+            ) : null}
           </>
         ) : null}
 
@@ -191,36 +214,64 @@ function Results({
         {relaxed ?? `${intro}: I found ${count === 1 ? "one for you" : `${count} for you`}. Shall I take you to them?`}
       </p>
       {count > 1 ? (
-        <div className="walk-helper-choices">
-          <button className="is-primary" onClick={() => onGo(matches.indices)} type="button">
-            Take me on a tour of all {count}
-          </button>
-        </div>
+        <button className="walk-helper-tour" onClick={() => onGo(matches.indices)} type="button">
+          Take me on a tour of all {count}
+          <Icon name="arrowRight" size={16} />
+        </button>
       ) : null}
       <ul className="walk-helper-results">
         {matches.indices.map((index, position) => {
           const painting = paintings[index];
-          if (!painting) {
-            return null;
-          }
-          return (
-            <li key={painting.id}>
-              <img alt="" loading="lazy" src={painting.imageUrl} />
-              <div>
-                <strong>{painting.title}</strong>
-                <small>
-                  {painting.artistName} · {[painting.style, painting.price].filter(Boolean).join(" · ")}
-                </small>
-              </div>
-              <button onClick={() => onGo(matches.indices.slice(position))} type="button">
-                Take me there
-              </button>
-            </li>
-          );
+          return painting ? (
+            <PaintingCard key={painting.id} onGo={() => onGo(matches.indices.slice(position))} painting={painting} />
+          ) : null;
         })}
       </ul>
     </>
   );
+}
+
+/** A painting the helper offers: its picture, the facts on its label, and a way there. */
+function PaintingCard({ painting, onGo }: { painting: GalleryPainting; onGo: () => void }) {
+  const size = [painting.dimensions, painting.price].filter(Boolean).join(" | ");
+  return (
+    <li className="walk-helper-card">
+      <img alt={`${painting.title} by ${painting.artistName}`} loading="lazy" src={painting.thumbUrl} />
+      <div>
+        <strong>{painting.title}</strong>
+        <small>{painting.artistName}</small>
+        {painting.style ? <small>{painting.style}</small> : null}
+        {painting.medium ? <small>{painting.medium}</small> : null}
+        {size ? <small>{size}</small> : null}
+      </div>
+      <button onClick={onGo} type="button">
+        Take me there
+        <Icon name="arrowRight" size={14} />
+      </button>
+    </li>
+  );
+}
+
+/**
+ * Up to `count` paintings to suggest, each by a different artist where the
+ * collection allows, in a random order.
+ */
+function pickSuggestions(paintings: readonly GalleryPainting[], count: number): number[] {
+  const order = paintings.map((_, index) => index).sort(() => Math.random() - 0.5);
+  const picked: number[] = [];
+  const artists = new Set<string>();
+  for (const index of order) {
+    const painting = paintings[index];
+    if (painting && !artists.has(painting.artistSlug)) {
+      artists.add(painting.artistSlug);
+      picked.push(index);
+    }
+    if (picked.length === count) {
+      return picked;
+    }
+  }
+  // Fewer artists than suggestions: fill up with more of their work.
+  return [...picked, ...order.filter((index) => !picked.includes(index))].slice(0, count);
 }
 
 function About({

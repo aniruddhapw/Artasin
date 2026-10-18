@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { VirtualGallery } from "@/components/gallery3d/VirtualGallery";
 import { prisma } from "@/lib/db";
-import { ogUrl, textureUrl } from "@/lib/images";
+import { ogUrl, textureUrl, thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 import { createTranslator, translateOr } from "@/lib/i18n";
 import { JsonLd } from "@/components/JsonLd";
@@ -79,12 +79,13 @@ export default async function VirtualGalleryPage({ searchParams }: PageProps<"/g
     medium: artwork.medium,
     dimensions: artwork.dimensions,
     price: serializeMoney(artwork.priceCents, artwork.currency).formatted,
-    imageUrl: textureUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"
+    imageUrl: textureUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg",
+    thumbUrl: thumbUrl(artwork.media[0]?.url) || "/artisan/artwork-placeholder.svg"
   }));
 
   return (
     <>
-      <Nav active="exhibitions" />
+      <Nav active="exhibitions" immersive />
       <main className="walk-page">
         <div className="walk-frame">
           {paintings.length ? (

@@ -6544,31 +6544,63 @@ textarea::placeholder {
   pointer-events: auto;
 }
 
+/* The gallery's controls: frosted, rounded glass over the 3D view, with
+   title-case serif labels beside an icon. */
 .walk-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
+  gap: 10px;
+  min-height: 48px;
   padding: 0 18px;
-  border: 1px solid var(--line);
-  background: rgba(249, 249, 247, 0.9);
-  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 14px;
+  background: rgba(250, 247, 241, 0.74);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 6px 22px rgba(40, 30, 20, 0.1);
   color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 16px;
   white-space: nowrap;
-  transition: border-color 180ms ease;
+  transition: background 180ms ease, color 180ms ease;
 }
 
 .walk-chip:hover {
-  border-color: var(--primary);
+  background: rgba(255, 253, 249, 0.92);
 }
 
 .walk-chip.is-active {
-  border-color: var(--primary);
-  background: var(--primary);
-  color: var(--on-primary);
+  background: rgba(36, 31, 26, 0.88);
+  color: #f6f1e8;
+}
+
+/* Related tools share one capsule, as on a museum audio-guide bar. */
+.walk-chip-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 18px;
+  background: rgba(250, 247, 241, 0.74);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 6px 22px rgba(40, 30, 20, 0.1);
+}
+
+.walk-chip-group .walk-chip {
+  min-height: 40px;
+  border-color: transparent;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.walk-chip-group .walk-chip:hover {
+  background: rgba(255, 253, 249, 0.8);
+}
+
+.walk-chip-group .walk-chip.is-active {
+  background: rgba(36, 31, 26, 0.88);
 }
 
 .walk-nav {
@@ -6589,9 +6621,17 @@ textarea::placeholder {
 .walk-card,
 .walk-help,
 .walk-list {
-  border: 1px solid var(--line);
-  background: rgba(249, 249, 247, 0.94);
-  backdrop-filter: blur(16px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 18px;
+  background: rgba(250, 247, 241, 0.9);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 18px 48px rgba(40, 30, 20, 0.14);
+}
+
+/* The share menu opens above the card, so the card must let it out. */
+.walk-card {
+  overflow: visible;
 }
 
 .walk-card {
@@ -6750,6 +6790,68 @@ textarea::placeholder {
   }
 }
 
+/* On a phone, and a phone held sideways, the gallery takes the whole screen:
+   the site's bar is hidden (Nav immersive) and the gallery's own back arrow
+   leads out. After the tablet rule above, which it overrides. */
+@media (max-width: 720px), (max-height: 500px) {
+  .top-nav--immersive {
+    display: none;
+  }
+
+  .walk-page {
+    --walk-nav: 0px;
+  }
+}
+
+/* A phone held sideways: little height, so the controls and the painting
+   card are made compact enough to leave the painting in view. */
+@media (max-height: 500px) and (min-width: 721px) {
+  .walk-topbar {
+    top: 10px;
+  }
+
+  .walk-chip {
+    min-height: 38px;
+    font-size: 14px;
+  }
+
+  .walk-chip-group .walk-chip {
+    min-height: 32px;
+  }
+
+  .walk-bottombar {
+    bottom: 10px;
+  }
+
+  .walk-card {
+    width: min(300px, 100%);
+    padding: 12px 16px;
+  }
+
+  .walk-card h2 {
+    font-size: 20px;
+  }
+
+  .walk-card .walk-meta,
+  .walk-card .walk-eyebrow {
+    display: none;
+  }
+
+  .walk-card-actions {
+    margin-top: 8px;
+  }
+
+  .walk-card-actions .button {
+    min-height: 36px;
+    padding: 6px 14px;
+  }
+
+  .walk-card-links {
+    margin-top: 6px;
+  }
+}
+
+
 @media (max-width: 720px) {
   .walk-topbar,
   .walk-bottombar {
@@ -6763,10 +6865,53 @@ textarea::placeholder {
   }
 
   .walk-topbar .walk-chip {
+    gap: 6px;
     min-height: 36px;
-    padding: 0 12px;
-    font-size: 11px;
-    letter-spacing: 0.08em;
+    padding: 0 10px;
+    border-radius: 11px;
+    font-size: 14px;
+  }
+
+  .walk-chip-group {
+    gap: 2px;
+    padding: 3px;
+    border-radius: 14px;
+  }
+
+  .walk-topbar {
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  /* The back arrow: a square the height of the tools capsule beside it. */
+  .walk-topbar > .walk-chip {
+    width: 42px;
+    min-height: 42px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 14px;
+  }
+
+  .walk-chip-group {
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .walk-chip-group .walk-chip {
+    min-height: 34px;
+    padding: 0 9px;
+    border-radius: 10px;
+  }
+
+  /* Icon only on a phone, so the bar fits on one row; the label stays for
+     screen readers. */
+  .walk-chip-label-wide {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .walk-bottombar {
@@ -6849,11 +6994,14 @@ textarea::placeholder {
   right: 24px;
   bottom: 88px;
   display: flex;
-  width: min(380px, calc(100% - 48px));
+  overflow: hidden;
+  width: min(420px, calc(100% - 48px));
   flex-direction: column;
-  border: 1px solid var(--line);
-  background: rgba(249, 249, 247, 0.96);
-  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  background: rgba(250, 247, 241, 0.94);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 22px 60px rgba(40, 30, 20, 0.16);
   pointer-events: auto;
 }
 
@@ -6861,8 +7009,73 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--line);
+  padding: 18px 20px 6px;
+}
+
+.walk-helper-name {
+  color: var(--muted);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 15px;
+}
+
+/* "Discover art you love", with the tour button. */
+.walk-helper-hero {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 14px;
+  background: rgba(236, 231, 222, 0.75);
+}
+
+.walk-helper-hero h2 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.walk-helper-hero p {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.walk-helper-tour {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #1d1a17;
+  color: #f6f1e8;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 16px;
+}
+
+.walk-helper-tour:hover {
+  background: #000;
+}
+
+/* "Suggested for you", with a rule running out to the right. */
+.walk-helper-section {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.walk-helper-section::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
 }
 
 .walk-helper-head .walk-eyebrow {
@@ -6898,10 +7111,17 @@ textarea::placeholder {
 }
 
 .walk-helper-close {
+  display: grid;
+  width: 34px;
+  height: 34px;
   margin-left: auto;
-  padding: 4px 8px;
-  color: var(--muted);
-  font-size: 24px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text);
+  font-size: 22px;
   line-height: 1;
 }
 
@@ -6915,7 +7135,8 @@ textarea::placeholder {
 
 .walk-helper-say {
   padding: 12px 14px;
-  background: var(--surface-container);
+  border-radius: 12px;
+  background: rgba(236, 231, 222, 0.75);
   color: var(--text);
   font-size: 15px;
   line-height: 1.55;
@@ -6941,8 +7162,9 @@ textarea::placeholder {
   gap: 6px;
   min-height: 38px;
   padding: 0 14px;
-  border: 1px solid var(--primary);
-  background: var(--surface-lowest);
+  border: 1px solid rgba(29, 26, 23, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
   color: var(--text);
   font-size: 14px;
   transition: background 160ms ease;
@@ -6965,46 +7187,70 @@ textarea::placeholder {
 
 .walk-helper-results {
   display: grid;
-  gap: 10px;
+  gap: 18px;
   padding: 0;
   list-style: none;
 }
 
-.walk-helper-results li {
+/* A painting card: picture, the facts on its label, and "Take me there". */
+.walk-helper-card {
   display: grid;
-  grid-template-columns: 56px 1fr auto;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
-.walk-helper-results img {
-  width: 56px;
-  height: 56px;
+.walk-helper-card img {
+  width: 92px;
+  height: 112px;
+  border-radius: 8px;
   object-fit: cover;
   background: var(--surface-container);
+  box-shadow: 0 4px 12px rgba(40, 30, 20, 0.12);
 }
 
-.walk-helper-results strong {
-  display: block;
+.walk-helper-card div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.walk-helper-card strong {
+  margin-bottom: 4px;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 400;
+  line-height: 1.2;
 }
 
-.walk-helper-results small {
+.walk-helper-card small {
+  overflow: hidden;
   color: var(--muted);
-  font-size: 12px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.walk-helper-results button {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--primary);
-  font-size: 12px;
+.walk-helper-card button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(29, 26, 23, 0.55);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.walk-helper-card button:hover {
+  background: #1d1a17;
+  color: #f6f1e8;
 }
 
 .walk-card-ask {
@@ -7057,7 +7303,32 @@ textarea::placeholder {
     width: auto;
     max-height: min(62%, calc(100% - var(--walk-top, 52px) - 96px));
     border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
     box-shadow: 0 -12px 32px rgba(26, 28, 28, 0.12);
+  }
+
+  .walk-helper-hero {
+    padding: 16px;
+  }
+
+  .walk-helper-hero h2 {
+    font-size: 22px;
+  }
+
+  .walk-helper-card {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 4px 12px;
+  }
+
+  .walk-helper-card img {
+    width: 72px;
+    height: 88px;
+    grid-row: span 2;
+  }
+
+  .walk-helper-card button {
+    justify-self: start;
+    min-height: 34px;
   }
 
   .walk-stage.is-helper-open .walk-bottombar {

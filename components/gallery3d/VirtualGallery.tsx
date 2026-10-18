@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Icon } from "@/components/Icon";
 import { ShareButton } from "@/components/ShareButton";
 import { HelperPanel, type HelperStep } from "./HelperPanel";
 import { buildGallery } from "./scene";
@@ -245,37 +246,57 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
 
       <div className="walk-topbar" ref={topbarRef}>
         <Link className="walk-chip" href="/gallery">
-          &larr; Collection
+          <Icon name="arrowLeft" size={18} />
+          <span className="walk-chip-label-wide">Collection</span>
         </Link>
-        <button
-          aria-pressed={helperStep !== null}
-          className={helperStep ? "walk-chip is-active" : "walk-chip"}
-          onClick={() => (helperStep ? setHelperStep(null) : openHelper())}
-          type="button"
-        >
-          Helper
-        </button>
-        <button
-          className="walk-chip"
-          onClick={() => {
-            setHelperStep(null);
-            setShowList((open) => !open);
-          }}
-          type="button"
-        >
-          {showList ? "Close list" : `All works (${paintings.length})`}
-        </button>
-        <button
-          aria-pressed={showVisitors}
-          className={showVisitors ? "walk-chip is-active" : "walk-chip"}
-          onClick={() => setShowVisitors((on) => !on)}
-          type="button"
-        >
-          Visitors
-        </button>
-        <button className="walk-chip" onClick={() => setShowHelp((open) => !open)} type="button">
-          {showHelp ? "Hide help" : "Help"}
-        </button>
+        <div aria-label="Gallery tools" className="walk-chip-group" role="group">
+          <button
+            aria-pressed={helperStep !== null}
+            className={helperStep ? "walk-chip is-active" : "walk-chip"}
+            onClick={() => (helperStep ? setHelperStep(null) : openHelper())}
+            type="button"
+          >
+            <Icon name="sparkle" size={18} />
+            <span>Helper</span>
+          </button>
+          <button
+            aria-pressed={showList}
+            className={showList ? "walk-chip is-active" : "walk-chip"}
+            onClick={() => {
+              setHelperStep(null);
+              setShowList((open) => !open);
+            }}
+            type="button"
+          >
+            <Icon name="grid" size={18} />
+            {/* On a phone just the count, so the bar fits on one row. */}
+            {showList ? (
+              <span className="walk-chip-label-wide">Close list</span>
+            ) : (
+              <span>
+                <span className="walk-chip-label-wide">All works </span>({paintings.length})
+              </span>
+            )}
+          </button>
+          <button
+            aria-pressed={showVisitors}
+            className={showVisitors ? "walk-chip is-active" : "walk-chip"}
+            onClick={() => setShowVisitors((on) => !on)}
+            type="button"
+          >
+            <Icon name="users" size={18} />
+            <span className="walk-chip-label-wide">Visitors</span>
+          </button>
+          <button
+            aria-pressed={showHelp}
+            className={showHelp ? "walk-chip is-active" : "walk-chip"}
+            onClick={() => setShowHelp((open) => !open)}
+            type="button"
+          >
+            <Icon name="help" size={18} />
+            <span className="walk-chip-label-wide">Help</span>
+          </button>
+        </div>
       </div>
 
       {loading && !failed ? (
@@ -298,7 +319,7 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
               <strong>Visit a painting</strong> — click it, or use Next / Previous
             </li>
             <li>
-              <strong>Need ideas?</strong> — ask the helper with the &ldquo;Ask me&rdquo; tag
+              <strong>Need ideas?</strong> — tap Aarav, our virtual curator
             </li>
             <li>
               <strong>Custom orders</strong> — visit the desk in the reception at the far end
@@ -421,7 +442,8 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
             onClick={() => step(-1)}
             type="button"
           >
-            &larr; Previous
+            <Icon name="arrowLeft" size={16} />
+            <span>Previous</span>
           </button>
           <button
             aria-label="Next painting"
@@ -429,7 +451,8 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
             onClick={() => step(1)}
             type="button"
           >
-            Next &rarr;
+            <span>Next</span>
+            <Icon name="arrowRight" size={16} />
           </button>
         </div>
       </div>
