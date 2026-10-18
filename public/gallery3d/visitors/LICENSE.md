@@ -16,6 +16,12 @@ reduced to 512 px (256 px for the hair and eyelash cut-outs) and re-encoded as
 WebP, and its mesh simplified to about half the triangles with glTF-Transform
 (weld, simplify, meshopt). Normal maps were left out.
 
+The body texture's alpha holds a mask for dyeing a visitor's top
+(components/gallery3d/crowd.ts): 255 on the top garment, 204 on other
+clothes, 153 on skin. Skin was found with a standard skin-tone test on the
+colours; the top garment is every texture patch (UV island) that is mostly
+not moved by the leg bones.
+
 The animation files hold only a skeleton and the clips: body bones only (no
 face or helper bones), rotations plus the root and pelvis positions, with the
 walk's forward travel removed so the gallery moves the figures itself. The

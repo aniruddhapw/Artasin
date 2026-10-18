@@ -35,8 +35,15 @@ const WALK_CLIP_SPEED: Record<Sex, number> = { f: 0.93, m: 0.69 };
 
 /** One loaded avatar, ready to be copied for as many visitors as need it. */
 export interface VisitorModel {
-  create(): VisitorBody;
+  /** A copy for one visitor; with `dye`, the top they wear is that colour instead. */
+  create(dye?: number): VisitorBody;
 }
+
+/**
+ * Muted colours for the tops of repeated avatars, in keeping with the site's
+ * palette, so two copies of the same person don't walk about dressed alike.
+ */
+export const CLOTHING_DYES = [0x2f5d62, 0x8c2f39, 0xb5893a, 0x34466b, 0x5d6b3a, 0xa65a3f, 0xd9cfbf, 0x4a3b5c] as const;
 
 /** One visitor's copy of an avatar, with its own animation state. */
 export interface VisitorBody {
@@ -106,11 +113,14 @@ export async function loadVisitorModels(THREE: Three, budget: number): Promise<V
       try {
         const { scene: template } = await loader.loadAsync(url);
         return {
-          create() {
+          create(dye) {
             const object = clone(template);
             object.updateMatrixWorld(true);
             object.traverse((child) => {
               if (child instanceof THREE.SkinnedMesh) {
+                if (dye !== undefined && child.material instanceof THREE.MeshStandardMaterial && child.material.name === "body") {
+                  child.material = dyedMaterial(THREE, child.material, dye);
+                }
                 // Bounds from the standing pose, with room for the arms and
                 // stride, so visitors out of view are skipped by the renderer.
                 child.computeBoundingSphere();
@@ -137,4 +147,34 @@ export async function loadVisitorModels(THREE: Three, budget: number): Promise<V
     })
   );
   return models.filter((model) => model !== null);
+}
+
+/**
+ * A copy of an avatar's body material that dyes their top: the top garment
+ * takes on `dye`, keeping the fabric's own light and shade, while skin,
+ * trousers and shoes stay as they are. Which texels are the top comes from
+ * the body texture's alpha, baked in when the avatars were converted: 1 on
+ * the top garment, 0.8 on other clothes, 0.6 on skin. Every dyed copy shares
+ * one shader program; only the colour differs.
+ */
+function dyedMaterial(THREE: Three, source: THREE_NS.MeshStandardMaterial, dye: number): THREE_NS.MeshStandardMaterial {
+  const material = source.clone();
+  const colour = new THREE.Color(dye);
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.clothDye = { value: colour };
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nuniform vec3 clothDye;")
+      .replace(
+        "#include <map_fragment>",
+        `#ifdef USE_MAP
+          vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+          float cloth = smoothstep( 0.88, 0.97, sampledDiffuseColor.a );
+          float shade = dot( sampledDiffuseColor.rgb, vec3( 0.2126, 0.7152, 0.0722 ) );
+          vec3 dyed = clamp( clothDye * ( shade / 0.22 ), 0.0, 1.0 );
+          diffuseColor.rgb *= mix( sampledDiffuseColor.rgb, dyed, cloth * 0.9 );
+        #endif`
+      );
+  };
+  material.customProgramCacheKey = () => "gallery-visitor-dye";
+  return material;
 }

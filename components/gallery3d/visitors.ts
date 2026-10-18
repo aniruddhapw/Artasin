@@ -11,7 +11,7 @@
 
 import type * as THREE_NS from "three";
 import type { Point } from "@/lib/galleryLayout";
-import type { VisitorBody, VisitorModel } from "./crowd";
+import { CLOTHING_DYES, type VisitorBody, type VisitorModel } from "./crowd";
 import { addYaw, type StaffModel, type StaffRole } from "./staff";
 import type { NonEmptyArray } from "@/types/utils";
 
@@ -645,14 +645,16 @@ export function createVisitors(
   }
 
   // Each visitor takes the next avatar in turn, so the same one never stands
-  // at neighbouring paintings (visitors start at consecutive ones).
+  // at neighbouring paintings (visitors start at consecutive ones). The first
+  // of each wears their own clothes; later copies wear a different colour top.
   function useVisitorModels(models: readonly VisitorModel[]) {
     visitors.forEach((visitor, index) => {
       const model = models[index % models.length];
       if (visitor.model || !model) {
         return;
       }
-      visitor.model = model.create();
+      const copy = Math.floor(index / models.length);
+      visitor.model = model.create(copy ? CLOTHING_DYES[(index + 3 * copy) % CLOTHING_DYES.length] : undefined);
       visitor.root.add(visitor.model.object);
       visitor.body.visible = false;
       // The avatars already differ in build; keep heights within a natural range.
