@@ -334,7 +334,14 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
             type="button"
           >
             <Icon name="grid" size={18} />
-            <span>{showList ? "Close list" : `All works (${paintings.length})`}</span>
+            {/* On a phone just the count, so the bar fits on one row. */}
+            {showList ? (
+              <span className="walk-chip-label-wide">Close list</span>
+            ) : (
+              <span>
+                <span className="walk-chip-label-wide">All works </span>({paintings.length})
+              </span>
+            )}
           </button>
           <button
             aria-pressed={showVisitors}

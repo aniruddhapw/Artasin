@@ -85,7 +85,7 @@ export default async function VirtualGalleryPage({ searchParams }: PageProps<"/g
 
   return (
     <>
-      <Nav active="exhibitions" />
+      <Nav active="exhibitions" immersive />
       <main className="walk-page">
         <div className="walk-frame">
           {paintings.length ? (
