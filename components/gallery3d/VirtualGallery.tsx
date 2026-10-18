@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Icon } from "@/components/Icon";
 import { ShareButton } from "@/components/ShareButton";
+import { createAmbientMusic, type AmbientMusic } from "./ambientMusic";
 import { HelperPanel, type HelperStep } from "./HelperPanel";
 import { buildGallery } from "./scene";
 import type { GalleryApi, GalleryInsets, GalleryPainting } from "./types";
@@ -39,6 +41,9 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
   // Paintings the helper is walking the visitor through, and where they are in them.
   const [tour, setTour] = useState<{ indices: number[]; position: number } | null>(null);
   const selectedRef = useRef<number | null>(null);
+  const [musicOn, setMusicOn] = useState(false);
+  const musicOnRef = useRef(false);
+  const musicRef = useRef<AmbientMusic | null>(null);
 
   const openHelper = useCallback(
     (step?: HelperStep) => {
@@ -152,6 +157,67 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
       window.history.replaceState(window.history.state, "", url);
     }
   }, [selected, paintings]);
+
+  // Background music: off until the visitor turns it on (browsers allow sound
+  // only after a tap anyway). Turning it on is remembered, and on a later
+  // visit it starts again from their first tap or key press in the gallery.
+  const setMusic = useCallback((on: boolean) => {
+    musicOnRef.current = on;
+    setMusicOn(on);
+  }, []);
+
+  const toggleMusic = useCallback(() => {
+    musicRef.current ??= createAmbientMusic();
+    const music = musicRef.current;
+    const on = !musicOnRef.current;
+    if (on) {
+      void music.start().catch(() => setMusic(false));
+    } else {
+      music.stop();
+    }
+    setMusic(on);
+    writeMusicPreference(on);
+  }, [setMusic]);
+
+  useEffect(() => {
+    if (readMusicPreference() !== "on") {
+      return undefined;
+    }
+    function startOnFirstInput() {
+      window.removeEventListener("pointerdown", startOnFirstInput);
+      window.removeEventListener("keydown", startOnFirstInput);
+      musicRef.current ??= createAmbientMusic();
+      void musicRef.current
+        .start()
+        .then(() => setMusic(true))
+        .catch(() => {});
+    }
+    window.addEventListener("pointerdown", startOnFirstInput);
+    window.addEventListener("keydown", startOnFirstInput);
+    return () => {
+      window.removeEventListener("pointerdown", startOnFirstInput);
+      window.removeEventListener("keydown", startOnFirstInput);
+    };
+  }, [setMusic]);
+
+  // Quiet while the tab is in the background, and gone when leaving the page.
+  useEffect(() => {
+    function onVisibility() {
+      const music = musicRef.current;
+      if (!music || !musicOn) {
+        return;
+      }
+      if (document.hidden) {
+        music.stop();
+      } else {
+        void music.start().catch(() => {});
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [musicOn]);
+
+  useEffect(() => () => musicRef.current?.dispose(), []);
 
   useEffect(() => {
     showVisitorsRef.current = showVisitors;
@@ -272,6 +338,17 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
           type="button"
         >
           Visitors
+        </button>
+        <button
+          aria-label={musicOn ? "Turn the music off" : "Turn the music on"}
+          aria-pressed={musicOn}
+          className={musicOn ? "walk-chip walk-chip-music is-active" : "walk-chip walk-chip-music"}
+          onClick={toggleMusic}
+          title={musicOn ? "Music on" : "Music off"}
+          type="button"
+        >
+          <Icon name={musicOn ? "volume" : "volumeOff"} size={16} />
+          <span>Music</span>
         </button>
         <button className="walk-chip" onClick={() => setShowHelp((open) => !open)} type="button">
           {showHelp ? "Hide help" : "Help"}
@@ -435,4 +512,24 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
       </div>
     </div>
   );
+}
+
+const MUSIC_PREFERENCE = "artasin.galleryMusic";
+
+// Storage can be unavailable (private windows, blocked site data): music then
+// just isn't remembered.
+function readMusicPreference(): string | null {
+  try {
+    return window.localStorage.getItem(MUSIC_PREFERENCE);
+  } catch {
+    return null;
+  }
+}
+
+function writeMusicPreference(on: boolean): void {
+  try {
+    window.localStorage.setItem(MUSIC_PREFERENCE, on ? "on" : "off");
+  } catch {
+    // Not remembered; nothing else depends on it.
+  }
 }

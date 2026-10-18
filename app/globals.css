@@ -6544,6 +6544,11 @@ textarea::placeholder {
   pointer-events: auto;
 }
 
+/* The music toggle: a speaker icon beside its label. */
+.walk-chip-music {
+  gap: 8px;
+}
+
 .walk-chip {
   display: inline-flex;
   align-items: center;
