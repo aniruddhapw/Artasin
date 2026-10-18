@@ -108,7 +108,11 @@ export function ShareButton({
   async function handleClick() {
     if (canUseNativeShare) {
       try {
-        await navigator.share({ title, text: shareText, url });
+        // Only the title and the link: given text as well, the phone's own
+        // "Copy" copies the sentence and the link together (on Android
+        // sometimes with no space between), which pastes as a broken link.
+        // Apps like WhatsApp show the page's preview card from the link.
+        await navigator.share({ title, url });
         return;
       } catch (error) {
         // A cancelled share sheet is not an error worth surfacing.
