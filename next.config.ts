@@ -10,37 +10,35 @@ import type { NextConfig } from "next";
 // are allowlisted for the Google Fonts @import in app/globals.css.
 // www.youtube-nocookie.com is the host of the portfolio video player
 // (lib/youtube.ts youtubeEmbedUrl); without it every video opens to a black box.
-function contentSecurityPolicy({ scriptExtra = "", connectExtra = "" } = {}): string {
-  return [
-    "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${scriptExtra} https://checkout.razorpay.com`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data: https://fonts.gstatic.com",
-    `connect-src 'self'${connectExtra} https://api.razorpay.com https://lumberjack.razorpay.com`,
-    "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://www.youtube-nocookie.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'"
-  ].join("; ");
-}
+//
+// The 3D gallery's models (components/gallery3d/staff.ts and crowd.ts) need
+// two more things: 'wasm-unsafe-eval' lets the meshopt decoder compile its
+// WebAssembly (it allows WebAssembly, not JavaScript eval), and blob: in
+// connect-src lets GLTFLoader read the textures it unpacks from a model file
+// into blob: URLs of its own. They apply to every page, not just
+// /gallery/walk: a page's CSP is the one the document was loaded with, so
+// arriving at the gallery by an in-app link (from the home page, say) kept
+// the previous page's policy and the models silently failed to load.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://checkout.razorpay.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' blob: https://api.razorpay.com https://lumberjack.razorpay.com",
+  "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://www.youtube-nocookie.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'"
+].join("; ");
 
-function securityHeaders(csp: string) {
-  return [
-    { key: "Content-Security-Policy", value: csp },
-    { key: "X-Frame-Options", value: "SAMEORIGIN" },
-    { key: "X-Content-Type-Options", value: "nosniff" },
-    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }
-  ];
-}
-
-// The 3D gallery's staff models (components/gallery3d/staff.ts) need two more
-// things, on that page only: 'wasm-unsafe-eval' lets the meshopt decoder
-// compile its WebAssembly (it allows WebAssembly, not JavaScript eval), and
-// blob: in connect-src lets GLTFLoader read the textures it unpacks from the
-// model file into blob: URLs of its own.
-const galleryWalkCsp = contentSecurityPolicy({ scriptExtra: " 'wasm-unsafe-eval'", connectExtra: " blob:" });
+const securityHeaders = [
+  { key: "Content-Security-Policy", value: contentSecurityPolicy },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }
+];
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -62,11 +60,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    return [
-      { source: "/:path*", headers: securityHeaders(contentSecurityPolicy()) },
-      // Later rules override earlier ones for the same header.
-      { source: "/gallery/walk", headers: securityHeaders(galleryWalkCsp) }
-    ];
+    return [{ source: "/:path*", headers: securityHeaders }];
   }
 };
 
