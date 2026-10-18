@@ -6790,6 +6790,68 @@ textarea::placeholder {
   }
 }
 
+/* On a phone, and a phone held sideways, the gallery takes the whole screen:
+   the site's bar is hidden (Nav immersive) and the gallery's own back arrow
+   leads out. After the tablet rule above, which it overrides. */
+@media (max-width: 720px), (max-height: 500px) {
+  .top-nav--immersive {
+    display: none;
+  }
+
+  .walk-page {
+    --walk-nav: 0px;
+  }
+}
+
+/* A phone held sideways: little height, so the controls and the painting
+   card are made compact enough to leave the painting in view. */
+@media (max-height: 500px) and (min-width: 721px) {
+  .walk-topbar {
+    top: 10px;
+  }
+
+  .walk-chip {
+    min-height: 38px;
+    font-size: 14px;
+  }
+
+  .walk-chip-group .walk-chip {
+    min-height: 32px;
+  }
+
+  .walk-bottombar {
+    bottom: 10px;
+  }
+
+  .walk-card {
+    width: min(300px, 100%);
+    padding: 12px 16px;
+  }
+
+  .walk-card h2 {
+    font-size: 20px;
+  }
+
+  .walk-card .walk-meta,
+  .walk-card .walk-eyebrow {
+    display: none;
+  }
+
+  .walk-card-actions {
+    margin-top: 8px;
+  }
+
+  .walk-card-actions .button {
+    min-height: 36px;
+    padding: 6px 14px;
+  }
+
+  .walk-card-links {
+    margin-top: 6px;
+  }
+}
+
+
 @media (max-width: 720px) {
   .walk-topbar,
   .walk-bottombar {
@@ -6816,8 +6878,28 @@ textarea::placeholder {
     border-radius: 14px;
   }
 
+  .walk-topbar {
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  /* The back arrow: a square the height of the tools capsule beside it. */
+  .walk-topbar > .walk-chip {
+    width: 42px;
+    min-height: 42px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 14px;
+  }
+
+  .walk-chip-group {
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
   .walk-chip-group .walk-chip {
-    min-height: 32px;
+    min-height: 34px;
+    padding: 0 9px;
     border-radius: 10px;
   }
 
