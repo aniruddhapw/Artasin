@@ -14,7 +14,9 @@ import type { UserRole } from "@prisma/client";
 import type { TranslationKey } from "@/lib/i18n";
 
 export const metadata = {
-  title: "Account Settings"
+  title: "Account Settings",
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 const roleLabelKeys: Record<UserRole, TranslationKey> = {

@@ -4,11 +4,12 @@ import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { RouteProgress } from "@/components/RouteProgress";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { getTranslations } from "@/lib/i18n";
+import { DEFAULT_SHARE_IMAGE, SITE_NAME, SITE_URL, jsonLd } from "@/lib/seo";
 import { SOCIAL_LINKS } from "@/lib/socialLinks";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
+const siteUrl = SITE_URL;
 const siteDescription =
-  "Shop original paintings, sculpture, and photography from independent artists, or commission a custom piece made for your space. Curated, minimalist, and authenticated.";
+  "Discover and buy original paintings and artwork by Indian artists. Commission a custom piece or walk through our 3D virtual art gallery.";
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
@@ -17,24 +18,21 @@ export const metadata = {
     template: "%s | ARTASIN"
   },
   description: siteDescription,
-  keywords: [
-    "buy original art online",
-    "commission custom artwork",
-    "independent artists",
-    "minimalist art marketplace",
-    "original paintings and sculpture"
-  ],
+  // The fallback card; pages set their own with pageMetadata() (lib/seo.ts).
   openGraph: {
     type: "website",
-    siteName: "ARTASIN",
+    siteName: SITE_NAME,
+    locale: "en_IN",
     title: "ARTASIN | Original Art & Custom Commissions",
     description: siteDescription,
-    url: siteUrl
+    url: siteUrl,
+    images: [DEFAULT_SHARE_IMAGE]
   },
   twitter: {
     card: "summary_large_image",
     title: "ARTASIN | Original Art & Custom Commissions",
-    description: siteDescription
+    description: siteDescription,
+    images: [DEFAULT_SHARE_IMAGE.url]
   },
   appleWebApp: {
     capable: true,
@@ -80,7 +78,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang={locale}>
       <body>
         <script
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
           type="application/ld+json"
         />
         {/* The fade-in starts at opacity 0 and is cleared by the image's onLoad

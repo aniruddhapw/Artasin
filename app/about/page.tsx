@@ -6,17 +6,14 @@ import { prisma } from "@/lib/db";
 import { getTranslations } from "@/lib/i18n";
 import { ARTWORK_PLACEHOLDER, thumbUrl } from "@/lib/images";
 import type { Prisma } from "@prisma/client";
+import { pageMetadata } from "@/lib/seo";
 
 const SUPPORT_EMAIL = "support@artasin.in";
 const HERO_WORKS = 3;
 
 export async function generateMetadata() {
   const { t } = await getTranslations();
-  return {
-    title: t("about.title"),
-    description: t("about.description"),
-    alternates: { canonical: "/about" }
-  };
+  return pageMetadata({ title: t("about.title"), description: t("about.description"), path: "/about" });
 }
 
 const VALUES = ["artists", "people", "roots"] as const;

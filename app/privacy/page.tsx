@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Privacy Policy",
-  description:
-    "How ARTASIN collects, uses, stores, and protects your personal data, and the rights you have over it.",
-  alternates: { canonical: "/privacy" }
-};
+  description: "How ARTASIN collects, uses, stores, and protects your personal data, and the rights you have over it.",
+  path: "/privacy"
+});
 
 const LAST_UPDATED = "8 September 2026";
 

@@ -9,7 +9,9 @@ import { prisma } from "@/lib/db";
 import { serializeMoney } from "@/lib/api";
 
 export const metadata = {
-  title: "Custom Artwork Request"
+  title: "Custom Artwork Request",
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 export default async function BuyerCommissionDetailPage({ params }: PageProps<"/commissions/[id]">) {

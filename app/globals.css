@@ -592,6 +592,67 @@ dd {
   width: 100%;
 }
 
+/* Breadcrumbs: Home / Collection / Painting / title, above a page's content. */
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 24px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 13px;
+  list-style: none;
+}
+
+.breadcrumbs li + li::before {
+  content: "/";
+  margin-right: 6px;
+  color: var(--line);
+}
+
+.breadcrumbs a {
+  color: var(--muted);
+}
+
+.breadcrumbs a:hover,
+.breadcrumbs a:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.breadcrumbs [aria-current="page"] {
+  overflow: hidden;
+  max-width: 40ch;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The artwork page has no padded container of its own, so its trail gets
+   the same width and margins as the layout under it. */
+.artwork-page .breadcrumbs {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 40px var(--desktop-margin) 0;
+}
+
+.artwork-page .artwork-layout {
+  padding-top: 8px;
+}
+
+/* Over the centred article. */
+.blog-post-page .breadcrumbs {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+@media (max-width: 980px) {
+  .artwork-page .breadcrumbs {
+    padding: 24px var(--mobile-margin) 0;
+  }
+}
+
 /* Delivery and returns, under the purchase buttons. */
 .buyer-promises {
   display: grid;
@@ -6353,9 +6414,87 @@ textarea::placeholder {
    --------------------------------------------------------------------------- */
 
 .walk-page {
-  height: 100vh;
-  height: 100dvh;
-  padding-top: 80px;
+  --walk-nav: 80px;
+  padding-top: var(--walk-nav);
+}
+
+.walk-help-more {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* The 3D view fills the screen under the nav; the introduction is below it. */
+.walk-frame {
+  height: calc(100vh - var(--walk-nav));
+  height: calc(100dvh - var(--walk-nav));
+}
+
+.walk-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 72px var(--desktop-margin) 96px;
+  /* Clear of the fixed nav when the help panel's link jumps here. */
+  scroll-margin-top: var(--walk-nav);
+}
+
+.walk-intro-copy {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.walk-intro-copy h1 {
+  font-size: clamp(34px, 4vw, 54px);
+  line-height: 1.08;
+}
+
+.walk-intro-copy > p:not(.home-eyebrow) {
+  max-width: 56ch;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.walk-intro-works h2 {
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+
+.walk-intro-works ul {
+  display: grid;
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 0;
+  list-style: none;
+}
+
+.walk-intro-works li {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.walk-intro-works li > a {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 18px;
+}
+
+.walk-intro-works span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.walk-intro-works span a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .walk-stage {
@@ -6601,7 +6740,13 @@ textarea::placeholder {
   /* The mobile nav adds a scrolling row of links under the bar, ending at
      128px (see .request-page above). */
   .walk-page {
-    padding-top: 128px;
+    --walk-nav: 128px;
+  }
+
+  .walk-intro {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 48px var(--mobile-margin) 72px;
   }
 }
 

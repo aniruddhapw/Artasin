@@ -6,7 +6,9 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export const metadata = {
-  title: "My Custom Artwork Requests"
+  title: "My Custom Artwork Requests",
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 export default async function BuyerCommissionsPage() {

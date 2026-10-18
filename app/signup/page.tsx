@@ -5,7 +5,9 @@ import { SignupForm } from "@/components/auth/SignupForm";
 
 export const metadata = {
   title: "Create Account",
-  alternates: { canonical: "/signup" }
+  alternates: { canonical: "/signup" },
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 export default async function SignupPage() {
