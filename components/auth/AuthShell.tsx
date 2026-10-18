@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/BrandLogo";
-import { LanguageToggle } from "@/components/i18n/LanguageToggle";
 import type { ReactNode } from "react";
 
 export function AuthShell({
@@ -20,9 +19,6 @@ export function AuthShell({
         <Link className="auth-brand" href="/">
           <BrandLogo />
         </Link>
-        {/* Sign-in is the first screen an artist meets, so the language switch
-            has to be reachable before they are through it. */}
-        <LanguageToggle />
       </div>
       <section className="auth-grid">
         <aside className="auth-editorial">

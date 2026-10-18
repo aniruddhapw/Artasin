@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
+import { getAuthUser } from "@/lib/auth";
 import { dictionaries, type Dictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, format, isLocale, type Locale, type Translate } from "@/lib/i18n/shared";
 
@@ -12,11 +14,25 @@ export function createTranslator(locale: Locale): Translate {
   return (key, vars) => format(dictionary, key, vars);
 }
 
-/** Server components: the locale the visitor has chosen, from their cookie. */
+/**
+ * Whether the visitor is a signed-in artist, the only people offered a
+ * language other than English. Cached per request, as every server component
+ * that translates asks.
+ */
+export const viewerIsArtist = cache(async (): Promise<boolean> => (await getAuthUser())?.role === "ARTIST");
+
+/**
+ * Server components: the locale the visitor has chosen, from their cookie.
+ * Only artists can choose, so anyone else gets English even if their browser
+ * still has an older choice saved.
+ */
 export async function getLocale(): Promise<Locale> {
   const store = await cookies();
   const value = store.get(LOCALE_COOKIE)?.value;
-  return isLocale(value) ? value : DEFAULT_LOCALE;
+  if (!isLocale(value) || value === DEFAULT_LOCALE) {
+    return DEFAULT_LOCALE;
+  }
+  return (await viewerIsArtist()) ? value : DEFAULT_LOCALE;
 }
 
 /** Server components: `const { t, locale } = await getTranslations();` */
