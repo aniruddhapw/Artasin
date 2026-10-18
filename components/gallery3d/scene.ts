@@ -25,6 +25,8 @@ import {
   type WallSlot
 } from "@/lib/galleryLayout";
 import type { GalleryApi, GalleryCallbacks, GalleryInsets, GalleryPainting } from "./types";
+import { loadVisitorModels, visitorModelBudget } from "./crowd";
+import { loadStaffModels, shouldLoadStaffModels } from "./staff";
 import { createVisitors, type ClearView } from "./visitors";
 
 /** The three module, passed in so it can be loaded on demand. */
@@ -314,8 +316,9 @@ export function buildGallery(
     reducedMotion,
     glowTexture,
     desk: { x: layout.desk.x + 0.35, z: layout.desk.z - 0.75 },
-    // A few steps in from the entrance, to one side of the way in.
-    helper: { x: layout.start.x + 2, z: layout.start.z - 5 },
+    // A few steps in from the entrance, a little to one side of the way in:
+    // near enough the middle to be in view on a phone held upright.
+    helper: { x: layout.start.x + 1.2, z: layout.start.z - 6 },
     walk: {
       route: (from, to) => route(layout, from, to),
       collide: (point, radius) => collide(layout, point, radius)
@@ -330,6 +333,33 @@ export function buildGallery(
     object.userData.helper = true;
     pickables.push(object);
   }
+
+  // The staff's realistic models (~1.5 MB) come after the paintings, so they
+  // never hold up the gallery, and the other visitors' avatars (up to
+  // ~0.85 MB, less on small devices) after those; until then, or without
+  // them, the simple figures stand in.
+  let staffRequested = false;
+  function requestStaffModels() {
+    if (staffRequested || !shouldLoadStaffModels()) {
+      return;
+    }
+    staffRequested = true;
+    loadStaffModels(THREE)
+      .then((models) => {
+        if (!disposed) {
+          visitors.useStaffModels(models);
+        }
+      })
+      .catch(() => {})
+      .then(() => (disposed || !visitors.count ? [] : loadVisitorModels(THREE, visitorModelBudget())))
+      .then((models) => {
+        if (!disposed) {
+          visitors.useVisitorModels(models);
+        }
+      })
+      .catch(() => {});
+  }
+  const staffTimer = window.setTimeout(requestStaffModels, 4000);
 
   let loaded = 0;
   let disposed = false;
@@ -357,6 +387,9 @@ export function buildGallery(
         loaded += 1;
         if (!disposed) {
           onProgress(loaded);
+          if (loaded === hung.length) {
+            requestStaffModels();
+          }
         }
       });
   });
@@ -772,6 +805,7 @@ export function buildGallery(
     setVisitorsVisible: visitors.setVisible,
     dispose() {
       disposed = true;
+      window.clearTimeout(staffTimer);
       cancelAnimationFrame(frame);
       resizeObserver.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
@@ -790,8 +824,11 @@ export function buildGallery(
         object.geometry?.dispose();
         const materials: THREE_NS.Material[] = Array.isArray(object.material) ? object.material : [object.material];
         for (const material of materials) {
-          if ("map" in material && material.map instanceof THREE.Texture) {
-            material.map.dispose();
+          // Every texture it holds (map, normalMap...), not only the colour map.
+          for (const value of Object.values(material)) {
+            if (value instanceof THREE.Texture) {
+              value.dispose();
+            }
           }
           material?.dispose();
         }

@@ -3,12 +3,16 @@
  * built from simple shapes, who wander the corridors between the paintings,
  * stop to look for a while, sometimes in twos, and keep out of the visitor's way.
  *
- * Everything is generated in code (no model downloads). Geometries and
- * materials are shared between figures; scene.ts disposes them with the scene.
+ * The figures are generated in code, so the gallery needs no downloads to
+ * start; realistic avatars (crowd.ts) take their place once they have loaded.
+ * Geometries and materials are shared between figures; scene.ts disposes them
+ * with the scene.
  */
 
 import type * as THREE_NS from "three";
 import type { Point } from "@/lib/galleryLayout";
+import { CLOTHING_DYES, type VisitorBody, type VisitorModel } from "./crowd";
+import { addYaw, type StaffModel, type StaffRole } from "./staff";
 import type { NonEmptyArray } from "@/types/utils";
 
 type Three = typeof THREE_NS;
@@ -63,6 +67,10 @@ export interface Visitors {
   representativeMeshes: THREE_NS.Mesh[];
   /** The helper's meshes and name tag, so clicking them opens the helper. */
   helperObjects: THREE_NS.Object3D[];
+  /** Swaps the staff's simple figures for realistic models once they have loaded. */
+  useStaffModels(models: Partial<Record<StaffRole, StaffModel>>): void;
+  /** Swaps the other visitors' simple figures for realistic avatars once they have loaded. */
+  useVisitorModels(models: readonly VisitorModel[]): void;
 }
 
 /** How a figure is dressed. Colours are hex numbers. */
@@ -107,10 +115,21 @@ interface Visitor extends Figure {
   blend: number;
   /** Already stepped aside for the viewer at this painting. */
   madeRoom?: boolean;
+  /** The realistic avatar standing in for the simple figure, once loaded. */
+  model?: VisitorBody;
+  /** Time not yet given to the avatar's animation (far-off ones update less often). */
+  pendingDt: number;
+  /** Counts frames, to update far-off avatars on every third. */
+  frame: number;
 }
 
 interface Helper extends Figure {
   tag: THREE_NS.Sprite;
+  staff?: StaffModel;
+  /** Head turn towards the visitor while standing, eased. */
+  look: number;
+  /** Has waved hello on the visitor's first approach. */
+  greeted: boolean;
   heading: number;
   faceHeading: number;
   phase: number;
@@ -124,6 +143,7 @@ interface Helper extends Figure {
 }
 
 interface Representative extends Figure {
+  staff?: StaffModel;
   meshes: THREE_NS.Mesh[];
   sway: number;
   look: number;
@@ -147,6 +167,8 @@ const VIEWER_SPACE = 1.3;
 const NEAR_VIEWER = 1;
 /** How close a visitor's middle comes to a wall. */
 const BODY_RADIUS = 0.35;
+/** Further than this, an avatar is small enough on screen to animate on every third frame. */
+const FAR_VIEWER = 12;
 
 /** A [min, max] range to pick a random value from. */
 type Range = readonly [number, number];
@@ -349,7 +371,9 @@ export function createVisitors(
       painting: index % hung.length,
       target: new THREE.Vector3(),
       path: [],
-      blend: 0
+      blend: 0,
+      pendingDt: 0,
+      frame: index
     };
     chooseSpot(visitor, visitor.painting);
     root.position.copy(visitor.target);
@@ -437,6 +461,15 @@ export function createVisitors(
     if (!reducedMotion && distance < 5 && dz > 0 && !rep.waveCooldown && !rep.wave) {
       rep.wave = 2.4;
       rep.waveCooldown = 25;
+      if (rep.staff) {
+        playWave(rep.staff);
+      }
+    }
+    if (rep.staff) {
+      rep.staff.mixer.update(reducedMotion ? 0 : dt);
+      if (rep.staff.head) {
+        addYaw(THREE, rep.staff.head, rep.look);
+      }
     }
     rep.sway += dt * (reducedMotion ? 0 : 0.6);
     rep.body.rotation.z = Math.sin(rep.sway) * 0.015;
@@ -475,7 +508,20 @@ export function createVisitors(
     figure.root.add(tag);
     figure.root.position.set(x, 0, z);
     // Facing in from the entrance side, towards an arriving visitor.
-    return { ...figure, tag, heading: 0, faceHeading: 0, phase: 0, blend: 0, sway: 0, path: [], goal: null, replan: 0 };
+    return {
+      ...figure,
+      tag,
+      look: 0,
+      greeted: false,
+      heading: 0,
+      faceHeading: 0,
+      phase: 0,
+      blend: 0,
+      sway: 0,
+      path: [],
+      goal: null,
+      replan: 0
+    };
   }
 
   /**
@@ -548,6 +594,83 @@ export function createVisitors(
     guide.sway += dt * (reducedMotion ? 0 : 1.6);
     // The tag bobs gently so it catches the eye.
     guide.tag.position.y = 2.12 + Math.sin(guide.sway) * 0.03;
+
+    if (guide.staff) {
+      const { mixer, actions, head } = guide.staff;
+      const waving = actions.wave?.isRunning() ?? false;
+      actions.walk?.setEffectiveWeight(guide.blend);
+      if (!waving) {
+        actions.idle?.setEffectiveWeight(1 - guide.blend);
+      }
+      // A wave the first time the visitor comes near, while standing.
+      const near = Math.hypot(viewer.x - root.position.x, viewer.z - root.position.z) < 7;
+      if (!guide.greeted && near && !moving && !reducedMotion) {
+        guide.greeted = true;
+        playWave(guide.staff);
+      }
+      // Glance at the visitor while standing still.
+      const towards = moving ? 0 : clampAngle(Math.atan2(viewer.x - root.position.x, viewer.z - root.position.z) - guide.heading, 0.8);
+      guide.look += (towards - guide.look) * Math.min(dt * 3, 1);
+      mixer.update(reducedMotion ? 0 : dt);
+      if (head) {
+        addYaw(THREE, head, guide.look);
+      }
+    }
+  }
+
+  // Into the wave and, when it is done, back to standing.
+  function playWave({ mixer, actions }: StaffModel) {
+    const { wave, idle } = actions;
+    if (!wave || wave.isRunning()) {
+      return;
+    }
+    wave.reset().setEffectiveWeight(1).fadeIn(0.35).play();
+    idle?.fadeOut(0.35);
+    const done = (event: { action: THREE_NS.AnimationAction }) => {
+      if (event.action !== wave) {
+        return;
+      }
+      mixer.removeEventListener("finished", done);
+      wave.fadeOut(0.45);
+      idle?.reset().fadeIn(0.45).play();
+    };
+    mixer.addEventListener("finished", done);
+  }
+
+  // The model stands where the simple figure stood; the figure stays, hidden,
+  // as what clicks land on.
+  function adopt(figure: Figure, staff: StaffModel) {
+    figure.root.add(staff.model);
+    figure.body.visible = false;
+  }
+
+  // Each visitor takes the next avatar in turn, so the same one never stands
+  // at neighbouring paintings (visitors start at consecutive ones). The first
+  // of each wears their own clothes; later copies wear a different colour top.
+  function useVisitorModels(models: readonly VisitorModel[]) {
+    visitors.forEach((visitor, index) => {
+      const model = models[index % models.length];
+      if (visitor.model || !model) {
+        return;
+      }
+      const copy = Math.floor(index / models.length);
+      visitor.model = model.create(copy ? CLOTHING_DYES[(index + 3 * copy) % CLOTHING_DYES.length] : undefined);
+      visitor.root.add(visitor.model.object);
+      visitor.body.visible = false;
+      // The avatars already differ in build; keep heights within a natural range.
+      visitor.root.scale.setScalar(clamp(visitor.root.scale.x, 0.95, 1.03));
+    });
+  }
+
+  function useStaffModels(models: Partial<Record<StaffRole, StaffModel>>) {
+    if (representative && models.desk && !representative.staff) {
+      representative.staff = models.desk;
+      adopt(representative, models.desk);
+    }
+    if (helper && models.helper && !helper.staff) {
+      helper.staff = models.helper;
+      adopt(helper, models.helper);
+    }
   }
 
   let focused: number | null = null;
@@ -663,6 +786,21 @@ export function createVisitors(
       visitor.head.rotation.x = -0.12 * still;
       visitor.head.rotation.z = Math.sin(visitor.sway * 0.7) * 0.08 * still;
       visitor.head.rotation.y = Math.sin(visitor.sway * 0.45) * 0.15 * still;
+
+      if (visitor.model && root.visible) {
+        const { mixer, idle, walk: stride, walkSpeed } = visitor.model;
+        stride.setEffectiveWeight(visitor.blend);
+        idle.setEffectiveWeight(1 - visitor.blend);
+        // Steps in time with how fast they actually move, so feet don't slide.
+        stride.timeScale = visitor.speed / walkSpeed;
+        visitor.pendingDt += reducedMotion ? 0 : dt;
+        visitor.frame += 1;
+        const far = Math.hypot(root.position.x - viewer.x, root.position.z - viewer.z) > FAR_VIEWER;
+        if (!far || visitor.frame % 3 === 0) {
+          mixer.update(visitor.pendingDt);
+          visitor.pendingDt = 0;
+        }
+      }
     }
   }
 
@@ -681,7 +819,15 @@ export function createVisitors(
     }
   });
 
-  return { update, setVisible, count, representativeMeshes: representative?.meshes ?? [], helperObjects };
+  return {
+    update,
+    setVisible,
+    count,
+    representativeMeshes: representative?.meshes ?? [],
+    helperObjects,
+    useStaffModels,
+    useVisitorModels
+  };
 }
 
 /** The helper's "Ask me" name tag: a dark pill with cream lettering. */
