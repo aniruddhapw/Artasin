@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { JsonLd } from "@/components/JsonLd";
+import { absoluteUrl, metaDescription, pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { LazyImage } from "@/components/LazyImage";
@@ -58,26 +61,18 @@ export async function generateMetadata({ params }: PageProps<"/artist/[slug]">) 
     : undefined;
   const previewSource = await getPreviewImage(artist.id, firstPortfolioPreview);
   const description =
-    artist.bio?.slice(0, 160) ||
+    artist.bio?.trim() ||
     `${artist.discipline || "Artist"}${artist.location ? ` in ${artist.location}` : ""} on ARTASIN — original work and commissions.`;
 
-  return {
-    title: `${artist.displayName}`,
+  return pageMetadata({
+    title: `${artist.displayName} – ${artist.discipline || "Artist"}${artist.location ? `, ${artist.location}` : ""}`,
     description,
-    alternates: { canonical: `/artist/${artist.slug}` },
-    openGraph: {
-      type: "profile",
-      title: `${artist.displayName} on ARTASIN`,
-      description,
-      images: previewSource ? [{ url: ogUrl(previewSource), width: 1200, height: 630 }] : undefined
-    },
-    twitter: {
-      card: previewSource ? "summary_large_image" : "summary",
-      title: `${artist.displayName} on ARTASIN`,
-      description,
-      images: previewSource ? [ogUrl(previewSource)] : undefined
-    }
-  };
+    path: `/artist/${artist.slug}`,
+    type: "profile",
+    image: previewSource ? { url: ogUrl(previewSource), width: 1200, height: 630 } : undefined,
+    // Only verified artists are in the sitemap; the rest stay out of search too.
+    noIndex: artist.verificationStatus !== "APPROVED"
+  });
 }
 
 export default async function ArtistProfilePage({ params }: PageProps<"/artist/[slug]">) {
@@ -140,6 +135,23 @@ export default async function ArtistProfilePage({ params }: PageProps<"/artist/[
     <>
       <Nav active="artists" />
       <main className="page request-page">
+        <Breadcrumbs
+          items={[
+            { name: "Artists", path: "/artists" },
+            { name: artist.displayName, path: `/artist/${artist.slug}` }
+          ]}
+        />
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: artist.displayName,
+            url: absoluteUrl(`/artist/${artist.slug}`),
+            ...(artist.bio ? { description: metaDescription(artist.bio, 500) } : {}),
+            ...(artist.discipline ? { knowsAbout: artist.discipline } : {}),
+            ...(artist.location ? { homeLocation: { "@type": "Place", name: artist.location } } : {})
+          }}
+        />
         <header className="request-header">
           <p className="byline">{artist.discipline || "Artist"}</p>
           <h1>{artist.displayName}</h1>

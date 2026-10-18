@@ -3,12 +3,13 @@ import { Footer } from "@/components/Footer";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Journal",
+export const metadata = pageMetadata({
+  title: "Journal: Stories from Indian Artists",
   description: "Process notes, studio updates, and stories from the artists on ARTASIN.",
-  alternates: { canonical: "/blog" }
-};
+  path: "/blog"
+});
 
 const dateFormat = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" });
 

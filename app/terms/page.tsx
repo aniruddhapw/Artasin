@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { DELIVERY_DAYS, RETURN_DAYS } from "@/lib/policies";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Terms of Service",
-  description:
-    "The terms that govern buying, selling, and commissioning original artwork on the ARTASIN marketplace.",
-  alternates: { canonical: "/terms" }
-};
+  description: "The terms that govern buying, selling, and commissioning original artwork on the ARTASIN marketplace.",
+  path: "/terms"
+});
 
 const LAST_UPDATED = "18 October 2026";
 

@@ -10,7 +10,9 @@ import { serializeMoney } from "@/lib/api";
 import { isOfflinePayments } from "@/lib/paymentMode";
 
 export const metadata = {
-  title: "Order History"
+  title: "Order History",
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 const statusLabels = {

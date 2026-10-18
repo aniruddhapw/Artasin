@@ -3,15 +3,18 @@ import { Nav } from "@/components/Nav";
 import { CommissionRequestForm } from "@/components/requests/CommissionRequestForm";
 import { prisma } from "@/lib/db";
 import { getTranslations } from "@/lib/i18n";
+import { pageMetadata } from "@/lib/seo";
 
 const PROCESS_STEPS = ["step1", "step2", "step3", "step4"] as const;
 
 export async function generateMetadata() {
   const { t } = await getTranslations();
-  return {
+  return pageMetadata({
     title: t("request.title"),
-    alternates: { canonical: "/requests" }
-  };
+    description:
+      "Commission an original painting or artwork from an Indian artist on ARTASIN. Describe the subject, size, style and budget, and the artist quotes before any work begins.",
+    path: "/requests"
+  });
 }
 
 export default async function RequestsPage({ searchParams }: PageProps<"/requests">) {

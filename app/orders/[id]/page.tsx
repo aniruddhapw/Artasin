@@ -11,7 +11,9 @@ import { isOfflinePayments } from "@/lib/paymentMode";
 import { parseShippingAddress } from "@/lib/shippingAddress";
 
 export const metadata = {
-  title: "Order Confirmation"
+  title: "Order Confirmation",
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 const statusLabels = {

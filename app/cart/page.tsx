@@ -11,7 +11,9 @@ import { getTranslations, translateOr } from "@/lib/i18n";
 import { thumbUrl } from "@/lib/images";
 
 export const metadata = {
-  title: "Cart"
+  title: "Cart",
+  // Nothing here for search; links from it are still followed.
+  robots: { index: false, follow: true }
 };
 
 export default async function CartPage() {

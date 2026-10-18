@@ -304,6 +304,11 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
               <strong>Custom orders</strong> — visit the desk in the reception at the far end
             </li>
           </ul>
+          {/* The page's introduction and painting list sit below the 3D view,
+              which takes the scroll wheel and touch for walking. */}
+          <a className="walk-help-more" href="#walk-intro">
+            About this gallery and all its paintings &darr;
+          </a>
         </div>
       ) : null}
 

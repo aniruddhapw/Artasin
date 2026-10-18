@@ -1,4 +1,6 @@
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
+import { SITE_URL } from "@/lib/seo";
+
+const siteUrl = SITE_URL;
 
 export default function robots() {
   return {

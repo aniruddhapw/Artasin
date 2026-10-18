@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { JsonLd } from "@/components/JsonLd";
+import { SITE_NAME, absoluteUrl, metaDescription, pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
@@ -24,24 +27,18 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">) {
   if (!post || post.status !== "PUBLISHED") {
     return { title: "Post Not Found" };
   }
-  const description = post.excerpt || sanitizeBlogHtml(post.body).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
-  return {
+  return pageMetadata({
     title: post.title,
-    description,
-    alternates: { canonical: `/blog/${slug}` },
-    openGraph: {
-      type: "article",
-      title: `${post.title} — ${post.artist.displayName}`,
-      description,
-      images: post.coverImageUrl ? [{ url: ogUrl(post.coverImageUrl), width: 1200, height: 630 }] : undefined
-    },
-    twitter: {
-      card: post.coverImageUrl ? "summary_large_image" : "summary",
-      title: post.title,
-      description,
-      images: post.coverImageUrl ? [ogUrl(post.coverImageUrl)] : undefined
-    }
-  };
+    description: postSummary(post),
+    path: `/blog/${slug}`,
+    type: "article",
+    image: post.coverImageUrl ? { url: ogUrl(post.coverImageUrl), width: 1200, height: 630 } : undefined
+  });
+}
+
+/** The excerpt, or the opening of the post, as one line (newlines break the meta tags). */
+function postSummary(post: { excerpt: string | null; body: string }): string {
+  return metaDescription(post.excerpt || sanitizeBlogHtml(post.body).replace(/<[^>]+>/g, " "));
 }
 
 export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">) {
@@ -70,6 +67,27 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
     <>
       <Nav active="journal" />
       <main className="page blog-post-page">
+        <Breadcrumbs
+          items={[
+            { name: "Journal", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` }
+          ]}
+        />
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: post.title,
+            description: postSummary(post),
+            url: absoluteUrl(`/blog/${post.slug}`),
+            mainEntityOfPage: absoluteUrl(`/blog/${post.slug}`),
+            datePublished: (post.publishedAt ?? post.createdAt).toISOString(),
+            dateModified: post.updatedAt.toISOString(),
+            ...(post.coverImageUrl ? { image: absoluteUrl(post.coverImageUrl) } : {}),
+            author: { "@type": "Person", name: post.artist.displayName, url: absoluteUrl(`/artist/${post.artist.slug}`) },
+            publisher: { "@type": "Organization", name: SITE_NAME, logo: { "@type": "ImageObject", url: absoluteUrl("/brand/artasin-lockup.png") } }
+          }}
+        />
         <article className="blog-post">
           <header className="blog-post-header">
             <p className="byline">
