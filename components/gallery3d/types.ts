@@ -30,7 +30,8 @@ export interface GalleryCallbacks {
 
 /** What the React component can do to the scene. */
 export interface GalleryApi {
-  focus(index: number): void;
+  /** Goes to a painting (or the desk, after the last); `instant` jumps there without the glide. */
+  focus(index: number, options?: { instant?: boolean }): void;
   setInsets(next: GalleryInsets): void;
   /** Shows or hides the wandering visitors (not the desk representative). */
   setVisitorsVisible(visible: boolean): void;

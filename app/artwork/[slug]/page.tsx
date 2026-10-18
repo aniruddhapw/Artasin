@@ -208,6 +208,12 @@ export default async function ArtworkDetailPage({ params }: PageProps<"/artwork/
               >
                 Request Custom Artwork
               </Link>
+              {/* Paintings for sale hang in the 3D gallery; this opens it in front of this one. */}
+              {isAvailable && artwork.category === "Painting" ? (
+                <Link className="button button-secondary" href={`/gallery/walk?at=${encodeURIComponent(artwork.slug)}`}>
+                  See it in the 3D gallery
+                </Link>
+              ) : null}
               <ShareButton
                 className="button button-secondary"
                 path={`/artwork/${artwork.slug}`}
