@@ -8,7 +8,10 @@ import type { HelperPainting } from "@/lib/galleryHelper";
 export interface GalleryPainting extends HelperPainting {
   id: string;
   slug: string;
+  /** The texture hung on the wall (1280px). */
   imageUrl: string;
+  /** A small version for the helper's cards (600px). */
+  thumbUrl: string;
 }
 
 /** Screen space the overlay bars cover, in CSS pixels. */

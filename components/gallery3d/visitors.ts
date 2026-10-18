@@ -484,8 +484,8 @@ export function createVisitors(
     arm.rotation.x = -raise * 0.25;
   }
 
-  // The Artasin helper: in a terracotta top with a cream scarf and an
-  // "Ask me" tag above their head, so visitors know who to click.
+  // The Artasin helper, Aarav: in a terracotta top with a cream scarf and a
+  // name tag above their head, so visitors know who to click.
   const helper = helperStart ? buildHelper(helperStart) : null;
 
   function buildHelper({ x, z }: { x: number; z: number }): Helper {
@@ -503,8 +503,8 @@ export function createVisitors(
     badge.position.set(0.09, 1.33, 0.125);
     figure.body.add(badge);
     const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeTagTexture(THREE), transparent: true, depthWrite: false }));
-    tag.scale.set(0.62, 0.22, 1);
-    tag.position.y = 2.12;
+    tag.scale.set(TAG_WIDTH, TAG_WIDTH * (TAG_CANVAS.height / TAG_CANVAS.width), 1);
+    tag.position.y = TAG_HEIGHT;
     figure.root.add(tag);
     figure.root.position.set(x, 0, z);
     // Facing in from the entrance side, towards an arriving visitor.
@@ -593,7 +593,7 @@ export function createVisitors(
     guide.body.position.y = Math.abs(Math.cos(guide.phase)) * 0.03 * guide.blend;
     guide.sway += dt * (reducedMotion ? 0 : 1.6);
     // The tag bobs gently so it catches the eye.
-    guide.tag.position.y = 2.12 + Math.sin(guide.sway) * 0.03;
+    guide.tag.position.y = TAG_HEIGHT + Math.sin(guide.sway) * 0.03;
 
     if (guide.staff) {
       const { mixer, actions, head } = guide.staff;
@@ -830,25 +830,59 @@ export function createVisitors(
   };
 }
 
-/** The helper's "Ask me" name tag: a dark pill with cream lettering. */
+/** The tag's size on screen, in world units, and on its canvas, in pixels. */
+const TAG_WIDTH = 1.35;
+/** Height of the tag's centre, clear above the helper's head. */
+const TAG_HEIGHT = 2.2;
+const TAG_CANVAS = { width: 640, height: 172 };
+
+/**
+ * The helper's name tag: a light, frosted pill with a warm amber dot,
+ * "Aarav · Virtual Curator" and "Tap to guide →". Drawn again once the web
+ * fonts have loaded, so it never keeps a fallback typeface.
+ */
 function makeTagTexture(THREE: Three): THREE_NS.CanvasTexture {
   const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 90;
-  const ctx = canvas.getContext("2d");
-  if (ctx) {
-    ctx.fillStyle = "rgba(29, 26, 23, 0.92)";
-    ctx.beginPath();
-    ctx.roundRect(4, 4, 248, 82, 41);
-    ctx.fill();
-    ctx.fillStyle = "#f4f1ea";
-    ctx.font = '600 38px Inter, "Helvetica Neue", Arial, sans-serif';
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Ask me", 128, 47);
-  }
+  canvas.width = TAG_CANVAS.width;
+  canvas.height = TAG_CANVAS.height;
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  const draw = () => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return;
+    }
+    const { width, height } = canvas;
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "rgba(250, 247, 241, 0.94)";
+    ctx.beginPath();
+    ctx.roundRect(6, 6, width - 12, height - 12, (height - 12) / 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(29, 26, 23, 0.12)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    // The amber dot, with a soft ring, like a "live" marker.
+    const dotX = 70;
+    const dotY = height / 2;
+    ctx.fillStyle = "rgba(214, 154, 60, 0.28)";
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#d69a3c";
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#1d1a17";
+    ctx.font = '400 46px "Playfair Display", Georgia, serif';
+    ctx.fillText("Aarav · Virtual Curator", 118, 78);
+    ctx.fillStyle = "#5c574f";
+    ctx.font = '500 34px Inter, "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText("Tap to guide \u2192", 120, 128);
+    texture.needsUpdate = true;
+  };
+  draw();
+  void document.fonts?.ready.then(draw);
   return texture;
 }
 
