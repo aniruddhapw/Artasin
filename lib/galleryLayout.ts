@@ -151,13 +151,98 @@ export function deskArea(layout: GalleryLayout): Rect {
   };
 }
 
+/** A bench: centre, size (length along x unless turned) and whether it is turned a quarter. */
+export interface Bench {
+  x: number;
+  z: number;
+  /** Radians about the vertical: 0 seats face +z (towards the entrance). */
+  rotation: number;
+}
+
+export const BENCH_LENGTH = 1.8;
+export const BENCH_DEPTH = 0.5;
+/** The floor a potted plant takes, as the half-width of a square. */
+export const PLANT_RADIUS = 0.38;
+/** How far a plant stands out from the block corner it marks, along each axis. */
+const PLANT_OUT = 0.45;
+
+export interface GalleryProps {
+  benches: Bench[];
+  plants: Point[];
+}
+
+/**
+ * Where the furniture goes, kept off every walking line: benches in the
+ * reception either side of the desk, facing back into the gallery; plants
+ * on alternate corners of each block (where corridors cross), in the four
+ * corners of the building, and either side of the desk.
+ */
+export function placeProps(layout: GalleryLayout): GalleryProps {
+  const { bounds, desk } = layout;
+  const benchZ = bounds.minZ + 1.6;
+  const benchX = DESK_WIDTH / 2 + 5.5;
+  const benches: Bench[] = [
+    { x: desk.x - benchX, z: benchZ, rotation: 0 },
+    { x: desk.x + benchX, z: benchZ, rotation: 0 }
+  ];
+
+  const plants: Point[] = [];
+  layout.islands.forEach((island, index) => {
+    const corners: [Point, Point] =
+      index % 2 === 0
+        ? [{ x: island.minX - PLANT_OUT, z: island.maxZ + PLANT_OUT }, { x: island.maxX + PLANT_OUT, z: island.minZ - PLANT_OUT }]
+        : [{ x: island.maxX + PLANT_OUT, z: island.maxZ + PLANT_OUT }, { x: island.minX - PLANT_OUT, z: island.minZ - PLANT_OUT }];
+    plants.push(...corners);
+  });
+  const inset = PLANT_RADIUS + 0.25;
+  plants.push(
+    { x: bounds.minX + inset, z: bounds.maxZ - inset },
+    { x: bounds.maxX - inset, z: bounds.maxZ - inset },
+    { x: bounds.minX + inset, z: bounds.minZ + inset },
+    { x: bounds.maxX - inset, z: bounds.minZ + inset },
+    { x: desk.x - DESK_WIDTH / 2 - 1.2, z: bounds.minZ + 0.8 },
+    { x: desk.x + DESK_WIDTH / 2 + 1.2, z: bounds.minZ + 0.8 }
+  );
+  return { benches, plants };
+}
+
+/** The floor each bench and plant takes up, for collide(). */
+export function propAreas(props: GalleryProps): Rect[] {
+  const benchAreas = props.benches.map((bench) => {
+    const turned = Math.abs(Math.sin(bench.rotation)) > 0.5;
+    const halfX = (turned ? BENCH_DEPTH : BENCH_LENGTH) / 2;
+    const halfZ = (turned ? BENCH_LENGTH : BENCH_DEPTH) / 2;
+    return { minX: bench.x - halfX, maxX: bench.x + halfX, minZ: bench.z - halfZ, maxZ: bench.z + halfZ };
+  });
+  const plantAreas = props.plants.map((plant) => ({
+    minX: plant.x - PLANT_RADIUS,
+    maxX: plant.x + PLANT_RADIUS,
+    minZ: plant.z - PLANT_RADIUS,
+    maxZ: plant.z + PLANT_RADIUS
+  }));
+  return [...benchAreas, ...plantAreas];
+}
+
+// collide() runs every frame for every figure, so a layout's solids are
+// worked out once.
+const solidsCache = new WeakMap<GalleryLayout, Rect[]>();
+
+function solidsOf(layout: GalleryLayout): Rect[] {
+  let solids = solidsCache.get(layout);
+  if (!solids) {
+    solids = [...layout.islands, deskArea(layout), ...propAreas(placeProps(layout))];
+    solidsCache.set(layout, solids);
+  }
+  return solids;
+}
+
 /**
  * Moves a point the least distance that puts it at least `radius` clear of
- * every wall, block and the desk. Returns a new point.
+ * every wall, block, the desk and the furniture. Returns a new point.
  */
 export function collide(layout: GalleryLayout, point: Point, radius: number): Point {
   let { x, z } = point;
-  const solids = [...layout.islands, deskArea(layout)];
+  const solids = solidsOf(layout);
   // Twice, so a push out of one block into a neighbour's corner is resolved.
   for (let pass = 0; pass < 2; pass += 1) {
     x = Math.min(Math.max(x, layout.bounds.minX + radius), layout.bounds.maxX - radius);
@@ -170,15 +255,25 @@ export function collide(layout: GalleryLayout, point: Point, radius: number): Po
       if (left <= 0 || right <= 0 || back <= 0 || front <= 0) {
         continue;
       }
-      const least = Math.min(left, right, back, front);
-      if (least === left) {
-        x = solid.minX - radius;
-      } else if (least === right) {
-        x = solid.maxX + radius;
-      } else if (least === front) {
-        z = solid.maxZ + radius;
-      } else {
-        z = solid.minZ - radius;
+      // The shortest way out that stays inside the building: a plant in a
+      // corner of the building can only be left towards the room.
+      const { bounds } = layout;
+      const ways = [
+        { distance: left, x: solid.minX - radius, z },
+        { distance: right, x: solid.maxX + radius, z },
+        { distance: front, x, z: solid.maxZ + radius },
+        { distance: back, x, z: solid.minZ - radius }
+      ].filter(
+        (way) =>
+          way.x >= bounds.minX + radius - 1e-9 &&
+          way.x <= bounds.maxX - radius + 1e-9 &&
+          way.z >= bounds.minZ + radius - 1e-9 &&
+          way.z <= bounds.maxZ - radius + 1e-9
+      );
+      const best = ways.reduce<(typeof ways)[number] | null>((a, b) => (a && a.distance <= b.distance ? a : b), null);
+      if (best) {
+        x = best.x;
+        z = best.z;
       }
     }
   }

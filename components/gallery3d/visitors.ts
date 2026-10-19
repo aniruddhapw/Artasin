@@ -592,8 +592,10 @@ export function createVisitors(
     guide.arms[1].rotation.x = swing * 0.75;
     guide.body.position.y = Math.abs(Math.cos(guide.phase)) * 0.03 * guide.blend;
     guide.sway += dt * (reducedMotion ? 0 : 1.6);
-    // The tag bobs gently so it catches the eye.
+    // The tag bobs gently so it catches the eye. Close by, it would cover the
+    // view (he stands beside you at a painting), and you know who he is.
     guide.tag.position.y = TAG_HEIGHT + Math.sin(guide.sway) * 0.03;
+    guide.tag.visible = Math.hypot(viewer.x - root.position.x, viewer.z - root.position.z) > TAG_HIDE_WITHIN;
 
     if (guide.staff) {
       const { mixer, actions, head } = guide.staff;
@@ -834,6 +836,8 @@ export function createVisitors(
 const TAG_WIDTH = 1.35;
 /** Height of the tag's centre, clear above the helper's head. */
 const TAG_HEIGHT = 2.2;
+/** Nearer than this (metres), the tag is hidden. */
+const TAG_HIDE_WITHIN = 3.5;
 const TAG_CANVAS = { width: 640, height: 172 };
 
 /**
