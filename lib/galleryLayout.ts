@@ -162,9 +162,9 @@ export interface Bench {
 export const BENCH_LENGTH = 1.8;
 export const BENCH_DEPTH = 0.5;
 /** The floor a potted plant takes, as the half-width of a square. */
-export const PLANT_RADIUS = 0.45;
+export const PLANT_RADIUS = 0.38;
 /** How far a plant stands out from the block corner it marks, along each axis. */
-const PLANT_OUT = 0.6;
+const PLANT_OUT = 0.45;
 
 export interface GalleryProps {
   benches: Bench[];

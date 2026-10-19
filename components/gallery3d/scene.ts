@@ -156,7 +156,8 @@ export function buildGallery(
   const floorTexture = makePlankTexture(THREE);
   floorTexture.wrapS = THREE.RepeatWrapping;
   floorTexture.wrapT = THREE.RepeatWrapping;
-  floorTexture.repeat.set(floorWidth / 3, floorDepth / 3);
+  // One texture covers 6 m of floor, so its repeat is hard to spot.
+  floorTexture.repeat.set(floorWidth / 6, floorDepth / 6);
   floorTexture.anisotropy = maxAnisotropy;
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(floorWidth, floorDepth),
@@ -384,7 +385,7 @@ export function buildGallery(
       return;
     }
     plantsRequested = true;
-    addPlants(THREE, scene, furniture.plants).catch(() => {});
+    addPlants(THREE, scene, furniture.plants, glowTexture).catch(() => {});
   }
   for (const mesh of desk.meshes) {
     mesh.userData.index = DESK_INDEX;
@@ -1337,33 +1338,47 @@ async function loadArtTexture(THREE: Three, url: string): Promise<{ texture: THR
   return { texture, aspect };
 }
 
+/**
+ * The floor: honey-oak planks, 16 rows over 6 m of floor, each plank 1.2–2.7 m
+ * long and a slightly different tone, with fine grain. Big enough that the
+ * repeat is hard to spot. A fixed seed keeps the floor the same on every visit.
+ */
 function makePlankTexture(THREE: Three): THREE_NS.CanvasTexture {
-  const size = 512;
+  const size = 1024;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
   const ctx = context2d(canvas);
-  const rows = 8;
+  const rows = 16;
   const rowHeight = size / rows;
-  // A fixed seed keeps the floor identical on every visit.
   let seed = 7;
   const random = () => {
     seed = (seed * 16807) % 2147483647;
     return seed / 2147483647;
   };
+  // Draws a rectangle, and again a texture-width to the left: a plank running
+  // off the right edge carries on from the left, so the repeat has no seam.
+  const fillWrapped = (x: number, y: number, w: number, h: number) => {
+    ctx.fillRect(x, y, w, h);
+    if (x + w > size) {
+      ctx.fillRect(x - size, y, w, h);
+    }
+  };
   for (let row = 0; row < rows; row += 1) {
-    let x = -random() * size * 0.5;
-    while (x < size) {
-      const length = size * (0.45 + random() * 0.5);
-      // Honey oak: warm, and a touch deeper than before.
-      const shade = 138 + Math.floor(random() * 36);
+    // Each row starts at its own point, and its planks cover exactly one
+    // texture width, the last one shortened to meet the first.
+    const start = random() * size;
+    let x = start;
+    while (x < start + size) {
+      const length = Math.min(size * (0.2 + random() * 0.25), start + size - x);
+      const shade = 132 + Math.floor(random() * 44);
       ctx.fillStyle = `rgb(${shade + 42}, ${shade + 4}, ${shade - 52})`;
-      ctx.fillRect(x, row * rowHeight, length, rowHeight);
-      for (let grain = 0; grain < 6; grain += 1) {
-        ctx.fillStyle = `rgba(80, 55, 30, ${0.04 + random() * 0.05})`;
-        ctx.fillRect(x, row * rowHeight + random() * rowHeight, length, 1 + random() * 2);
+      fillWrapped(x % size, row * rowHeight, length, rowHeight);
+      for (let grain = 0; grain < 7; grain += 1) {
+        ctx.fillStyle = `rgba(80, 52, 26, ${0.035 + random() * 0.05})`;
+        fillWrapped(x % size, row * rowHeight + random() * rowHeight, length, 1 + random() * 2);
       }
       ctx.fillStyle = "rgba(60, 40, 20, 0.45)";
-      ctx.fillRect(x, row * rowHeight, 2, rowHeight);
+      fillWrapped(x % size, row * rowHeight, 2, rowHeight);
       x += length;
     }
     ctx.fillStyle = "rgba(60, 40, 20, 0.5)";
@@ -1388,8 +1403,9 @@ function makeGlowTexture(THREE: Three): THREE_NS.CanvasTexture {
   return new THREE.CanvasTexture(canvas);
 }
 
-const PLAQUE_WIDTH = 0.5;
-const PLAQUE_HEIGHT = 0.31;
+// Large enough to read from a couple of metres, as gallery labels are.
+const PLAQUE_WIDTH = 0.62;
+const PLAQUE_HEIGHT = 0.385;
 
 /**
  * The wall label beside a painting: a thin brushed-brass plate with the

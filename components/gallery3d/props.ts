@@ -54,7 +54,12 @@ export function addBenches(THREE: Three, scene: THREE_NS.Scene, benches: readonl
  * little differently so they don't look stamped out. Resolves when they are
  * in the scene; rejects (and leaves the floor bare) if the model can't load.
  */
-export async function addPlants(THREE: Three, scene: THREE_NS.Scene, spots: readonly Point[]): Promise<void> {
+export async function addPlants(
+  THREE: Three,
+  scene: THREE_NS.Scene,
+  spots: readonly Point[],
+  glowTexture: THREE_NS.Texture
+): Promise<void> {
   if (!spots.length) {
     return;
   }
@@ -77,7 +82,7 @@ export async function addPlants(THREE: Three, scene: THREE_NS.Scene, spots: read
     return seed / 2147483647;
   };
   const placements = spots.map((spot) => {
-    const scale = 1.15 + random() * 0.2;
+    const scale = 0.95 + random() * 0.15;
     return new THREE.Matrix4().compose(
       new THREE.Vector3(spot.x, 0, spot.z),
       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), random() * Math.PI * 2),
@@ -99,6 +104,21 @@ export async function addPlants(THREE: Three, scene: THREE_NS.Scene, spots: read
     mesh.computeBoundingSphere();
     scene.add(mesh);
   });
+
+  // A soft shadow under every pot, so the plants sit on the floor rather
+  // than float above it. One instanced mesh for all of them.
+  const shadows = new THREE.InstancedMesh(
+    new THREE.PlaneGeometry(1.25, 1.25).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ map: glowTexture, color: 0x000000, transparent: true, opacity: 0.7, depthWrite: false }),
+    placements.length
+  );
+  placements.forEach((placement, index) => {
+    shadows.setMatrixAt(index, instance.multiplyMatrices(placement, new THREE.Matrix4().makeTranslation(0, 0.005, 0)));
+  });
+  shadows.instanceMatrix.needsUpdate = true;
+  shadows.computeBoundingSphere();
+  shadows.renderOrder = 1;
+  scene.add(shadows);
 }
 
 /** Dark walnut with long, slightly wavy grain. */
