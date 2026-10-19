@@ -29,6 +29,8 @@ import {
 import type { GalleryApi, GalleryCallbacks, GalleryInsets, GalleryPainting } from "./types";
 import { loadVisitorModels, visitorModelBudget } from "./crowd";
 import { addBenches, addPlants } from "./props";
+import { LIGHT_MAP_INTENSITY, floorLightmap, wallLightmap, wallPlane } from "./lighting";
+import { HALL_HEIGHT, HANG_HEIGHT, SPOT_OUT, slotsOnFace, spotFor, wallFaces } from "@/lib/galleryLighting";
 import { loadStaffModels, shouldLoadStaffModels } from "./staff";
 import { createVisitors, type ClearView } from "./visitors";
 
@@ -67,9 +69,7 @@ interface Tween {
 }
 
 
-const HALL_HEIGHT = 5.2;
 const EYE_HEIGHT = 1.65;
-const HANG_HEIGHT = 1.9;
 // The artwork itself; the mount and frame add to it, keeping the framed size
 // close to what the wall slots were planned for.
 const MAX_WIDTH = 2.5;
@@ -81,8 +81,6 @@ const WALK_SPEED = 3.2;
 const LOOK_SPEED = 0.0042;
 /** How close the camera may come to a wall. */
 const WALL_MARGIN = 0.6;
-/** How far out from its wall each painting's ceiling spotlight hangs. */
-const SPOT_OUT = 1.5;
 
 const DESK_HEIGHT = 1.05;
 
@@ -124,6 +122,9 @@ export function buildGallery(
 
   const layout = planGallery(paintings.length);
   const { bounds } = layout;
+  // Every painting's ceiling spotlight, for the baked light (lib/galleryLighting.ts).
+  const litSlots = layout.slots.slice(0, paintings.length);
+  const spots = litSlots.map(spotFor);
   const floorWidth = bounds.maxX - bounds.minX;
   const floorDepth = bounds.maxZ - bounds.minZ;
   const centerX = (bounds.minX + bounds.maxX) / 2;
@@ -134,9 +135,12 @@ export function buildGallery(
   // the floor and the people their highlights, which flat lights alone can't.
   // Generated once on the GPU (no download); the plain lights carry the scene
   // until it is ready.
-  scene.add(new THREE.HemisphereLight(0xffefd6, 0x8f7356, 0.85));
-  scene.add(new THREE.AmbientLight(0xffffff, 0.1));
-  const sun = new THREE.DirectionalLight(0xffe6c4, 0.65);
+  // Walls and floor carry their own baked light (lightmaps, below); these
+  // lights are for everything else (people, plants, frames) and are kept
+  // low so the spotlit paintings stand out.
+  scene.add(new THREE.HemisphereLight(0xffefd6, 0x8f7356, 0.6));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.08));
+  const sun = new THREE.DirectionalLight(0xffe6c4, 0.4);
   sun.position.set(2, 10, 4);
   scene.add(sun);
   let environment: THREE_NS.Texture | null = null;
@@ -162,7 +166,14 @@ export function buildGallery(
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(floorWidth, floorDepth),
     // Polished enough to catch a soft sheen from the room, not a mirror.
-    new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.4, metalness: 0.05, envMapIntensity: 0.45 })
+    new THREE.MeshStandardMaterial({
+      map: floorTexture,
+      roughness: 0.4,
+      metalness: 0.05,
+      envMapIntensity: 0.45,
+      lightMap: floorLightmap(THREE, layout, spots),
+      lightMapIntensity: LIGHT_MAP_INTENSITY
+    })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(centerX, 0, centerZ);
@@ -180,40 +191,33 @@ export function buildGallery(
 
   // Walls block clicks on whatever is behind them (see pickAt).
   const occluders: THREE_NS.Object3D[] = [];
-  const wallMaterial = new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.95 });
   const skirtMaterial = new THREE.MeshStandardMaterial({ color: 0x3b2a1d, roughness: 0.55 });
-  const outerWalls: { width: number; x: number; z: number; rotation: number }[] = [
-    { width: floorDepth, x: bounds.minX, z: centerZ, rotation: Math.PI / 2 },
-    { width: floorDepth, x: bounds.maxX, z: centerZ, rotation: -Math.PI / 2 },
-    { width: floorWidth, x: centerX, z: bounds.minZ, rotation: 0 },
-    { width: floorWidth, x: centerX, z: bounds.maxZ, rotation: Math.PI }
-  ];
-  for (const wall of outerWalls) {
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(wall.width, HALL_HEIGHT), wallMaterial);
-    mesh.rotation.y = wall.rotation;
-    mesh.position.set(wall.x, HALL_HEIGHT / 2, wall.z);
+  // Every wall face (the outer walls and the four sides of each block) is its
+  // own plane, so each can carry the light its spotlights throw on it: the
+  // bright scallop on each painting, softer between, darker at the corners.
+  for (const face of wallFaces(layout)) {
+    const plane = wallPlane(face);
+    const wall = new THREE.Mesh(
+      new THREE.PlaneGeometry(plane.width, HALL_HEIGHT),
+      // Lit only by its lightmap (no scene lights), so the contrast between
+      // spotlit paintings and the wall between them is exactly as baked.
+      new THREE.MeshBasicMaterial({
+        color: WALL_COLOR,
+        lightMap: wallLightmap(THREE, face, slotsOnFace(face, litSlots).map(spotFor)),
+        lightMapIntensity: LIGHT_MAP_INTENSITY
+      })
+    );
+    wall.rotation.y = plane.rotation;
+    wall.position.set(plane.centre.x, HALL_HEIGHT / 2, plane.centre.z);
     // Skirting boards ground the walls visually.
-    const skirt = new THREE.Mesh(new THREE.BoxGeometry(wall.width, 0.14, 0.04), skirtMaterial);
-    skirt.rotation.y = wall.rotation;
-    skirt.position.set(wall.x, 0.07, wall.z);
-    scene.add(mesh, skirt);
-    occluders.push(mesh);
-  }
-  // The blocks the corridors run between, floor to ceiling.
-  for (const island of layout.islands) {
-    const width = island.maxX - island.minX;
-    const depth = island.maxZ - island.minZ;
-    const x = (island.minX + island.maxX) / 2;
-    const z = (island.minZ + island.maxZ) / 2;
-    const block = new THREE.Mesh(new THREE.BoxGeometry(width, HALL_HEIGHT, depth), wallMaterial);
-    block.position.set(x, HALL_HEIGHT / 2, z);
-    const skirt = new THREE.Mesh(new THREE.BoxGeometry(width + 0.04, 0.14, depth + 0.04), skirtMaterial);
-    skirt.position.set(x, 0.07, z);
-    scene.add(block, skirt);
-    occluders.push(block);
+    const skirt = new THREE.Mesh(new THREE.BoxGeometry(plane.width, 0.14, 0.04), skirtMaterial);
+    skirt.rotation.y = plane.rotation;
+    skirt.position.set(plane.centre.x + face.n.x * 0.02, 0.07, plane.centre.z + face.n.z * 0.02);
+    scene.add(wall, skirt);
+    occluders.push(wall);
   }
 
-  addContactShadows(THREE, scene, layout);
+  addTrackRails(THREE, scene, layout);
 
   // A soft ceiling panel over every corridor crossing.
   const panelMaterial = new THREE.MeshBasicMaterial({ color: 0xfffaf0 });
@@ -261,7 +265,9 @@ export function buildGallery(
   const canvasGeometry = new THREE.PlaneGeometry(1, 1);
   const frameMaterial = new THREE.MeshStandardMaterial({ color: FRAME_COLOR, roughness: 0.45, metalness: 0.2 });
   const spot = makeSpotlightParts(THREE);
-  const mountMaterial = new THREE.MeshStandardMaterial({ color: 0xf7f2e8, roughness: 0.92 });
+  // The mount sits in the spotlight's brightest light, which the room's low
+  // general light doesn't give it.
+  const mountMaterial = new THREE.MeshStandardMaterial({ color: 0xf7f2e8, roughness: 0.92, emissive: 0xb4a994 });
   const frameShadowMaterial = new THREE.MeshBasicMaterial({
     map: makeFrameShadowTexture(THREE),
     color: 0x1d1610,
@@ -269,7 +275,6 @@ export function buildGallery(
     opacity: 0.55,
     depthWrite: false
   });
-  addLightPools(THREE, scene, layout.slots.slice(0, paintings.length), glowTexture);
   const pickables: THREE_NS.Object3D[] = [];
   const hung = paintings.map((painting, index) => {
     // planGallery makes a slot for every painting.
@@ -278,19 +283,6 @@ export function buildGallery(
     group.position.set(slot.x + slot.nx * 0.01, HANG_HEIGHT, slot.z + slot.nz * 0.01);
     // The painting faces out along the wall's normal (planes face +Z).
     group.rotation.y = Math.atan2(slot.nx, slot.nz);
-
-    const glow = new THREE.Mesh(
-      canvasGeometry,
-      new THREE.MeshBasicMaterial({
-        map: glowTexture,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        color: 0xffe2b8,
-        opacity: 0.55
-      })
-    );
-    glow.position.set(0, 0.25, 0.005);
 
     // The frame's soft shadow on the wall, cast down by its spotlight.
     const shadow = new THREE.Mesh(canvasGeometry, frameShadowMaterial);
@@ -313,14 +305,13 @@ export function buildGallery(
     mat.userData.index = index;
     art.userData.index = index;
     pickables.push(frame, mat, art);
-    group.add(shadow, glow, frame, mat, art, plaque);
+    group.add(shadow, frame, mat, art, plaque);
     scene.add(group);
 
     const beam = addSpotlight(THREE, scene, spot, slot);
     const item = {
       group,
       shadow,
-      glow,
       frame,
       mat,
       art,
@@ -359,8 +350,6 @@ export function buildGallery(
     // A little larger than the frame and lower, as the light comes from above.
     item.shadow.scale.set(outerWidth + 0.34, outerHeight + 0.34, 1);
     item.shadow.position.y = -0.09;
-    const glowSize = Math.max(outerWidth, outerHeight) * 2;
-    item.glow.scale.set(glowSize, glowSize, 1);
     item.plaque.position.x = outerWidth / 2 + PLAQUE_WIDTH / 2 + 0.12;
     item.plaque.position.y = -outerHeight / 2 + PLAQUE_HEIGHT / 2;
     // The spotlight's beam widens to take in the whole painting.
@@ -1061,7 +1050,7 @@ function makeSpotlightParts(THREE: Three): SpotlightParts {
       color: 0xffe9c4,
       map: makeBeamTexture(THREE),
       transparent: true,
-      opacity: 0.16,
+      opacity: 0.08,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide
@@ -1104,152 +1093,6 @@ function addSpotlight(THREE: Three, scene: THREE_NS.Scene, parts: SpotlightParts
   return beam;
 }
 
-/** A wall face: from `a` to `b` along the floor, with `n` pointing into the room. */
-interface WallFace {
-  a: Point;
-  b: Point;
-  n: Point;
-}
-
-/** Every wall face of the plan: the outer walls facing in, the blocks facing out. */
-function wallFaces(layout: GalleryLayout): WallFace[] {
-  const box = (r: GalleryLayout["bounds"], sign: 1 | -1): WallFace[] => [
-    { a: { x: r.minX, z: r.minZ }, b: { x: r.minX, z: r.maxZ }, n: { x: sign, z: 0 } },
-    { a: { x: r.maxX, z: r.minZ }, b: { x: r.maxX, z: r.maxZ }, n: { x: -sign, z: 0 } },
-    { a: { x: r.minX, z: r.minZ }, b: { x: r.maxX, z: r.minZ }, n: { x: 0, z: sign } },
-    { a: { x: r.minX, z: r.maxZ }, b: { x: r.maxX, z: r.maxZ }, n: { x: 0, z: -sign } }
-  ];
-  return [...box(layout.bounds, 1), ...layout.islands.flatMap((island) => box(island, -1))];
-}
-
-/**
- * Builds one mesh from many quads, each given as four corners in order
- * (along the near edge, then back along the far edge). The near edge gets
- * v = 0 and the far edge v = 1, so a fade texture runs across every quad.
- */
-function quadsGeometry(THREE: Three, quads: readonly (readonly [THREE_NS.Vector3, THREE_NS.Vector3, THREE_NS.Vector3, THREE_NS.Vector3])[]) {
-  const positions = new Float32Array(quads.length * 12);
-  const uvs = new Float32Array(quads.length * 8);
-  const indices: number[] = [];
-  quads.forEach((corners, q) => {
-    corners.forEach((corner, c) => positions.set([corner.x, corner.y, corner.z], q * 12 + c * 3));
-    uvs.set([0, 0, 1, 0, 1, 1, 0, 1], q * 8);
-    const o = q * 4;
-    indices.push(o, o + 1, o + 2, o, o + 2, o + 3);
-  });
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
-  geometry.setIndex(indices);
-  return geometry;
-}
-
-/**
- * Soft shading where walls meet the floor and the ceiling, the way light
- * falls off into corners in a real room: a dark band on the floor along every
- * wall, and fainter ones up the foot and down the top of the wall. Drawn as
- * one mesh, so it costs a single draw however big the gallery grows.
- */
-function addContactShadows(THREE: Three, scene: THREE_NS.Scene, layout: GalleryLayout): void {
-  const quads: [THREE_NS.Vector3, THREE_NS.Vector3, THREE_NS.Vector3, THREE_NS.Vector3][] = [];
-  const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
-  for (const { a, b, n } of wallFaces(layout)) {
-    const floorBand = 0.75;
-    const wallBand = 0.55;
-    const ceilingBand = 0.9;
-    const lift = 0.004;
-    // Floor, from the wall out.
-    quads.push([
-      v(a.x + n.x * lift, lift, a.z + n.z * lift),
-      v(b.x + n.x * lift, lift, b.z + n.z * lift),
-      v(b.x + n.x * floorBand, lift, b.z + n.z * floorBand),
-      v(a.x + n.x * floorBand, lift, a.z + n.z * floorBand)
-    ]);
-    // The foot of the wall, from the floor up.
-    quads.push([
-      v(a.x + n.x * lift, 0, a.z + n.z * lift),
-      v(b.x + n.x * lift, 0, b.z + n.z * lift),
-      v(b.x + n.x * lift, wallBand, b.z + n.z * lift),
-      v(a.x + n.x * lift, wallBand, a.z + n.z * lift)
-    ]);
-    // The top of the wall, from the ceiling down.
-    quads.push([
-      v(a.x + n.x * lift, HALL_HEIGHT, a.z + n.z * lift),
-      v(b.x + n.x * lift, HALL_HEIGHT, b.z + n.z * lift),
-      v(b.x + n.x * lift, HALL_HEIGHT - ceilingBand, b.z + n.z * lift),
-      v(a.x + n.x * lift, HALL_HEIGHT - ceilingBand, a.z + n.z * lift)
-    ]);
-  }
-  const mesh = new THREE.Mesh(
-    quadsGeometry(THREE, quads),
-    new THREE.MeshBasicMaterial({
-      map: makeFadeTexture(THREE),
-      color: 0x2a2118,
-      transparent: true,
-      opacity: 0.5,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      polygonOffset: true,
-      polygonOffsetFactor: -1
-    })
-  );
-  // Drawn after the walls and floor it darkens.
-  mesh.renderOrder = 1;
-  scene.add(mesh);
-}
-
-/** A warm pool of light on the floor below each painting's spotlight, all in one mesh. */
-function addLightPools(THREE: Three, scene: THREE_NS.Scene, slots: readonly WallSlot[], glowTexture: THREE_NS.Texture): void {
-  const size = 1.4;
-  const quads = slots.map((slot) => {
-    // Out from the wall, where the beam's spill reaches the floor.
-    const cx = slot.x + slot.nx * 1.1;
-    const cz = slot.z + slot.nz * 1.1;
-    const y = 0.006;
-    return [
-      new THREE.Vector3(cx - size, y, cz - size),
-      new THREE.Vector3(cx + size, y, cz - size),
-      new THREE.Vector3(cx + size, y, cz + size),
-      new THREE.Vector3(cx - size, y, cz + size)
-    ] as const;
-  });
-  if (!quads.length) {
-    return;
-  }
-  // Each quad's 0-1 UVs take in the whole radial glow.
-  const mesh = new THREE.Mesh(
-    quadsGeometry(THREE, quads),
-    new THREE.MeshBasicMaterial({
-      map: glowTexture,
-      color: 0xffd9a8,
-      transparent: true,
-      opacity: 0.32,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide
-    })
-  );
-  mesh.renderOrder = 2;
-  scene.add(mesh);
-}
-
-/** Dark at v = 0 fading to nothing at v = 1, eased so the edge never shows. */
-function makeFadeTexture(THREE: Three): THREE_NS.CanvasTexture {
-  const canvas = document.createElement("canvas");
-  canvas.width = 4;
-  canvas.height = 128;
-  const ctx = context2d(canvas);
-  // flipY puts the bottom of the canvas at v = 0.
-  const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
-  gradient.addColorStop(0, "rgba(255,255,255,1)");
-  gradient.addColorStop(0.25, "rgba(255,255,255,0.55)");
-  gradient.addColorStop(0.6, "rgba(255,255,255,0.15)");
-  gradient.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  return new THREE.CanvasTexture(canvas);
-}
-
 /** A soft-edged rectangle, scaled behind each frame as its shadow. */
 function makeFrameShadowTexture(THREE: Three): THREE_NS.CanvasTexture {
   const size = 128;
@@ -1260,6 +1103,59 @@ function makeFrameShadowTexture(THREE: Three): THREE_NS.CanvasTexture {
   ctx.fillStyle = "#fff";
   ctx.fillRect(18, 18, size - 36, size - 36);
   return new THREE.CanvasTexture(canvas);
+}
+
+/**
+ * Black ceiling tracks the spotlights hang from: one along each wall that has
+ * paintings, SPOT_OUT out from it, as in a real gallery. All of them are one
+ * merged mesh, so they cost a single draw.
+ */
+function addTrackRails(THREE: Three, scene: THREE_NS.Scene, layout: GalleryLayout): void {
+  const positions: number[] = [];
+  const normals: number[] = [];
+  const indices: number[] = [];
+  const place = new THREE.Matrix4();
+  const turn = new THREE.Matrix3();
+  for (const face of wallFaces(layout)) {
+    if (!slotsOnFace(face, layout.slots).length) {
+      continue;
+    }
+    const length = Math.hypot(face.b.x - face.a.x, face.b.z - face.a.z);
+    const rail = new THREE.BoxGeometry(length, 0.03, 0.04);
+    place.compose(
+      new THREE.Vector3(
+        (face.a.x + face.b.x) / 2 + face.n.x * SPOT_OUT,
+        HALL_HEIGHT - 0.02,
+        (face.a.z + face.b.z) / 2 + face.n.z * SPOT_OUT
+      ),
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(face.n.x, face.n.z)),
+      new THREE.Vector3(1, 1, 1)
+    );
+    turn.getNormalMatrix(place);
+    const offset = positions.length / 3;
+    const position = rail.getAttribute("position");
+    const normal = rail.getAttribute("normal");
+    const point = new THREE.Vector3();
+    for (let i = 0; i < position.count; i += 1) {
+      point.fromBufferAttribute(position, i).applyMatrix4(place);
+      positions.push(point.x, point.y, point.z);
+      point.fromBufferAttribute(normal, i).applyMatrix3(turn).normalize();
+      normals.push(point.x, point.y, point.z);
+    }
+    const index = rail.getIndex();
+    for (let i = 0; index && i < index.count; i += 1) {
+      indices.push(index.getX(i) + offset);
+    }
+    rail.dispose();
+  }
+  if (!indices.length) {
+    return;
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setIndex(indices);
+  scene.add(new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x3a3632, roughness: 0.5, metalness: 0.3 })));
 }
 
 /** Fades a beam from the lamp (the top of the cone) to nothing at the wall. */
