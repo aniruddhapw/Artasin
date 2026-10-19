@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   CORRIDOR_WIDTH,
+  PLANT_RADIUS,
   buildLayout,
   collide,
   deskArea,
+  placeProps,
   planGallery,
+  propAreas,
   route,
   type GalleryLayout,
   type Point,
@@ -151,5 +154,62 @@ describe("route", () => {
     const [first, second] = layout.islands;
     assert.ok(first && second);
     assert.equal(second.minX - first.maxX, CORRIDOR_WIDTH);
+  });
+});
+
+describe("placeProps", () => {
+  for (const [cols, rows] of [
+    [2, 1],
+    [2, 3],
+    [4, 2]
+  ] as const) {
+    const layout = buildLayout(cols, rows);
+    const props = placeProps(layout);
+    const areas = propAreas(props);
+
+    it(`stands every bench and plant on open floor (${cols}x${rows})`, () => {
+      for (const area of areas) {
+        for (const corner of [
+          { x: area.minX, z: area.minZ },
+          { x: area.maxX, z: area.maxZ },
+          { x: area.minX, z: area.maxZ },
+          { x: area.maxX, z: area.minZ }
+        ]) {
+          assert.ok(isFree(layout, corner), `prop corner ${JSON.stringify(corner)} is not on open floor`);
+        }
+      }
+    });
+
+    it(`keeps every corridor's centre line clear, where everyone walks (${cols}x${rows})`, () => {
+      const clearance = 1.2;
+      for (const area of areas) {
+        for (const x of layout.xs) {
+          const crossesInZ = area.minZ < Math.max(...layout.zs) + CORRIDOR_WIDTH / 2;
+          if (crossesInZ) {
+            assert.ok(area.maxX < x - clearance || area.minX > x + clearance || area.maxZ < Math.min(...layout.zs) - CORRIDOR_WIDTH / 2,
+              `prop ${JSON.stringify(area)} blocks the corridor along x = ${x}`);
+          }
+        }
+        for (const z of layout.zs) {
+          assert.ok(area.maxZ < z - clearance || area.minZ > z + clearance, `prop ${JSON.stringify(area)} blocks the corridor along z = ${z}`);
+        }
+      }
+    });
+
+    it(`leaves room in front of every painting (${cols}x${rows})`, () => {
+      for (const slot of layout.slots) {
+        // Where someone stands to look: a couple of metres out from the wall.
+        const spot = { x: slot.x + slot.nx * 2, z: slot.z + slot.nz * 2 };
+        assert.ok(!areas.some((area) => inside(area, spot, 0.5)), `a prop stands in front of the painting at ${JSON.stringify(slot)}`);
+      }
+    });
+  }
+
+  it("is solid to collide()", () => {
+    const layout = buildLayout(2, 2);
+    const plant = placeProps(layout).plants[0];
+    assert.ok(plant);
+    const pushed = collide(layout, plant, 0.3);
+    assert.ok(Math.max(Math.abs(pushed.x - plant.x), Math.abs(pushed.z - plant.z)) >= PLANT_RADIUS + 0.3 - 1e-9);
   });
 });
