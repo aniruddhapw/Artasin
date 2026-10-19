@@ -21,12 +21,14 @@ import {
   pathLength,
   planGallery,
   route,
+  placeProps,
   type GalleryLayout,
   type Point,
   type WallSlot
 } from "@/lib/galleryLayout";
 import type { GalleryApi, GalleryCallbacks, GalleryInsets, GalleryPainting } from "./types";
 import { loadVisitorModels, visitorModelBudget } from "./crowd";
+import { addBenches, addPlants } from "./props";
 import { loadStaffModels, shouldLoadStaffModels } from "./staff";
 import { createVisitors, type ClearView } from "./visitors";
 
@@ -68,9 +70,13 @@ interface Tween {
 const HALL_HEIGHT = 5.2;
 const EYE_HEIGHT = 1.65;
 const HANG_HEIGHT = 1.9;
-const MAX_WIDTH = 2.8;
-const MAX_HEIGHT = 2.1;
+// The artwork itself; the mount and frame add to it, keeping the framed size
+// close to what the wall slots were planned for.
+const MAX_WIDTH = 2.5;
+const MAX_HEIGHT = 1.85;
 const FRAME_BORDER = 0.08;
+/** The off-white mount between artwork and frame, as a share of its shorter side. */
+const MOUNT_SHARE = 0.08;
 const WALK_SPEED = 3.2;
 const LOOK_SPEED = 0.0042;
 /** How close the camera may come to a wall. */
@@ -85,7 +91,9 @@ const LOGO_URL = "/brand/artasin-lockup.png";
 const LOGO_WIDTH = 499;
 const LOGO_HEIGHT = 132;
 
-const WALL_COLOR = 0xf4f1ea;
+// Warm cream walls and a warm room tone, after the redesign concept.
+const WALL_COLOR = 0xf2eadc;
+const ROOM_TONE = 0xebe2d3;
 const FRAME_COLOR = 0x1d1a17;
 
 export function buildGallery(
@@ -108,8 +116,8 @@ export function buildGallery(
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xe9e5dc);
-  scene.fog = new THREE.Fog(0xe9e5dc, 18, 70);
+  scene.background = new THREE.Color(ROOM_TONE);
+  scene.fog = new THREE.Fog(ROOM_TONE, 18, 70);
 
   const camera = new THREE.PerspectiveCamera(62, 1, 0.05, 200);
   camera.rotation.order = "YXZ";
@@ -126,9 +134,9 @@ export function buildGallery(
   // the floor and the people their highlights, which flat lights alone can't.
   // Generated once on the GPU (no download); the plain lights carry the scene
   // until it is ready.
-  scene.add(new THREE.HemisphereLight(0xfffaf0, 0x9c8a74, 0.85));
+  scene.add(new THREE.HemisphereLight(0xffefd6, 0x8f7356, 0.85));
   scene.add(new THREE.AmbientLight(0xffffff, 0.1));
-  const sun = new THREE.DirectionalLight(0xfff4e0, 0.6);
+  const sun = new THREE.DirectionalLight(0xffe6c4, 0.65);
   sun.position.set(2, 10, 4);
   scene.add(sun);
   let environment: THREE_NS.Texture | null = null;
@@ -163,7 +171,7 @@ export function buildGallery(
   // as murky grey; a little emissive keeps the ceiling gallery-white.
   const ceiling = new THREE.Mesh(
     new THREE.PlaneGeometry(floorWidth, floorDepth),
-    new THREE.MeshStandardMaterial({ color: 0xfbfaf7, emissive: 0xd9d5cc, roughness: 1 })
+    new THREE.MeshStandardMaterial({ color: 0xfaf5ec, emissive: 0xdccfba, roughness: 1 })
   );
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.set(centerX, HALL_HEIGHT, centerZ);
@@ -172,7 +180,7 @@ export function buildGallery(
   // Walls block clicks on whatever is behind them (see pickAt).
   const occluders: THREE_NS.Object3D[] = [];
   const wallMaterial = new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.95 });
-  const skirtMaterial = new THREE.MeshStandardMaterial({ color: 0x3a332c, roughness: 0.7 });
+  const skirtMaterial = new THREE.MeshStandardMaterial({ color: 0x3b2a1d, roughness: 0.55 });
   const outerWalls: { width: number; x: number; z: number; rotation: number }[] = [
     { width: floorDepth, x: bounds.minX, z: centerZ, rotation: Math.PI / 2 },
     { width: floorDepth, x: bounds.maxX, z: centerZ, rotation: -Math.PI / 2 },
@@ -252,6 +260,7 @@ export function buildGallery(
   const canvasGeometry = new THREE.PlaneGeometry(1, 1);
   const frameMaterial = new THREE.MeshStandardMaterial({ color: FRAME_COLOR, roughness: 0.45, metalness: 0.2 });
   const spot = makeSpotlightParts(THREE);
+  const mountMaterial = new THREE.MeshStandardMaterial({ color: 0xf7f2e8, roughness: 0.92 });
   const frameShadowMaterial = new THREE.MeshBasicMaterial({
     map: makeFrameShadowTexture(THREE),
     color: 0x1d1610,
@@ -289,24 +298,40 @@ export function buildGallery(
     const frame = new THREE.Mesh(frameGeometry, frameMaterial);
     frame.position.z = 0.03;
 
+    // The mount: an off-white border inside the frame, as a gallery would hang it.
+    const mat = new THREE.Mesh(canvasGeometry, mountMaterial);
+    mat.position.z = 0.061;
+
     const canvasMaterial = new THREE.MeshBasicMaterial({ color: 0xdcd8d0 });
     const art = new THREE.Mesh(canvasGeometry, canvasMaterial);
-    art.position.z = 0.062;
+    art.position.z = 0.063;
 
-    const plaque = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.56, 0.28),
-      new THREE.MeshBasicMaterial({ map: makePlaqueTexture(THREE, painting) })
-    );
-    plaque.position.z = 0.012;
+    const plaque = makePlaque(THREE, painting, maxAnisotropy);
 
     frame.userData.index = index;
+    mat.userData.index = index;
     art.userData.index = index;
-    pickables.push(frame, art);
-    group.add(shadow, glow, frame, art, plaque);
+    pickables.push(frame, mat, art);
+    group.add(shadow, glow, frame, mat, art, plaque);
     scene.add(group);
 
     const beam = addSpotlight(THREE, scene, spot, slot);
-    const item = { group, shadow, glow, frame, art, plaque, beam, width: 0, height: 0, normal: { x: slot.nx, z: slot.nz } };
+    const item = {
+      group,
+      shadow,
+      glow,
+      frame,
+      mat,
+      art,
+      plaque,
+      beam,
+      width: 0,
+      height: 0,
+      /** The whole framed work: artwork, mount and frame. */
+      outerWidth: 0,
+      outerHeight: 0,
+      normal: { x: slot.nx, z: slot.nz }
+    };
     resize(item, 4 / 3);
     return item;
   });
@@ -320,17 +345,23 @@ export function buildGallery(
       height = MAX_HEIGHT;
       width = height * aspect;
     }
+    const mount = clamp(Math.min(width, height) * MOUNT_SHARE, 0.08, 0.16);
+    const outerWidth = width + (mount + FRAME_BORDER) * 2;
+    const outerHeight = height + (mount + FRAME_BORDER) * 2;
     item.width = width;
     item.height = height;
+    item.outerWidth = outerWidth;
+    item.outerHeight = outerHeight;
     item.art.scale.set(width, height, 1);
-    item.frame.scale.set(width + FRAME_BORDER * 2, height + FRAME_BORDER * 2, 1);
+    item.mat.scale.set(width + mount * 2, height + mount * 2, 1);
+    item.frame.scale.set(outerWidth, outerHeight, 1);
     // A little larger than the frame and lower, as the light comes from above.
-    item.shadow.scale.set(width + FRAME_BORDER * 2 + 0.34, height + FRAME_BORDER * 2 + 0.34, 1);
+    item.shadow.scale.set(outerWidth + 0.34, outerHeight + 0.34, 1);
     item.shadow.position.y = -0.09;
-    const glowSize = Math.max(width, height) * 2.1;
+    const glowSize = Math.max(outerWidth, outerHeight) * 2;
     item.glow.scale.set(glowSize, glowSize, 1);
-    item.plaque.position.x = width / 2 + FRAME_BORDER + 0.36;
-    item.plaque.position.y = -height / 2 + 0.14;
+    item.plaque.position.x = outerWidth / 2 + PLAQUE_WIDTH / 2 + 0.12;
+    item.plaque.position.y = -outerHeight / 2 + PLAQUE_HEIGHT / 2;
     // The spotlight's beam widens to take in the whole painting.
     const spread = Math.max(width, height) * 0.62;
     item.beam.scale.x = spread;
@@ -342,6 +373,19 @@ export function buildGallery(
   // representative, which opens the custom-order (commission) request.
   const DESK_INDEX = hung.length;
   const desk = buildDesk(THREE, scene, layout.desk, glowTexture);
+
+  // Benches now; the plants (~150 KB) arrive with the people, after the
+  // paintings. Both are already solid to collide() (lib/galleryLayout.ts).
+  const furniture = placeProps(layout);
+  addBenches(THREE, scene, furniture.benches, glowTexture);
+  let plantsRequested = false;
+  function requestPlants() {
+    if (plantsRequested) {
+      return;
+    }
+    plantsRequested = true;
+    addPlants(THREE, scene, furniture.plants).catch(() => {});
+  }
   for (const mesh of desk.meshes) {
     mesh.userData.index = DESK_INDEX;
     pickables.push(mesh);
@@ -376,6 +420,7 @@ export function buildGallery(
   // them, the simple figures stand in.
   let staffRequested = false;
   function requestStaffModels() {
+    requestPlants();
     if (staffRequested || !shouldLoadStaffModels()) {
       return;
     }
@@ -543,8 +588,8 @@ export function buildGallery(
     }
     return {
       center: item.group.position,
-      width: item.width + FRAME_BORDER * 2,
-      height: item.height + FRAME_BORDER * 2,
+      width: item.outerWidth,
+      height: item.outerHeight,
       normal: new THREE.Vector3(item.normal.x, 0, item.normal.z),
       // Facing the wall: the camera looks along -normal, and at yaw 0 down -Z.
       yaw: Math.atan2(item.normal.x, item.normal.z),
@@ -741,7 +786,7 @@ export function buildGallery(
     }
     const { x: nx, z: nz } = item.normal;
     const depth = (selectedAnchor.x - item.group.position.x) * nx + (selectedAnchor.z - item.group.position.z) * nz;
-    return { x: item.group.position.x, z: item.group.position.z, nx, nz, halfWidth: item.width / 2, depth };
+    return { x: item.group.position.x, z: item.group.position.z, nx, nz, halfWidth: item.outerWidth / 2, depth };
   }
 
   // Out of the walls, the blocks and the desk.
@@ -1309,8 +1354,9 @@ function makePlankTexture(THREE: Three): THREE_NS.CanvasTexture {
     let x = -random() * size * 0.5;
     while (x < size) {
       const length = size * (0.45 + random() * 0.5);
-      const shade = 150 + Math.floor(random() * 40);
-      ctx.fillStyle = `rgb(${shade + 30}, ${shade}, ${shade - 38})`;
+      // Honey oak: warm, and a touch deeper than before.
+      const shade = 138 + Math.floor(random() * 36);
+      ctx.fillStyle = `rgb(${shade + 42}, ${shade + 4}, ${shade - 52})`;
       ctx.fillRect(x, row * rowHeight, length, rowHeight);
       for (let grain = 0; grain < 6; grain += 1) {
         ctx.fillStyle = `rgba(80, 55, 30, ${0.04 + random() * 0.05})`;
@@ -1342,34 +1388,87 @@ function makeGlowTexture(THREE: Three): THREE_NS.CanvasTexture {
   return new THREE.CanvasTexture(canvas);
 }
 
+const PLAQUE_WIDTH = 0.5;
+const PLAQUE_HEIGHT = 0.31;
+
+/**
+ * The wall label beside a painting: a thin brushed-brass plate with the
+ * title, artist, medium, size and price engraved on it. Slightly metallic, so
+ * it catches the room's reflection like the real thing.
+ */
+function makePlaque(THREE: Three, painting: GalleryPainting, anisotropy: number): THREE_NS.Mesh {
+  const texture = makePlaqueTexture(THREE, painting);
+  texture.anisotropy = anisotropy;
+  const face = new THREE.MeshStandardMaterial({ map: texture, metalness: 0.35, roughness: 0.42 });
+  const edge = new THREE.MeshStandardMaterial({ color: 0x9c7740, metalness: 0.6, roughness: 0.35 });
+  // A box's faces: +x, -x, +y, -y, +z (the front), -z.
+  const plaque = new THREE.Mesh(new THREE.BoxGeometry(PLAQUE_WIDTH, PLAQUE_HEIGHT, 0.012), [edge, edge, edge, edge, face, edge]);
+  plaque.position.z = 0.008;
+  return plaque;
+}
+
 function makePlaqueTexture(THREE: Three, painting: GalleryPainting): THREE_NS.CanvasTexture {
   const width = 512;
-  const height = 256;
+  const height = Math.round((width * PLAQUE_HEIGHT) / PLAQUE_WIDTH);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const ctx = context2d(canvas);
-  ctx.fillStyle = "#fbfaf6";
-  ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = "#d8d3c8";
-  ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, width - 4, height - 4);
-
-  ctx.fillStyle = "#1a1c1c";
-  ctx.font = '600 40px "Playfair Display", Georgia, serif';
-  const titleLines = wrapText(ctx, painting.title, width - 64).slice(0, 2);
-  titleLines.forEach((line, index) => ctx.fillText(line, 32, 68 + index * 46));
-
-  const below = 68 + titleLines.length * 46;
-  ctx.fillStyle = "#444748";
-  ctx.font = '28px Inter, "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(fitText(ctx, [painting.artistName, painting.year].filter(Boolean).join(", "), width - 64), 32, below);
-  ctx.fillStyle = "#1a1c1c";
-  ctx.font = '600 28px Inter, "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(painting.price, 32, Math.min(below + 46, height - 28));
-
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  // Drawn again once the web fonts have loaded, so labels never keep a fallback face.
+  const draw = () => {
+    const ctx = context2d(canvas);
+
+    // Brushed brass: a warm gradient with fine horizontal streaks.
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#b48d55");
+    gradient.addColorStop(0.45, "#dcc08a");
+    gradient.addColorStop(1, "#a9814b");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    let seed = painting.title.length * 131 + 17;
+    const random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
+    for (let line = 0; line < 140; line += 1) {
+      ctx.fillStyle = random() < 0.5 ? `rgba(255, 244, 214, ${0.05 + random() * 0.08})` : `rgba(90, 62, 26, ${0.04 + random() * 0.06})`;
+      ctx.fillRect(0, random() * height, width, 1);
+    }
+    ctx.strokeStyle = "rgba(84, 58, 24, 0.55)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(10, 10, width - 20, height - 20);
+
+    // Engraved lettering: dark, with a thin light edge below like a cut.
+    const engrave = (text: string, x: number, y: number) => {
+      ctx.fillStyle = "rgba(255, 240, 205, 0.55)";
+      ctx.fillText(text, x, y + 1.5);
+      ctx.fillStyle = "#2c1d0d";
+      ctx.fillText(text, x, y);
+    };
+    const left = 30;
+    const inner = width - left * 2;
+    ctx.font = '600 38px "Playfair Display", Georgia, serif';
+    const titleLines = wrapText(ctx, painting.title, inner).slice(0, 2);
+    titleLines.forEach((line, index) => engrave(line, left, 62 + index * 42));
+    let y = 62 + titleLines.length * 42;
+    ctx.font = 'italic 26px "Playfair Display", Georgia, serif';
+    engrave(fitText(ctx, [painting.artistName, painting.year].filter(Boolean).join(", "), inner), left, y);
+    y += 34;
+    ctx.font = '24px Inter, "Helvetica Neue", Arial, sans-serif';
+    for (const detail of [painting.medium, painting.dimensions].filter(Boolean)) {
+      if (y > height - 60) {
+        break;
+      }
+      engrave(fitText(ctx, detail, inner), left, y);
+      y += 30;
+    }
+    ctx.font = '600 28px Inter, "Helvetica Neue", Arial, sans-serif';
+    engrave(painting.price, left, Math.min(y + 8, height - 26));
+    texture.needsUpdate = true;
+  };
+  draw();
+  void document.fonts?.ready.then(draw);
   return texture;
 }
 
