@@ -5,9 +5,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ShareButton } from "@/components/ShareButton";
 import { createAmbientMusic, type AmbientMusic } from "./ambientMusic";
+import type { Wing } from "@/lib/galleryWings";
 import { HelperPanel, type HelperStep } from "./HelperPanel";
+import { MiniMap, wingColour } from "./MiniMap";
 import { buildGallery } from "./scene";
-import type { GalleryApi, GalleryInsets, GalleryPainting } from "./types";
+import type { GalleryApi, GalleryInsets, GalleryMap, GalleryPainting } from "./types";
 
 /**
  * A walk-through room for the collection's paintings. The Three.js scene lives
@@ -18,8 +20,20 @@ import type { GalleryApi, GalleryInsets, GalleryPainting } from "./types";
  * standing in front of that painting, so a link can point at one work. While
  * a painting is in view the address bar carries its ?at=, so copying the URL
  * shares it too.
+ *
+ * `wings` (lib/galleryWings.ts) name runs of the paintings, which hang in
+ * that order: each has a sign in the scene, a colour on the mini-map and a
+ * heading in the works list.
  */
-export function VirtualGallery({ paintings, startAt }: { paintings: readonly GalleryPainting[]; startAt?: string }) {
+export function VirtualGallery({
+  paintings,
+  startAt,
+  wings = []
+}: {
+  paintings: readonly GalleryPainting[];
+  startAt?: string;
+  wings?: readonly Wing[];
+}) {
   const mountRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<GalleryApi | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -44,6 +58,12 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
   const [musicOn, setMusicOn] = useState(false);
   const musicOnRef = useRef(false);
   const musicRef = useRef<AmbientMusic | null>(null);
+  // The mini-map: the plan, once the scene has made it; shown from the start
+  // on a big screen, on request on a phone.
+  const [galleryMap, setGalleryMap] = useState<GalleryMap | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const live = useCallback(() => apiRef.current?.live() ?? null, []);
 
   const openHelper = useCallback(
     (step?: HelperStep) => {
@@ -81,8 +101,10 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
           onHelper: () => openHelper(),
           onProgress: (loaded) => setProgress(loaded),
           onMove: () => setShowHelp(false)
-        });
+        }, wings);
         apiRef.current = api;
+        setGalleryMap(api.map);
+        setShowMap(window.matchMedia("(min-width: 721px) and (min-height: 501px)").matches);
         api.setInsets(insetsRef.current);
         api.setVisitorsVisible(showVisitorsRef.current);
         const startIndex = startAt ? paintings.findIndex((item) => item.slug === startAt) : -1;
@@ -98,7 +120,7 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
       api?.dispose();
       apiRef.current = null;
     };
-  }, [paintings, openHelper, startAt]);
+  }, [paintings, openHelper, startAt, wings]);
 
   // Tell the scene how much of the view the bars and card cover, so a focused
   // painting is framed in the clear space between them rather than behind them.
@@ -254,6 +276,7 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
         return;
       }
       if (event.key === "Escape") {
+        setMapExpanded(false);
         setShowList(false);
         setHelperStep(null);
         setSelected(null);
@@ -293,6 +316,10 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
   }
 
   const painting = selected === null ? null : paintings[selected];
+  // The wing a painting hangs in, when the gallery has more than one.
+  const wingFor = (index: number) =>
+    wings.length > 1 ? wings.find((wing) => index >= wing.start && index < wing.end) : undefined;
+  const paintingWing = selected === null ? undefined : wingFor(selected);
   const atDesk = selected === deskIndex;
   const loading = progress < paintings.length;
 
@@ -364,6 +391,18 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
             <span className="walk-chip-label-wide">Music</span>
           </button>
           <button
+            aria-pressed={showMap}
+            className={showMap ? "walk-chip is-active" : "walk-chip"}
+            onClick={() => {
+              setMapExpanded(false);
+              setShowMap((on) => !on);
+            }}
+            type="button"
+          >
+            <Icon name="map" size={18} />
+            <span className="walk-chip-label-wide">Map</span>
+          </button>
+          <button
             aria-pressed={showHelp}
             className={showHelp ? "walk-chip is-active" : "walk-chip"}
             onClick={() => setShowHelp((open) => !open)}
@@ -409,11 +448,37 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
         </div>
       ) : null}
 
+      {galleryMap && showMap && !showList && !helperOpen ? (
+        <MiniMap
+          deskIndex={deskIndex}
+          expanded={mapExpanded}
+          live={live}
+          map={galleryMap}
+          onExpand={setMapExpanded}
+          onPick={focus}
+          onWalk={(point) => {
+            setMapExpanded(false);
+            apiRef.current?.walkTo(point);
+          }}
+          selected={selected}
+        />
+      ) : null}
+
       {showList ? (
         <nav aria-label="Paintings in this gallery" className="walk-list">
           <ol>
             {paintings.map((item, index) => (
               <li key={item.id}>
+                {wings.length > 1 && wings.some((wing) => wing.start === index) ? (
+                  <p className="walk-list-wing">
+                    <span
+                      aria-hidden="true"
+                      className="walk-map-swatch"
+                      style={{ background: wingColour(wings.findIndex((wing) => wing.start === index)) }}
+                    />
+                    {wingFor(index)?.name}
+                  </p>
+                ) : null}
                 <button
                   className={index === selected ? "is-active" : ""}
                   onClick={() => focus(index)}
@@ -457,6 +522,7 @@ export function VirtualGallery({ paintings, startAt }: { paintings: readonly Gal
         {painting ? (
           <article aria-live="polite" className="walk-card">
             <p className="walk-eyebrow">
+              {paintingWing ? `${paintingWing.name} · ` : ""}
               {(selected ?? 0) + 1} / {paintings.length}
             </p>
             <h2>{painting.title}</h2>
