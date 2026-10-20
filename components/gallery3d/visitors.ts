@@ -62,6 +62,8 @@ export interface ClearView {
 export interface Visitors {
   update(dt: number, viewer: { x: number; z: number }, focusedIndex: number | null, clearView: ClearView | null): void;
   setVisible(visible: boolean): void;
+  /** Where the wandering visitors (none while hidden) and the helper stand. */
+  positions(): { visitors: { x: number; z: number }[]; helper: { x: number; z: number } | null };
   count: number;
   /** The representative's meshes, so clicking them opens the desk. */
   representativeMeshes: THREE_NS.Mesh[];
@@ -814,6 +816,13 @@ export function createVisitors(
     }
   }
 
+  function positions() {
+    return {
+      visitors: shown ? visitors.map((visitor) => ({ x: visitor.root.position.x, z: visitor.root.position.z })) : [],
+      helper: helper ? { x: helper.root.position.x, z: helper.root.position.z } : null
+    };
+  }
+
   const helperObjects: THREE_NS.Object3D[] = [];
   helper?.root.traverse((object) => {
     if ((object instanceof THREE.Mesh && object.material !== shadowMaterial) || object instanceof THREE.Sprite) {
@@ -824,6 +833,7 @@ export function createVisitors(
   return {
     update,
     setVisible,
+    positions,
     count,
     representativeMeshes: representative?.meshes ?? [],
     helperObjects,
