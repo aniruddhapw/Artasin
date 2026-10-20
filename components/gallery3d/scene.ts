@@ -26,7 +26,8 @@ import {
   type Point,
   type WallSlot
 } from "@/lib/galleryLayout";
-import type { GalleryApi, GalleryCallbacks, GalleryInsets, GalleryPainting } from "./types";
+import type { GalleryApi, GalleryCallbacks, GalleryInsets, GalleryLive, GalleryMap, GalleryPainting } from "./types";
+import type { Wing } from "@/lib/galleryWings";
 import { loadVisitorModels, visitorModelBudget } from "./crowd";
 import { addBenches, addPlants } from "./props";
 import { LIGHT_MAP_INTENSITY, floorLightmap, wallLightmap, wallPlane } from "./lighting";
@@ -83,6 +84,7 @@ const LOOK_SPEED = 0.0042;
 const WALL_MARGIN = 0.6;
 
 const DESK_HEIGHT = 1.05;
+const HALF_CORRIDOR = CORRIDOR_WIDTH / 2;
 
 // components/BrandLogo.tsx shows the same file; its pixel size sets the aspect.
 const LOGO_URL = "/brand/artasin-lockup.png";
@@ -98,7 +100,8 @@ export function buildGallery(
   THREE: Three,
   mount: HTMLElement,
   paintings: readonly GalleryPainting[],
-  { onSelect, onProgress, onMove, onHelper }: GalleryCallbacks
+  { onSelect, onProgress, onMove, onHelper }: GalleryCallbacks,
+  wings: readonly Wing[] = []
 ): GalleryApi {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -375,6 +378,10 @@ export function buildGallery(
     }
     plantsRequested = true;
     addPlants(THREE, scene, furniture.plants, glowTexture).catch(() => {});
+  }
+  // A sign hanging over the corridor where each wing begins.
+  if (wings.length > 1) {
+    addWingSigns(THREE, scene, layout, wings, maxAnisotropy);
   }
   for (const mesh of desk.meshes) {
     mesh.userData.index = DESK_INDEX;
@@ -871,9 +878,45 @@ export function buildGallery(
   }
   tick();
 
+  // ---------------------------------------------------------------- mini-map
+  const wingOfSlot = (index: number) => Math.max(wings.findIndex((wing) => index >= wing.start && index < wing.end), 0);
+  const map: GalleryMap = {
+    bounds: layout.bounds,
+    islands: layout.islands,
+    desk: { ...layout.desk, width: DESK_WIDTH, depth: DESK_DEPTH },
+    entrance: { x: layout.start.x, z: layout.bounds.maxZ },
+    paintings: hung.map((_, index) => {
+      const slot = layout.slots[index] ?? { x: 0, z: 0, nx: 0, nz: 1 };
+      return { ...slot, wing: wingOfSlot(index) };
+    }),
+    wings: wings.map((wing) => {
+      // Name each wing in the corridor by its middle painting: always on the
+      // floor, where an average of its places might land inside a block.
+      const slot = layout.slots[Math.floor((wing.start + Math.min(wing.end, hung.length) - 1) / 2)];
+      return {
+        ...wing,
+        label: slot ? { x: slot.x + slot.nx * HALF_CORRIDOR, z: slot.z + slot.nz * HALF_CORRIDOR } : layout.start
+      };
+    })
+  };
+
+  function live(): GalleryLive {
+    const people = visitors.positions();
+    return { viewer: { x: position.x, z: position.z, yaw }, visitors: people.visitors, helper: people.helper };
+  }
+
+  function walkTo(point: Point) {
+    noteMove();
+    const spot = collide(layout, point, WALL_MARGIN);
+    startTween(new THREE.Vector3(spot.x, EYE_HEIGHT, spot.z));
+  }
+
   return {
     focus,
     setInsets,
+    walkTo,
+    map,
+    live,
     setVisitorsVisible: visitors.setVisible,
     dispose() {
       disposed = true;
@@ -1103,6 +1146,82 @@ function makeFrameShadowTexture(THREE: Three): THREE_NS.CanvasTexture {
   ctx.fillStyle = "#fff";
   ctx.fillRect(18, 18, size - 36, size - 36);
   return new THREE.CanvasTexture(canvas);
+}
+
+const WING_SIGN_WIDTH = 2.4;
+const WING_SIGN_HEIGHT = 0.62;
+const WING_SIGN_Y = 4.1;
+
+/**
+ * A sign over the middle of the corridor where each wing begins, hung from
+ * the ceiling on two brass rods and facing both ways along the corridor, so
+ * it reads from either end: the wing's name and how many paintings it has.
+ */
+function addWingSigns(
+  THREE: Three,
+  scene: THREE_NS.Scene,
+  layout: GalleryLayout,
+  wings: readonly Wing[],
+  anisotropy: number
+): void {
+  const edge = new THREE.MeshStandardMaterial({ color: 0x9c7740, metalness: 0.6, roughness: 0.35 });
+  const board = new THREE.BoxGeometry(WING_SIGN_WIDTH, WING_SIGN_HEIGHT, 0.04);
+  const rodLength = HALL_HEIGHT - (WING_SIGN_Y + WING_SIGN_HEIGHT / 2);
+  const rod = new THREE.CylinderGeometry(0.008, 0.008, rodLength, 6);
+  for (const wing of wings) {
+    const slot = layout.slots[wing.start];
+    if (!slot) {
+      continue;
+    }
+    const texture = makeWingSignTexture(THREE, wing);
+    texture.anisotropy = anisotropy;
+    const face = new THREE.MeshBasicMaterial({ map: texture });
+    const group = new THREE.Group();
+    group.position.set(slot.x + slot.nx * CORRIDOR_WIDTH / 2, WING_SIGN_Y, slot.z + slot.nz * CORRIDOR_WIDTH / 2);
+    // Its faces look along the corridor: across the wall's normal.
+    group.rotation.y = Math.atan2(-slot.nz, slot.nx);
+    // A box's faces: +x, -x, +y, -y, +z and -z, each reading the right way round from outside.
+    group.add(new THREE.Mesh(board, [edge, edge, edge, edge, face, face]));
+    for (const side of [-1, 1]) {
+      const hanger = new THREE.Mesh(rod, edge);
+      hanger.position.set(side * WING_SIGN_WIDTH * 0.36, WING_SIGN_HEIGHT / 2 + rodLength / 2, 0);
+      group.add(hanger);
+    }
+    scene.add(group);
+  }
+}
+
+function makeWingSignTexture(THREE: Three, wing: Wing): THREE_NS.CanvasTexture {
+  const width = 1024;
+  const height = Math.round((width * WING_SIGN_HEIGHT) / WING_SIGN_WIDTH);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const count = wing.end - wing.start;
+  // Drawn again once the web fonts have loaded, as the plaques are.
+  const draw = () => {
+    const ctx = context2d(canvas);
+    ctx.fillStyle = "#26211c";
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = "rgba(201, 164, 106, 0.8)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(16, 16, width - 32, height - 32);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#c9a46a";
+    ctx.font = '600 26px Inter, "Helvetica Neue", Arial, sans-serif';
+    ctx.letterSpacing = "6px";
+    ctx.fillText(`${count} ${count === 1 ? "PAINTING" : "PAINTINGS"}`, width / 2, 84);
+    ctx.letterSpacing = "0px";
+    ctx.fillStyle = "#f4ede0";
+    ctx.font = '400 92px "Playfair Display", Georgia, serif';
+    ctx.fillText(fitText(ctx, wing.name, width - 120), width / 2, 196);
+    texture.needsUpdate = true;
+  };
+  draw();
+  void document.fonts?.ready.then(draw);
+  return texture;
 }
 
 /**

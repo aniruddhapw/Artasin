@@ -7,6 +7,7 @@ import { serializeMoney } from "@/lib/api";
 import { createTranslator, translateOr } from "@/lib/i18n";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_NAME, absoluteUrl, breadcrumbList, pageMetadata } from "@/lib/seo";
+import { arrangeWings } from "@/lib/galleryWings";
 
 // The rest of this page is in English, so its labels are too.
 const t = createTranslator("en");
@@ -53,7 +54,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/gallery/wal
 
 export default async function VirtualGalleryPage({ searchParams }: PageProps<"/gallery/walk">) {
   const startAt = startSlug((await searchParams).at);
-  const artworks = await prisma.artwork.findMany({
+  const newestFirst = await prisma.artwork.findMany({
     where: { status: "PUBLISHED", category: "Painting" },
     include: {
       artist: { select: { displayName: true, slug: true, bio: true, location: true, discipline: true } },
@@ -61,6 +62,8 @@ export default async function VirtualGalleryPage({ searchParams }: PageProps<"/g
     },
     orderBy: { createdAt: "desc" }
   });
+  // Paintings of a kind hang together, in named wings (lib/galleryWings.ts).
+  const { paintings: artworks, wings } = arrangeWings(newestFirst);
 
   // Only plain, serialisable fields cross into the client component.
   const paintings = artworks.map((artwork) => ({
@@ -89,7 +92,7 @@ export default async function VirtualGalleryPage({ searchParams }: PageProps<"/g
       <main className="walk-page">
         <div className="walk-frame">
           {paintings.length ? (
-            <VirtualGallery paintings={paintings} startAt={startAt} />
+            <VirtualGallery paintings={paintings} startAt={startAt} wings={wings} />
           ) : (
             <div className="walk-empty">
               <p>No paintings are hanging yet. Check back soon as artists list new work.</p>
