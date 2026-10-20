@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { getTranslations } from "@/lib/i18n";
 import { ARTWORK_PLACEHOLDER, thumbUrl } from "@/lib/images";
 import type { Prisma } from "@prisma/client";
@@ -28,10 +28,10 @@ const COLLECTOR_POINTS = ["originals", "commission", "follow", "meet"] as const;
 async function getAboutData() {
   const published = { status: "PUBLISHED" } satisfies Prisma.ArtworkWhereInput;
   const [artists, works, categories, recent] = await Promise.all([
-    prisma.artistProfile.count({ where: { verificationStatus: "APPROVED" } }),
-    prisma.artwork.count({ where: published }),
-    prisma.artwork.groupBy({ by: ["category"], where: published }),
-    prisma.artwork.findMany({
+    catalog.artistProfile.count({ where: { verificationStatus: "APPROVED" } }),
+    catalog.artwork.count({ where: published }),
+    catalog.artwork.groupBy({ by: ["category"], where: published }),
+    catalog.artwork.findMany({
       where: { ...published, media: { some: {} } },
       include: {
         artist: { select: { displayName: true } },

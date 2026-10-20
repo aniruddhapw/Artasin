@@ -8,14 +8,14 @@ import { Nav } from "@/components/Nav";
 import { ShareButton } from "@/components/ShareButton";
 import { UnpublishPostButton } from "@/components/admin/UnpublishPostButton";
 import { getAuthUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { ogUrl } from "@/lib/images";
 import { sanitizeBlogHtml } from "@/lib/sanitizeBlogHtml";
 
 const dateFormat = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", year: "numeric" });
 
 async function getPost(slug: string) {
-  return prisma.blogPost.findUnique({
+  return catalog.blogPost.findUnique({
     where: { slug },
     include: { artist: { select: { id: true, displayName: true, slug: true, bio: true } } }
   });
@@ -50,7 +50,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
   }
 
   const [otherPosts, viewer] = await Promise.all([
-    prisma.blogPost.findMany({
+    catalog.blogPost.findMany({
       where: { artistId: post.artist.id, status: "PUBLISHED", id: { not: post.id } },
       orderBy: { publishedAt: "desc" },
       take: 3
