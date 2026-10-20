@@ -7,7 +7,7 @@ import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
 import { serializeMoney } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, translateOr } from "@/lib/i18n";
 import { ARTWORK_PLACEHOLDER, detailUrl, stripUrl, thumbUrl } from "@/lib/images";
@@ -81,13 +81,13 @@ function excerpt(text: string, limit: number): string {
  * if the pinned piece is later unpublished, the newest listing stands in.
  */
 async function getSpotlight() {
-  const pinned = await prisma.artwork.findFirst({
+  const pinned = await catalog.artwork.findFirst({
     where: { ...withImage, isHero: true },
     include: cardInclude
   });
   return (
     pinned ||
-    prisma.artwork.findFirst({ where: withImage, include: cardInclude, orderBy: { createdAt: "desc" } })
+    catalog.artwork.findFirst({ where: withImage, include: cardInclude, orderBy: { createdAt: "desc" } })
   );
 }
 
@@ -96,7 +96,7 @@ async function getSpotlight() {
  * The cover avoids the spotlight piece, which is already shown just above.
  */
 async function getMediums(spotlightId: string | undefined) {
-  const grouped = await prisma.artwork.groupBy({
+  const grouped = await catalog.artwork.groupBy({
     by: ["category"],
     where: withImage,
     _count: { category: true },
@@ -110,11 +110,11 @@ async function getMediums(spotlightId: string | undefined) {
         orderBy: { createdAt: "desc" }
       } satisfies Pick<Prisma.ArtworkFindFirstArgs, "include" | "orderBy">;
       const cover =
-        (await prisma.artwork.findFirst({
+        (await catalog.artwork.findFirst({
           ...query,
           where: { ...withImage, category: group.category, id: { not: spotlightId } }
         })) ||
-        (await prisma.artwork.findFirst({ ...query, where: { ...withImage, category: group.category } }));
+        (await catalog.artwork.findFirst({ ...query, where: { ...withImage, category: group.category } }));
       return { category: group.category, count: group._count?.category ?? 0, image: thumbUrl(cover?.media[0]?.url) };
     })
   );
@@ -124,16 +124,16 @@ export default async function HomePage() {
   const [{ t }, user, artistCount, workCount, recent, paintings, paintingCount, spotlight] = await Promise.all([
     getTranslations(),
     getAuthUser(),
-    prisma.artistProfile.count({ where: { verificationStatus: "APPROVED" } }),
-    prisma.artwork.count({ where: { status: "PUBLISHED" } }),
-    prisma.artwork.findMany({ where: withImage, include: cardInclude, orderBy: { createdAt: "desc" }, take: RECENT_POOL }),
-    prisma.artwork.findMany({
+    catalog.artistProfile.count({ where: { verificationStatus: "APPROVED" } }),
+    catalog.artwork.count({ where: { status: "PUBLISHED" } }),
+    catalog.artwork.findMany({ where: withImage, include: cardInclude, orderBy: { createdAt: "desc" }, take: RECENT_POOL }),
+    catalog.artwork.findMany({
       where: { ...withImage, category: STRIP_CATEGORY },
       include: cardInclude,
       orderBy: { createdAt: "desc" },
       take: RECENT_POOL
     }),
-    prisma.artwork.count({ where: { status: "PUBLISHED", category: STRIP_CATEGORY } }),
+    catalog.artwork.count({ where: { status: "PUBLISHED", category: STRIP_CATEGORY } }),
     getSpotlight()
   ]);
   const mediums = await getMediums(spotlight?.id);
