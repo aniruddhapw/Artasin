@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
@@ -17,7 +17,7 @@ export default async function BlogIndexPage({ searchParams }: PageProps<"/blog">
   const params = await searchParams;
   const artistSlug = typeof params?.artist === "string" ? params.artist : undefined;
 
-  const posts = await prisma.blogPost.findMany({
+  const posts = await catalog.blogPost.findMany({
     where: {
       status: "PUBLISHED",
       artist: artistSlug ? { slug: artistSlug } : undefined

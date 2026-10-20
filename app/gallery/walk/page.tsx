@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { VirtualGallery } from "@/components/gallery3d/VirtualGallery";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { ogUrl, textureUrl, thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 import { createTranslator, translateOr } from "@/lib/i18n";
@@ -27,7 +27,7 @@ function startSlug(value: string | string[] | undefined): string | undefined {
 export async function generateMetadata({ searchParams }: PageProps<"/gallery/walk">) {
   const slug = startSlug((await searchParams).at);
   const painting = slug
-    ? await prisma.artwork.findFirst({
+    ? await catalog.artwork.findFirst({
         where: { slug, status: "PUBLISHED", category: "Painting" },
         select: {
           title: true,
@@ -54,7 +54,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/gallery/wal
 
 export default async function VirtualGalleryPage({ searchParams }: PageProps<"/gallery/walk">) {
   const startAt = startSlug((await searchParams).at);
-  const newestFirst = await prisma.artwork.findMany({
+  const newestFirst = await catalog.artwork.findMany({
     where: { status: "PUBLISHED", category: "Painting" },
     include: {
       artist: { select: { displayName: true, slug: true, bio: true, location: true, discipline: true } },

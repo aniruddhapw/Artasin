@@ -1,7 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { CommissionRequestForm } from "@/components/requests/CommissionRequestForm";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { getTranslations } from "@/lib/i18n";
 import { pageMetadata } from "@/lib/seo";
 
@@ -23,7 +23,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/request
 
   const { t } = await getTranslations();
 
-  const artists = await prisma.artistProfile.findMany({
+  const artists = await catalog.artistProfile.findMany({
     where: { verificationStatus: "APPROVED" },
     select: { id: true, displayName: true },
     orderBy: { displayName: "asc" }

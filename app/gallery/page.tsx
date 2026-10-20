@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { thumbUrl } from "@/lib/images";
 import { serializeMoney } from "@/lib/api";
 import { artworkCategories as categories, isArtworkCategory, stylesFor, type ArtworkCategory } from "@/data/artisan";
@@ -60,7 +60,7 @@ export default async function GalleryPage({ searchParams }: PageProps<"/gallery"
   const style = typeof params?.style === "string" ? stylesFor(category).find((item) => item === params.style) : undefined;
 
   const [artworks, styleCounts] = await Promise.all([
-    prisma.artwork.findMany({
+    catalog.artwork.findMany({
       where: {
         status: "PUBLISHED",
         category: category || undefined,
@@ -81,7 +81,7 @@ export default async function GalleryPage({ searchParams }: PageProps<"/gallery"
     }),
     // Only styles that have work behind them get a pill, so no filter is a dead end.
     category && stylesFor(category).length
-      ? prisma.artwork.groupBy({
+      ? catalog.artwork.groupBy({
           by: ["style"],
           where: { status: "PUBLISHED", category, style: { not: null } },
           _count: true

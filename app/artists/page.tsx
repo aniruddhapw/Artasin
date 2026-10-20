@@ -4,7 +4,7 @@ import { ArtistFilters } from "@/components/artists/ArtistFilters";
 import { Footer } from "@/components/Footer";
 import { LazyImage } from "@/components/LazyImage";
 import { Nav } from "@/components/Nav";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { getTranslations, translateOr } from "@/lib/i18n";
 import { ARTWORK_PLACEHOLDER, thumbUrl } from "@/lib/images";
 import type { Translate } from "@/lib/i18n";
@@ -98,7 +98,7 @@ export default async function ArtistsPage({ searchParams }: PageProps<"/artists"
   const sort = text(params?.sort);
   const { t } = await getTranslations();
 
-  const artists = await prisma.artistProfile.findMany({
+  const artists = await catalog.artistProfile.findMany({
     where: {
       verificationStatus: "APPROVED",
       discipline: medium || undefined,

@@ -12,6 +12,7 @@ import { Nav } from "@/components/Nav";
 import { StarRating } from "@/components/StarRating";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { serializeMoney } from "@/lib/api";
 import { createTranslator, translateOr } from "@/lib/i18n";
 import { galleryImages, ogUrl, thumbUrl } from "@/lib/images";
@@ -35,7 +36,7 @@ function describe(artwork: ArtworkWithArtist): string {
 }
 
 async function getArtwork(slug: string) {
-  return prisma.artwork.findUnique({
+  return catalog.artwork.findUnique({
     where: { slug },
     include: {
       artist: {
@@ -116,7 +117,7 @@ export default async function ArtworkDetailPage({ params }: PageProps<"/artwork/
   }
 
   const [moreWorks, reviews, reviewAggregate] = await Promise.all([
-    prisma.artwork.findMany({
+    catalog.artwork.findMany({
       where: {
         artistId: artwork.artistId,
         status: "PUBLISHED",
@@ -126,12 +127,12 @@ export default async function ArtworkDetailPage({ params }: PageProps<"/artwork/
       take: 3,
       orderBy: { createdAt: "desc" }
     }),
-    prisma.review.findMany({
+    catalog.review.findMany({
       where: { artworkId: artwork.id },
       include: { buyer: { select: { firstName: true, lastName: true } } },
       orderBy: { createdAt: "desc" }
     }),
-    prisma.review.aggregate({
+    catalog.review.aggregate({
       where: { artworkId: artwork.id },
       _avg: { rating: true },
       _count: true

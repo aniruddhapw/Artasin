@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { absoluteUrl, SITE_URL } from "@/lib/seo";
 
 const siteUrl = SITE_URL;
@@ -10,22 +10,22 @@ export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [artworks, artists, posts, categories] = await Promise.all([
-    prisma.artwork.findMany({
+    catalog.artwork.findMany({
       where: { status: "PUBLISHED" },
       // The first photo, so search engines find the artwork images too.
       select: { slug: true, updatedAt: true, media: { take: 1, orderBy: { sortOrder: "asc" }, select: { url: true } } }
     }),
-    prisma.artistProfile.findMany({
+    catalog.artistProfile.findMany({
       where: { verificationStatus: "APPROVED" },
       select: { slug: true, updatedAt: true }
     }),
-    prisma.blogPost.findMany({
+    catalog.blogPost.findMany({
       where: { status: "PUBLISHED" },
       select: { slug: true, updatedAt: true }
     }),
     // Categories with work for sale: each is an indexable collection page
     // (app/gallery/page.tsx). Empty ones would be thin pages, so they're left out.
-    prisma.artwork.groupBy({ by: ["category"], where: { status: "PUBLISHED" }, _max: { updatedAt: true } })
+    catalog.artwork.groupBy({ by: ["category"], where: { status: "PUBLISHED" }, _max: { updatedAt: true } })
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [

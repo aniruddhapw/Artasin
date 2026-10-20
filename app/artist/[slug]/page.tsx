@@ -9,14 +9,14 @@ import { Nav } from "@/components/Nav";
 import { PortfolioGrid } from "@/components/artwork/PortfolioGrid";
 import { ShareButton } from "@/components/ShareButton";
 import { StarRating } from "@/components/StarRating";
-import { prisma } from "@/lib/db";
+import { catalog } from "@/lib/catalogCache";
 import { ARTWORK_PLACEHOLDER, detailUrl, fullUrl, ogUrl, thumbUrl } from "@/lib/images";
 import { youtubeThumbnail } from "@/lib/youtube";
 import { serializeMoney } from "@/lib/api";
 import type { PortfolioItem } from "@/components/artwork/PortfolioGrid";
 
 async function getArtist(slug: string) {
-  return prisma.artistProfile.findUnique({
+  return catalog.artistProfile.findUnique({
     where: { slug },
     include: {
       artworks: {
@@ -33,7 +33,7 @@ async function getArtist(slug: string) {
 
 
 async function getPreviewImage(artistId: string, portfolioFallback: string | null | undefined) {
-  const artwork = await prisma.artwork.findFirst({
+  const artwork = await catalog.artwork.findFirst({
     where: {
       artistId,
       status: { in: ["PUBLISHED", "SOLD"] },
@@ -113,18 +113,18 @@ export default async function ArtistProfilePage({ params }: PageProps<"/artist/[
   });
 
   const [reviews, reviewAggregate, blogPosts] = await Promise.all([
-    prisma.review.findMany({
+    catalog.review.findMany({
       where: { artistId: artist.id },
       include: { buyer: { select: { firstName: true, lastName: true } } },
       orderBy: { createdAt: "desc" },
       take: 10
     }),
-    prisma.review.aggregate({
+    catalog.review.aggregate({
       where: { artistId: artist.id },
       _avg: { rating: true },
       _count: true
     }),
-    prisma.blogPost.findMany({
+    catalog.blogPost.findMany({
       where: { artistId: artist.id, status: "PUBLISHED" },
       orderBy: { publishedAt: "desc" },
       take: 3
