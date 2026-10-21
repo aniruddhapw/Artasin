@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: "/privacy"
 });
 
-const LAST_UPDATED = "8 September 2026";
+const LAST_UPDATED = "21 October 2026";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -97,13 +97,21 @@ export default function PrivacyPolicyPage() {
                 <strong>Server logs</strong> — our hosting provider records standard technical data such as IP
                 address, browser type, and requested pages for security and reliability purposes.
               </li>
+              <li>
+                <strong>Usage statistics</strong> — we use Vercel Web Analytics to count visits: which pages
+                are viewed, which site or campaign sent the visitor, and the country, browser and device type.
+                It uses no cookies and stores no IP address or other identifier that could single you out, so
+                we see only totals, never an individual visitor. In the 3D gallery it also counts actions such
+                as visiting a painting or opening the map.
+              </li>
             </ul>
 
             <h3>What we do not collect</h3>
             <ul>
               <li>
-                We do not run advertising or analytics trackers. There is no Google Analytics, no advertising
-                pixel, and no third-party behavioural tracking on this site.
+                We do not run advertising trackers or follow you across sites. There is no Google Analytics,
+                no advertising pixel, no session recording, and no third-party behavioural tracking on this
+                site.
               </li>
               <li>
                 We do not collect payment card numbers. When card payments are enabled, they will be handled
