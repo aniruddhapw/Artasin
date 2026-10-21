@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ShareButton } from "@/components/ShareButton";
 import type { Wing } from "@/lib/galleryWings";
+import { galleryEvent } from "./galleryEvents";
 import { HelperPanel, type HelperStep } from "./HelperPanel";
 import { MiniMap, wingColour } from "./MiniMap";
 import { buildGallery } from "./scene";
@@ -65,6 +66,7 @@ export function VirtualGallery({
     (step?: HelperStep) => {
       const current = selectedRef.current;
       const onPainting = current !== null && current < paintings.length;
+      galleryEvent("helper-opened");
       setHelperStep(step ?? (onPainting ? { kind: "about", index: current } : { kind: "home" }));
       setShowList(false);
       setShowHelp(false);
@@ -89,6 +91,7 @@ export function VirtualGallery({
           onSelect: (index) => {
             if (index !== null) {
               lastRef.current = index;
+              galleryEvent(index < paintings.length ? "painting-visited" : "desk-visited");
             }
             selectedRef.current = index;
             setSelected(index);
@@ -96,7 +99,10 @@ export function VirtualGallery({
           // Clicking the helper asks about the painting in front of you, if there is one.
           onHelper: () => openHelper(),
           onProgress: (loaded) => setProgress(loaded),
-          onMove: () => setShowHelp(false)
+          onMove: () => {
+            galleryEvent("explored");
+            setShowHelp(false);
+          }
         }, wings);
         apiRef.current = api;
         setGalleryMap(api.map);
@@ -231,6 +237,7 @@ export function VirtualGallery({
     if (first === undefined) {
       return;
     }
+    galleryEvent("helper-suggestions");
     setTour(indices.length > 1 ? { indices, position: 0 } : null);
     setHelperStep(null);
     focus(first);
@@ -378,9 +385,18 @@ export function VirtualGallery({
           expanded={mapExpanded}
           live={live}
           map={galleryMap}
-          onExpand={setMapExpanded}
-          onPick={focus}
+          onExpand={(expand) => {
+            if (expand) {
+              galleryEvent("map-expanded");
+            }
+            setMapExpanded(expand);
+          }}
+          onPick={(index) => {
+            galleryEvent("map-used");
+            focus(index);
+          }}
           onWalk={(point) => {
+            galleryEvent("map-used");
             setMapExpanded(false);
             apiRef.current?.walkTo(point);
           }}
@@ -459,7 +475,11 @@ export function VirtualGallery({
             </p>
             <div className="walk-card-actions">
               <strong>{painting.price}</strong>
-              <Link className="button button-primary" href={`/artwork/${painting.slug}`}>
+              <Link
+                className="button button-primary"
+                href={`/artwork/${painting.slug}`}
+                onClick={() => galleryEvent("view-artwork")}
+              >
                 View artwork
               </Link>
             </div>
@@ -471,13 +491,16 @@ export function VirtualGallery({
               >
                 Ask the helper about this painting
               </button>
-              <ShareButton
-                className="walk-card-share"
-                label="Share"
-                path={`/gallery/walk?at=${encodeURIComponent(painting.slug)}`}
-                text={`Walk up to "${painting.title}" by ${painting.artistName} in the ARTASIN 3D gallery`}
-                title={`${painting.title} in the ARTASIN 3D gallery`}
-              />
+              {/* Counts opening the share menu, wherever it then shares to. */}
+              <span className="walk-card-share-wrap" onClickCapture={() => galleryEvent("shared")}>
+                <ShareButton
+                  className="walk-card-share"
+                  label="Share"
+                  path={`/gallery/walk?at=${encodeURIComponent(painting.slug)}`}
+                  text={`Walk up to "${painting.title}" by ${painting.artistName} in the ARTASIN 3D gallery`}
+                  title={`${painting.title} in the ARTASIN 3D gallery`}
+                />
+              </span>
             </div>
           </article>
         ) : null}
@@ -490,7 +513,11 @@ export function VirtualGallery({
               you with an artist to create it.
             </p>
             <div className="walk-card-actions">
-              <Link className="button button-primary" href="/requests">
+              <Link
+                className="button button-primary"
+                href="/requests"
+                onClick={() => galleryEvent("commission-clicked")}
+              >
                 Request a custom piece
               </Link>
             </div>

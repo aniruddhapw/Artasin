@@ -6629,6 +6629,11 @@ textarea::placeholder {
   box-shadow: 0 18px 48px rgba(40, 30, 20, 0.14);
 }
 
+/* Only there to count share clicks; lays out as if it weren't. */
+.walk-card-share-wrap {
+  display: contents;
+}
+
 /* The share menu opens above the card, so the card must let it out. */
 .walk-card {
   overflow: visible;
