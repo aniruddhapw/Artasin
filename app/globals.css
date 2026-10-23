@@ -1,4 +1,15 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap");
+/* The rupee sign isn't in the Latin set of Inter that pages preload, so on
+   its own it would fetch Inter's 84 KB extended-Latin file on every page with
+   a price. This is Inter's own rupee, cut out of that file with fonttools
+   (pyftsubset --unicodes=U+20B9; all weights, 1.2 KB) and inlined, so it is
+   there the moment the page paints. Inter is under the SIL Open Font Licence. */
+@font-face {
+  font-family: "Rupee";
+  src: url("data:font/woff2;base64,d09GMgABAAAAAAS8ABMAAAAACRQAAARTAAQAQgAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcKj9IVkFSTT9NVkFSXgZgP1NUQVSBTicmADQvbBEICnSBCDCBTgE2AiQDCAsGAAQgBYVsByAb1AcIjsN0Oy0fOIkmUIOox6m/9yQ3SrjEKmEIZ8YhANecKAVAfyBCEcWuWQAu8KIkkEsxsYRe9H2eY8bDcWr+RQsPLQujvBqrxAY6m1g3rYHK9g6YDmKzzQ3cVxGJI5b0EIKWR4AI5phHCooqGjDQAWwbAGCspZZT7cV4ei0fM/CvAALAFFB89RxxFGCCpQT1IA8C4OSEACAIChB7UxBQKAQAAwcp2xr120YRZccAxteAn4gQxgJsnMMW+zoCRCHAnAeXVYAC5OKOl9ai65dICAc4kvXngLMnn3qOo+qC6XFogEIHABQAQF2rrOdB8y73kmEP/j8JjPfUqYAA6F2OlwFTFIJgoAFTRAKrKX9gbLNkwIYxYokgLqvXI04U0yy0VpYiTfr4bLafkxFASSYxgCAg8QxktASe5E+U1YCWq1ASAnUv8SfLr0JLUS31qZSWppnudG3vSaUOkwuAAAKAENbsRSHquch9M8+eHrF0aOGJ5OSES504AQrQgCk0BJhCxwQ6OgLmte3Q+kEJ8k0ShSnCMTr6XzMACYG2F0BE4oEBSALwJEgiyGqQJJAQSDLIr5AUUC0gqaDuBUkDzQRJB20vIIhtEwuAAkAHNGAByAAAOgCg6TP1LQ1xzZvWN0UfeeMN2fV6RFRz5JHXXmPnq69GRLjY0n3Nua8Gk669MfHa+YuDcQe0bcbQ8azy8ZY955566fSkqz+9+VPL9/Su9f2PvGXd7Pi8MSq68OWka79yJF4OAAIIALMoAGYBaCtFnPriQagpnHD+W6ae//PzLR98cscbYaZpfvHJz899csORQ4cOAYfsumh1PUm75JIj1+fabfbanU57067Y7zye73B+hv7vgvTGLTK7jclrUhMLO7r4d1e2bdg7vbFmlvn9klXR394SGo43omcljllZtbIXfwF38Q8/chmXOZprvv+d4HF8cuONn3Dhbk37/qlT82yvO+luI2LCDx9//9H1l6td8sR9exFAJ+9tKPV2x+b8ZmgGAB+vPxCKw55nx//3fsSdxnuAhgJA4D/ZI01E/LetGeaayuGUEr2RLAIoBkXQxoEAAACgI8DUKDREDwdCkEGIIARFDGdDI8GV0JnlTThI8zN7ArOyXEyEKMlDPIZUIYEpaUIiEbIOScRwNpKJEgspxGUnUjEkhDQm5UykEyFXI4MZuRWZGPIsnETJq4bce+f+kHx+AZuMchk2wmJKkiBRGlODEYNMpXwsg0aZaozyW2dQv54r1zjLCL9RY0zLjbBYAsZkiRdvmItlxLg+a/Xz84of2V5j4rlK6lcUTl9n0LBxHr1GpVgrQYJE2erUq1Sf1FnN1mwdkMc0NUnnMS5+PmaB+sXuNdKcbIp0/RL0lVvobzbYobI3fhefQhujo3pVEF2ykUqDBriM86o3yMslj5/HgOoO1QHK2kX7uVULsLj06+Vhquey2aBEKUIqZSmhqa71P+vlowHA/5c6igEA") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+20B9;
+}
 
 :root {
   --surface: #f9f9f7;
@@ -32,7 +43,7 @@ body {
   overflow-x: hidden;
   color: var(--text);
   background: var(--surface);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Rupee", var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -293,7 +304,7 @@ h1,
 .artwork-panel h1,
 .studio-header h1,
 .request-header h1 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 64px;
   font-weight: 400;
   line-height: 1.1;
@@ -379,7 +390,7 @@ h1,
 .card-heading h2,
 .process-column h2,
 legend {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 32px;
   font-weight: 400;
   line-height: 1.3;
@@ -394,7 +405,7 @@ legend {
 
 .more-card h3,
 .artwork-card h3 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 24px;
   font-weight: 400;
   line-height: 1.4;
@@ -474,7 +485,7 @@ legend {
 }
 
 .artist-avatar-monogram span {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 56px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -541,7 +552,7 @@ legend {
 
 .price {
   margin-bottom: 40px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 24px;
   line-height: 1.4;
 }
@@ -872,7 +883,7 @@ dd {
 }
 
 .order-history-details h3 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 18px;
   font-weight: 400;
   line-height: 1.4;
@@ -987,7 +998,7 @@ dd {
 .commission-detail-main .dashboard-card h2,
 .commission-detail-side .dashboard-card h2 {
   margin-bottom: 16px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 20px;
   font-weight: 400;
   line-height: 1.4;
@@ -1434,7 +1445,7 @@ textarea::placeholder {
 
 .checkout-summary h3 {
   margin-bottom: 4px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 20px;
   font-weight: 400;
   line-height: 1.4;
@@ -1560,7 +1571,7 @@ textarea::placeholder {
 
 .kpi strong {
   display: block;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 32px;
   font-weight: 400;
   line-height: 1.3;
@@ -1740,7 +1751,7 @@ textarea::placeholder {
 }
 
 .payout-figure {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 40px;
   line-height: 1.2;
 }
@@ -1938,7 +1949,7 @@ textarea::placeholder {
 
 .auth-form-header h2 {
   margin-bottom: 12px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 32px;
   font-weight: 400;
   line-height: 1.3;
@@ -2148,7 +2159,7 @@ textarea::placeholder {
 
 .legal-body h3 {
   margin: 28px 0 10px;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: "Rupee", var(--font-sans), system-ui, sans-serif;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -3718,7 +3729,7 @@ textarea::placeholder {
 :root[lang="mr"] textarea,
 :root[lang="mr"] select,
 :root[lang="mr"] button {
-  font-family: "Noto Sans Devanagari", Inter, system-ui, sans-serif;
+  font-family: var(--font-devanagari), var(--font-sans), system-ui, sans-serif;
 }
 
 :root[lang="mr"] h1,
@@ -3729,7 +3740,7 @@ textarea::placeholder {
 :root[lang="mr"] .home-medium-commission .home-medium-frame p,
 :root[lang="mr"] .request-header h1,
 :root[lang="mr"] .studio-header h1 {
-  font-family: "Noto Sans Devanagari", "Playfair Display", Georgia, serif;
+  font-family: var(--font-devanagari), var(--font-serif), Georgia, serif;
   font-weight: 600;
   letter-spacing: 0;
 }
@@ -3785,7 +3796,7 @@ textarea::placeholder {
 }
 
 .language-toggle .language-option[lang="mr"] {
-  font-family: "Noto Sans Devanagari", Inter, sans-serif;
+  font-family: var(--font-devanagari), var(--font-sans), sans-serif;
 }
 
 .language-toggle .language-option:hover:not(:disabled) {
@@ -4137,7 +4148,7 @@ textarea::placeholder {
 
 .blog-post-header h1 {
   margin: 8px 0 0;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 44px;
   font-weight: 400;
   line-height: 1.2;
@@ -4298,7 +4309,7 @@ textarea::placeholder {
 .rte-content h2,
 .ProseMirror h2 {
   margin: 28px 0 12px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 26px;
   font-weight: 400;
 }
@@ -4306,7 +4317,7 @@ textarea::placeholder {
 .rte-content h3,
 .ProseMirror h3 {
   margin: 24px 0 10px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 21px;
   font-weight: 400;
 }
@@ -4362,7 +4373,7 @@ textarea::placeholder {
 
 .blog-post-body h2 {
   margin: 40px 0 16px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 30px;
   font-weight: 400;
   line-height: 1.3;
@@ -4370,7 +4381,7 @@ textarea::placeholder {
 
 .blog-post-body h3 {
   margin: 32px 0 12px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 23px;
   font-weight: 400;
 }
@@ -4761,7 +4772,7 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 22px;
   font-weight: 400;
   line-height: 1.3;
@@ -4863,7 +4874,7 @@ textarea::placeholder {
 }
 
 .home-page h2 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-weight: 400;
   text-wrap: balance;
 }
@@ -4987,7 +4998,7 @@ textarea::placeholder {
 }
 
 .home-strip-caption strong {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 17px;
   font-weight: 400;
 }
@@ -5111,7 +5122,7 @@ textarea::placeholder {
 }
 
 .home-card h3 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 20px;
   font-weight: 400;
   line-height: 1.25;
@@ -5268,7 +5279,7 @@ textarea::placeholder {
 }
 
 .home-medium-row h3 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 24px;
   font-weight: 400;
 }
@@ -5290,7 +5301,7 @@ textarea::placeholder {
 }
 
 .home-medium-commission .home-medium-frame p {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 26px;
   line-height: 1.2;
 }
@@ -5354,7 +5365,7 @@ textarea::placeholder {
 
 .home-step-number {
   color: #6f7373;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 40px;
   line-height: 1;
 }
@@ -5388,7 +5399,7 @@ textarea::placeholder {
 }
 
 .home-path h3 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 28px;
   font-weight: 400;
 }
@@ -5710,7 +5721,7 @@ textarea::placeholder {
 .about-page h1,
 .about-page h2,
 .about-page h3 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-weight: 400;
   text-wrap: balance;
 }
@@ -5852,7 +5863,7 @@ textarea::placeholder {
 .about-motto blockquote {
   max-width: 24ch;
   margin: 0;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: clamp(30px, 4vw, 52px);
   line-height: 1.2;
   text-wrap: balance;
@@ -5876,7 +5887,7 @@ textarea::placeholder {
 }
 
 .about-stats strong {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: clamp(40px, 5vw, 64px);
   font-weight: 400;
   line-height: 1;
@@ -6483,7 +6494,7 @@ textarea::placeholder {
 }
 
 .walk-intro-works li > a {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 18px;
 }
 
@@ -6558,7 +6569,7 @@ textarea::placeholder {
   backdrop-filter: blur(18px) saturate(1.2);
   box-shadow: 0 6px 22px rgba(40, 30, 20, 0.1);
   color: var(--text);
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 16px;
   white-space: nowrap;
   transition: background 180ms ease, color 180ms ease;
@@ -6646,7 +6657,7 @@ textarea::placeholder {
 
 .walk-card h2 {
   margin-bottom: 6px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 28px;
   font-weight: 400;
   line-height: 1.2;
@@ -6731,7 +6742,7 @@ textarea::placeholder {
 }
 
 .walk-list button span {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 18px;
 }
 
@@ -6785,7 +6796,7 @@ textarea::placeholder {
 .walk-minimap-wing {
   overflow: hidden;
   min-width: 0;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6843,7 +6854,7 @@ textarea::placeholder {
 }
 
 .walk-map-expanded-head h2 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 24px;
   font-weight: 400;
 }
@@ -6882,7 +6893,7 @@ textarea::placeholder {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 16px;
   text-align: left;
 }
@@ -6894,7 +6905,7 @@ textarea::placeholder {
 .walk-map-legend small {
   margin-left: auto;
   color: var(--muted);
-  font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+  font-family: "Rupee", var(--font-sans), "Helvetica Neue", Arial, sans-serif;
   font-size: 13px;
 }
 
@@ -7257,7 +7268,7 @@ textarea::placeholder {
 
 .walk-helper-name {
   color: var(--muted);
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 15px;
 }
 
@@ -7271,7 +7282,7 @@ textarea::placeholder {
 }
 
 .walk-helper-hero h2 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 28px;
   font-weight: 400;
   line-height: 1.15;
@@ -7295,7 +7306,7 @@ textarea::placeholder {
   border-radius: 8px;
   background: #1d1a17;
   color: #f6f1e8;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 16px;
 }
 
@@ -7309,7 +7320,7 @@ textarea::placeholder {
   align-items: center;
   gap: 14px;
   margin-top: 6px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 17px;
   font-weight: 400;
 }
@@ -7334,7 +7345,7 @@ textarea::placeholder {
   border-radius: 50%;
   background: #a65a3f;
   color: #f4f1ea;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 18px;
 }
 
@@ -7460,7 +7471,7 @@ textarea::placeholder {
 
 .walk-helper-card strong {
   margin-bottom: 4px;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 19px;
   font-weight: 400;
   line-height: 1.2;
@@ -7469,7 +7480,7 @@ textarea::placeholder {
 .walk-helper-card small {
   overflow: hidden;
   color: var(--muted);
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-serif), Georgia, serif;
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
