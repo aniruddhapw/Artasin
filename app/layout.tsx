@@ -1,8 +1,10 @@
 import "./globals.css";
 import { Suspense } from "react";
+import { preconnect } from "react-dom";
 import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { RouteProgress } from "@/components/RouteProgress";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { fontVariables } from "./fonts";
 import { getTranslations } from "@/lib/i18n";
 import { DEFAULT_SHARE_IMAGE, SITE_NAME, SITE_URL, jsonLd } from "@/lib/seo";
 import { SOCIAL_LINKS } from "@/lib/socialLinks";
@@ -73,9 +75,12 @@ const structuredData = [
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const { locale, messages } = await getTranslations();
+  // Artwork images come from Cloudinary: open the connection while the page
+  // is still loading, rather than when the first image is found.
+  preconnect("https://res.cloudinary.com");
 
   return (
-    <html lang={locale}>
+    <html className={fontVariables} lang={locale}>
       <body>
         <script
           dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}

@@ -19,12 +19,19 @@ export interface StripWork {
   alt: string;
 }
 
+/**
+ * The first tiles are on screen as the page opens; on a phone one of them is
+ * the largest thing in view, which is what Largest Contentful Paint measures.
+ * They load first; the rest wait behind them.
+ */
+const EAGER_TILES = 3;
+
 export function WorkStrip({ label, works }: { label: string; works: readonly StripWork[] }) {
   if (!works.length) {
     return null;
   }
 
-  const tile = (work: StripWork, copy: boolean) => (
+  const tile = (work: StripWork, copy: boolean, index: number) => (
     <Link
       aria-hidden={copy || undefined}
       className="home-strip-tile"
@@ -33,9 +40,15 @@ export function WorkStrip({ label, works }: { label: string; works: readonly Str
       tabIndex={copy ? -1 : undefined}
     >
       {/* Not lazy: an unloaded image here has no width, so the browser never
-          sees it as visible and never fetches it. Low priority keeps these
-          behind the hero. The copy reuses the same URL, so it costs nothing. */}
-      <img alt={copy ? "" : work.alt} decoding="async" fetchPriority="low" src={work.stripImage} />
+          sees it as visible and never fetches it. Past the first few, low
+          priority keeps them behind what is in view. The copy reuses the same
+          URL, so it costs nothing. */}
+      <img
+        alt={copy ? "" : work.alt}
+        decoding="async"
+        fetchPriority={!copy && index < EAGER_TILES ? "high" : "low"}
+        src={work.stripImage}
+      />
       <span className="home-strip-caption">
         <strong>{work.title}</strong>
         <span>
@@ -48,8 +61,8 @@ export function WorkStrip({ label, works }: { label: string; works: readonly Str
   return (
     <div aria-label={label} className="home-strip" role="region">
       <div className="home-strip-track">
-        {works.map((work) => tile(work, false))}
-        {works.map((work) => tile(work, true))}
+        {works.map((work, index) => tile(work, false, index))}
+        {works.map((work, index) => tile(work, true, index))}
       </div>
     </div>
   );
