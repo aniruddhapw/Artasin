@@ -7152,7 +7152,7 @@ textarea::placeholder {
     top: calc(var(--walk-top, 52px) + 8px);
     left: 12px;
     right: 12px;
-    bottom: 72px;
+    bottom: calc(var(--walk-bottom, 60px) + 8px);
     width: auto;
   }
   .walk-minimap {
