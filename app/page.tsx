@@ -10,7 +10,16 @@ import { getAuthUser } from "@/lib/auth";
 import { catalog } from "@/lib/catalogCache";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, translateOr } from "@/lib/i18n";
-import { ARTWORK_PLACEHOLDER, detailUrl, stripUrl, thumbUrl } from "@/lib/images";
+import {
+  ARTWORK_PLACEHOLDER,
+  CARD_WIDTHS,
+  FEATURE_WIDTHS,
+  detailUrl,
+  stripSources,
+  stripUrl,
+  thumbUrl,
+  widthSrcSet
+} from "@/lib/images";
 import type { Prisma } from "@prisma/client";
 import type { JustListedWork } from "@/components/home/JustListed";
 import type { StripWork } from "@/components/home/WorkStrip";
@@ -115,7 +124,13 @@ async function getMediums(spotlightId: string | undefined) {
           where: { ...withImage, category: group.category, id: { not: spotlightId } }
         })) ||
         (await catalog.artwork.findFirst({ ...query, where: { ...withImage, category: group.category } }));
-      return { category: group.category, count: group._count?.category ?? 0, image: thumbUrl(cover?.media[0]?.url) };
+      const url = cover?.media[0]?.url;
+      return {
+        category: group.category,
+        count: group._count?.category ?? 0,
+        image: thumbUrl(url),
+        imageSrcSet: url ? widthSrcSet(url, CARD_WIDTHS) : undefined
+      };
     })
   );
 }
@@ -141,7 +156,9 @@ export default async function HomePage() {
   // A category an artist typed that has no translation shows as written.
   const categoryLabel = (category: string) => translateOr(t, `category.${category}`, category);
 
-  const toCard = (artwork: CardArtwork): JustListedWork & StripWork => ({
+  const toCard = (artwork: CardArtwork): JustListedWork & StripWork => {
+    const url = artwork.media[0]?.url ?? ARTWORK_PLACEHOLDER;
+    return {
     id: artwork.id,
     slug: artwork.slug,
     title: artwork.title,
@@ -149,9 +166,12 @@ export default async function HomePage() {
     category: categoryLabel(artwork.category),
     price: serializeMoney(artwork.priceCents, artwork.currency).formatted,
     alt: t("home.workAlt", { title: artwork.title, artist: artwork.artist.displayName }),
-    image: thumbUrl(artwork.media[0]?.url ?? ARTWORK_PLACEHOLDER),
-    stripImage: stripUrl(artwork.media[0]?.url ?? ARTWORK_PLACEHOLDER)
-  });
+    image: thumbUrl(url),
+    imageSrcSet: widthSrcSet(url, CARD_WIDTHS),
+    stripImage: stripUrl(url),
+    stripSources: stripSources(url)
+    };
+  };
 
   const strip = interleaveByArtist(paintings).slice(0, STRIP_LIMIT).map(toCard);
   const justListed = recent.slice(0, JUST_LISTED_LIMIT).map(toCard);
@@ -225,7 +245,9 @@ export default async function HomePage() {
               <Link className="home-spotlight-art" href={`/artwork/${spotlight.slug}`}>
                 <LazyImage
                   alt={t("home.workAlt", { title: spotlight.title, artist: spotlight.artist.displayName })}
+                  sizes="(max-width: 860px) 100vw, 640px"
                   src={detailUrl(spotlight.media[0]?.url ?? ARTWORK_PLACEHOLDER)}
+                  srcSet={widthSrcSet(spotlight.media[0]?.url ?? ARTWORK_PLACEHOLDER, FEATURE_WIDTHS)}
                 />
               </Link>
               <div className="home-spotlight-copy">
@@ -265,7 +287,14 @@ export default async function HomePage() {
                 key={medium.category}
               >
                 <div className="home-medium-frame">
-                  {medium.image ? <LazyImage alt="" src={medium.image} /> : null}
+                  {medium.image ? (
+                    <LazyImage
+                      alt=""
+                      sizes="(max-width: 1100px) 50vw, 300px"
+                      src={medium.image}
+                      srcSet={medium.imageSrcSet}
+                    />
+                  ) : null}
                 </div>
                 <div className="home-medium-row">
                   <h3>{categoryLabel(medium.category)}</h3>

@@ -41,6 +41,36 @@ export function stripUrl<T extends string | null | undefined>(url: T): T {
   return imageVariant(url, "f_auto,q_auto,h_640,c_limit");
 }
 
+/**
+ * The strip's sources, by screen: tiles are 210px tall on phones (860px wide
+ * and under) and 320px elsewhere, so each gets that height at 1x and 2x pixel
+ * density rather than one 640px file for every device. 3x screens take the 2x
+ * file: no sharper to the eye at this size, and 40% fewer bytes on a phone.
+ */
+export function stripSources(url: string): { phone: string; wide: string } {
+  const at = (height: number) => imageVariant(url, `f_auto,q_auto,h_${height},c_limit`);
+  return {
+    phone: `${at(210)} 1x, ${at(420)} 2x`,
+    wide: `${at(320)} 1x, ${at(640)} 2x`
+  };
+}
+
+/**
+ * A srcset of the image at each width, for the browser to pick from with the
+ * img's `sizes`. A URL that is not on Cloudinary comes back as one entry.
+ */
+export function widthSrcSet(url: string, widths: readonly number[]): string {
+  if (imageVariant(url, "x") === url) {
+    return url;
+  }
+  return widths.map((width) => `${imageVariant(url, `f_auto,q_auto,w_${width},c_limit`)} ${width}w`).join(", ");
+}
+
+/** Widths for grid cards and thumbnails (thumbUrl's 600px is the fallback). */
+export const CARD_WIDTHS = [320, 480, 640] as const;
+/** Widths for a large feature image (detailUrl's 1600px is the fallback). */
+export const FEATURE_WIDTHS = [640, 960, 1280, 1600] as const;
+
 /** The main image on the artwork detail page. */
 export function detailUrl<T extends string | null | undefined>(url: T): T {
   return imageVariant(url, "f_auto,q_auto,w_1600,c_limit");
