@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import type { Point } from "@/lib/galleryLayout";
 import type { GalleryLive, GalleryMap } from "./types";
+import { sansFont } from "./canvasFonts";
 
 /**
  * The 3D gallery's mini-map: the floor plan from above, with each wing's
@@ -343,7 +344,7 @@ function drawPlan(
     return;
   }
   // The wings' names, with a pale halo so they read over the plan.
-  ctx.font = '600 11px Inter, "Helvetica Neue", Arial, sans-serif';
+  ctx.font = `600 11px ${sansFont()}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";

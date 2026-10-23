@@ -14,6 +14,7 @@ import type { Point } from "@/lib/galleryLayout";
 import { CLOTHING_DYES, type VisitorBody, type VisitorModel } from "./crowd";
 import { addYaw, type StaffModel, type StaffRole } from "./staff";
 import type { NonEmptyArray } from "@/types/utils";
+import { sansFont, serifFont } from "./canvasFonts";
 
 type Three = typeof THREE_NS;
 
@@ -888,10 +889,10 @@ function makeTagTexture(THREE: Three): THREE_NS.CanvasTexture {
     ctx.fill();
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "#1d1a17";
-    ctx.font = '400 46px "Playfair Display", Georgia, serif';
+    ctx.font = `400 46px ${serifFont()}`;
     ctx.fillText("Aarav · Virtual Curator", 118, 78);
     ctx.fillStyle = "#5c574f";
-    ctx.font = '500 34px Inter, "Helvetica Neue", Arial, sans-serif';
+    ctx.font = `500 34px ${sansFont()}`;
     ctx.fillText("Tap to guide \u2192", 120, 128);
     texture.needsUpdate = true;
   };

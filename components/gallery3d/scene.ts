@@ -34,6 +34,7 @@ import { LIGHT_MAP_INTENSITY, floorLightmap, wallLightmap, wallPlane } from "./l
 import { HALL_HEIGHT, HANG_HEIGHT, SPOT_OUT, slotsOnFace, spotFor, wallFaces } from "@/lib/galleryLighting";
 import { loadStaffModels, shouldLoadStaffModels } from "./staff";
 import { createVisitors, type ClearView } from "./visitors";
+import { sansFont, serifFont } from "./canvasFonts";
 
 /** The three module, passed in so it can be loaded on demand. */
 type Three = typeof THREE_NS;
@@ -1057,12 +1058,12 @@ function makeDeskTexture(THREE: Three): THREE_NS.CanvasTexture {
   const ctx = context2d(canvas);
   ctx.textAlign = "center";
   ctx.fillStyle = "#f4f1ea";
-  ctx.font = '600 64px Inter, "Helvetica Neue", Arial, sans-serif';
+  ctx.font = `600 64px ${sansFont()}`;
   ctx.letterSpacing = "12px";
   ctx.fillText("CUSTOM ORDERS", width / 2, 104);
   ctx.letterSpacing = "0px";
   ctx.fillStyle = "#c9b79c";
-  ctx.font = 'italic 40px "Playfair Display", Georgia, serif';
+  ctx.font = `italic 40px ${serifFont()}`;
   ctx.fillText("Commission an original piece", width / 2, 172);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -1210,12 +1211,12 @@ function makeWingSignTexture(THREE: Three, wing: Wing): THREE_NS.CanvasTexture {
     ctx.strokeRect(16, 16, width - 32, height - 32);
     ctx.textAlign = "center";
     ctx.fillStyle = "#c9a46a";
-    ctx.font = '600 26px Inter, "Helvetica Neue", Arial, sans-serif';
+    ctx.font = `600 26px ${sansFont()}`;
     ctx.letterSpacing = "6px";
     ctx.fillText(`${count} ${count === 1 ? "PAINTING" : "PAINTINGS"}`, width / 2, 84);
     ctx.letterSpacing = "0px";
     ctx.fillStyle = "#f4ede0";
-    ctx.font = '400 92px "Playfair Display", Georgia, serif';
+    ctx.font = `400 92px ${serifFont()}`;
     ctx.fillText(fitText(ctx, wing.name, width - 120), width / 2, 196);
     texture.needsUpdate = true;
   };
@@ -1479,14 +1480,14 @@ function makePlaqueTexture(THREE: Three, painting: GalleryPainting): THREE_NS.Ca
     };
     const left = 30;
     const inner = width - left * 2;
-    ctx.font = '600 38px "Playfair Display", Georgia, serif';
+    ctx.font = `600 38px ${serifFont()}`;
     const titleLines = wrapText(ctx, painting.title, inner).slice(0, 2);
     titleLines.forEach((line, index) => engrave(line, left, 62 + index * 42));
     let y = 62 + titleLines.length * 42;
-    ctx.font = 'italic 26px "Playfair Display", Georgia, serif';
+    ctx.font = `italic 26px ${serifFont()}`;
     engrave(fitText(ctx, [painting.artistName, painting.year].filter(Boolean).join(", "), inner), left, y);
     y += 34;
-    ctx.font = '24px Inter, "Helvetica Neue", Arial, sans-serif';
+    ctx.font = `24px ${sansFont()}`;
     for (const detail of [painting.medium, painting.dimensions].filter(Boolean)) {
       if (y > height - 60) {
         break;
@@ -1494,7 +1495,7 @@ function makePlaqueTexture(THREE: Three, painting: GalleryPainting): THREE_NS.Ca
       engrave(fitText(ctx, detail, inner), left, y);
       y += 30;
     }
-    ctx.font = '600 28px Inter, "Helvetica Neue", Arial, sans-serif';
+    ctx.font = `600 28px ${sansFont()}`;
     engrave(painting.price, left, Math.min(y + 8, height - 26));
     texture.needsUpdate = true;
   };
@@ -1512,7 +1513,7 @@ function makeSignTexture(THREE: Three, count: number): THREE_NS.CanvasTexture {
   const ctx = context2d(canvas);
   ctx.textAlign = "center";
   ctx.fillStyle = "#444748";
-  ctx.font = '600 30px Inter, "Helvetica Neue", Arial, sans-serif';
+  ctx.font = `600 30px ${sansFont()}`;
   ctx.fillText(`THE COLLECTION · ${count} ${count === 1 ? "PAINTING" : "PAINTINGS"}`, width / 2, 42);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
