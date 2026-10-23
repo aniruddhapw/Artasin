@@ -19,6 +19,8 @@ export interface JustListedWork {
   category: string;
   price: string;
   image: string;
+  /** The same image at several widths, for phones to take a smaller one. */
+  imageSrcSet: string;
   alt: string;
 }
 
@@ -90,7 +92,12 @@ export function JustListed({ works, viewAllHref }: { works: readonly JustListedW
         {works.map((work) => (
           <Link className="home-card" href={`/artwork/${work.slug}`} key={work.id}>
             <div className="home-card-frame">
-              <LazyImage alt={work.alt} src={work.image} />
+              <LazyImage
+                alt={work.alt}
+                sizes="(max-width: 860px) 60vw, (max-width: 1100px) 33vw, 300px"
+                src={work.image}
+                srcSet={work.imageSrcSet}
+              />
             </div>
             <div>
               <h3>{work.title}</h3>

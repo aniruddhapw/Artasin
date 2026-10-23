@@ -4973,6 +4973,11 @@ textarea::placeholder {
   background: var(--surface-low);
 }
 
+/* The <picture> lays out as if it weren't there, so the image fills the tile. */
+.home-strip-tile picture {
+  display: contents;
+}
+
 .home-strip-tile img {
   width: auto;
   height: 100%;

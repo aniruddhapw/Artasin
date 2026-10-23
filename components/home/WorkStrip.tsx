@@ -16,6 +16,8 @@ export interface StripWork {
   artist: string;
   price: string;
   stripImage: string;
+  /** Sources sized for phones and for larger screens (lib/images.ts stripSources). */
+  stripSources: { phone: string; wide: string };
   alt: string;
 }
 
@@ -39,16 +41,21 @@ export function WorkStrip({ label, works }: { label: string; works: readonly Str
       key={`${copy ? "copy-" : ""}${work.id}`}
       tabIndex={copy ? -1 : undefined}
     >
-      {/* Not lazy: an unloaded image here has no width, so the browser never
-          sees it as visible and never fetches it. Past the first few, low
-          priority keeps them behind what is in view. The copy reuses the same
-          URL, so it costs nothing. */}
-      <img
-        alt={copy ? "" : work.alt}
-        decoding="async"
-        fetchPriority={!copy && index < EAGER_TILES ? "high" : "low"}
-        src={work.stripImage}
-      />
+      {/* Not lazy: tiles take their width from their image, so one loading
+          late would widen the track and make the moving strip jump. Past the
+          first few, low priority keeps them behind what is in view. Phones
+          get files sized for their 210px tiles. The copy reuses the same
+          URLs, so it costs nothing. */}
+      <picture>
+        <source media="(max-width: 860px)" srcSet={work.stripSources.phone} />
+        <img
+          alt={copy ? "" : work.alt}
+          decoding="async"
+          fetchPriority={!copy && index < EAGER_TILES ? "high" : "low"}
+          src={work.stripImage}
+          srcSet={work.stripSources.wide}
+        />
+      </picture>
       <span className="home-strip-caption">
         <strong>{work.title}</strong>
         <span>
