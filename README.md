@@ -109,6 +109,10 @@ Every order stores `platformCommissionCents` and `artistPayoutCents`, computed f
 
 Every listing is a unique original, so a cart line is a `CartItem` pointing at one artwork with no quantity. `lib/cart.ts` re-checks availability on every read and reports sold, unpublished, or archived pieces separately, so `/cart` can say what happened instead of silently dropping a row or quoting a price for something that's gone. `POST /api/orders/cart` turns the still-available items into orders; a single artwork can also be bought directly from `/artwork/[slug]` via `POST /api/orders`.
 
+### Analytics
+
+Vercel Web Analytics counts page views without cookies (`components/SiteAnalytics.tsx`, in the root layout). It drops `/admin` visits and every query parameter except `at`, `category`, `style` and the `utm_*` campaign tags, since some links carry private tokens. The project is on Vercel's Hobby plan, which has no custom events, so the 3D gallery records what visitors do as views of `/gallery/walk/event/<name>` (`components/gallery3d/galleryEvents.ts`): `explored`, `painting-visited`, `desk-visited`, `map-used`, `map-expanded`, `helper-opened`, `helper-suggestions` once per visit, and `view-artwork`, `shared`, `commission-clicked` every time. Hobby includes 50,000 events a month, after which collection pauses until the next month. The privacy policy describes all this.
+
 ### Caching the public catalogue
 
 Every page reads the login cookie for the nav, so pages render per request. To keep crawlers and repeat visits from waking the database (Neon bills for the time it is awake), public pages read artworks, artists, portfolios, blog posts and reviews through `catalog` (`lib/catalogCache.ts`) instead of `prisma`: the same calls, kept in Next's data cache for up to a day. The Prisma client in `lib/db.ts` clears that cache after any write to those tables, so edits, new listings and sales show at once. Per-visitor reads (the nav's user and cart, drafts) stay on `prisma`; anything a page shows only to some visitors must not be filtered inside a `catalog` read.

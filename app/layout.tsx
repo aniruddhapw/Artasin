@@ -4,6 +4,7 @@ import { preconnect } from "react-dom";
 import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { RouteProgress } from "@/components/RouteProgress";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { fontVariables } from "./fonts";
 import { getTranslations } from "@/lib/i18n";
 import { DEFAULT_SHARE_IMAGE, SITE_NAME, SITE_URL, jsonLd } from "@/lib/seo";
@@ -99,6 +100,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <LocaleProvider locale={locale} messages={messages}>
           {children}
         </LocaleProvider>
+        <SiteAnalytics />
       </body>
     </html>
   );
