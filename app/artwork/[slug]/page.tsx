@@ -99,7 +99,11 @@ function productData(artwork: ArtworkWithArtist, rating: { average: number; coun
         "@type": "MerchantReturnPolicy",
         applicableCountry: "IN",
         returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-        merchantReturnDays: RETURN_DAYS
+        merchantReturnDays: RETURN_DAYS,
+        merchantReturnLink: absoluteUrl("/returns"),
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/FreeReturn",
+        refundType: "https://schema.org/FullRefund"
       }
     },
     ...(rating.count
@@ -273,8 +277,8 @@ export default async function ArtworkDetailPage({ params }: PageProps<"/artwork/
                   <div>
                     <strong>Easy {RETURN_DAYS}-day returns</strong>
                     <span>
-                      Not quite right? Return it within {RETURN_DAYS} days of delivery for a full refund.{" "}
-                      <Link href="/terms#delivery-returns">Details</Link>
+                      Not quite right? Return it within {RETURN_DAYS} days of delivery, with free return shipping,
+                      for a full refund. <Link href="/returns">Details</Link>
                     </span>
                   </div>
                 </li>
