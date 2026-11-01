@@ -10,7 +10,7 @@ export const metadata = pageMetadata({
   path: "/terms"
 });
 
-const LAST_UPDATED = "18 October 2026";
+const LAST_UPDATED = "1 November 2026";
 
 export default function TermsPage() {
   return (
@@ -89,7 +89,7 @@ export default function TermsPage() {
                 authenticity claims are accurate, and the images shown are of the actual work.
               </li>
               <li>The work is legally yours to sell and is free of any undisclosed lien, claim, or dispute.</li>
-              <li>Selling it does not infringe anyone&rsquo;s copyright, trademark, or other rights.</li>
+              <li>Selling it does not infringe anyone’s copyright, trademark, or other rights.</li>
             </ul>
 
             <h3>Fulfilment</h3>
@@ -144,7 +144,7 @@ export default function TermsPage() {
               </li>
               <li>
                 Buying a physical work does <strong>not</strong> transfer its copyright. You may not reproduce,
-                publish, or commercially exploit the work without the artist&rsquo;s separate written permission.
+                publish, or commercially exploit the work without the artist’s separate written permission.
               </li>
             </ul>
 
@@ -156,13 +156,19 @@ export default function TermsPage() {
             </p>
             <p>
               You can return any artwork bought from a listing within <strong>{RETURN_DAYS} days</strong> of
-              delivery. To start a return, use <strong>Report an Issue</strong> on the order page or email{" "}
-              <a href="mailto:support@artasin.in">support@artasin.in</a> within that time, and we will confirm how
-              to send the work back.
+              delivery, for any reason. To start a return, use <strong>Report an Issue</strong> on the order page
+              or email <a href="mailto:support@artasin.in">support@artasin.in</a> within that time. Return shipping
+              is free: we book a courier to collect the work from you. The full policy is on our{" "}
+              <Link href="/returns">Returns and Refunds</Link> page.
             </p>
             <ul>
               <li>The work must come back in the condition it arrived in, in its original packing where possible.</li>
-              <li>We refund the full price once the artwork has been received back and checked.</li>
+              <li>Returns go back by courier only.</li>
+              <li>
+                We refund the full price to your original payment method once the artwork is back at the
+                artist’s studio and has been checked.
+              </li>
+              <li>We don’t offer exchanges, as every work is one of a kind.</li>
               <li>
                 Commissioned work is made specifically for you, so it is covered by section 7 rather than by this
                 return policy.
@@ -195,7 +201,7 @@ export default function TermsPage() {
                 are free to decline any request.
               </li>
               <li>
-                <strong>A quote</strong> is the artist&rsquo;s proposed price for the described work. Accepting a quote
+                <strong>A quote</strong> is the artist’s proposed price for the described work. Accepting a quote
                 and paying creates a binding commission agreement between you and the artist.
               </li>
               <li>
@@ -220,7 +226,7 @@ export default function TermsPage() {
               If something goes wrong with an order, use <strong>Report an Issue</strong> on the order page. This
               flags the order for review and pauses fulfilment. We will look at the order, the messages between
               you, and any evidence either side provides, and then either refund the buyer or resolve the order in
-              the artist&rsquo;s favour.
+              the artist’s favour.
             </p>
             <p>
               Our decision on a dispute is final as far as the platform is concerned. It does not limit any legal
@@ -284,7 +290,7 @@ export default function TermsPage() {
           <section>
             <h2>13. Disclaimers</h2>
             <p>
-              The site is provided &ldquo;as is&rdquo;. We do not warrant that it will be uninterrupted or
+              The site is provided “as is”. We do not warrant that it will be uninterrupted or
               error-free, and we do not warrant the quality, authenticity, safety, or legality of any artwork
               listed by an artist, nor the truth or accuracy of any listing. Transactions are between buyer and
               artist, and you deal with the other party at your own risk.
