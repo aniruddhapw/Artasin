@@ -31,6 +31,7 @@ export async function Footer({ variant = "full" }: { variant?: "full" | "simple"
             {variant === "full" ? <span>Legal</span> : null}
             <Link href="/privacy">{t("footer.privacy")}</Link>
             <Link href="/terms">{t("footer.terms")}</Link>
+            <Link href="/returns">{t("footer.returns")}</Link>
           </div>
         </div>
         <div className="footer-bottom">
